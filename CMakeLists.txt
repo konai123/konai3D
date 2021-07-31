@@ -68,6 +68,12 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/external/d3d12/include
 )
 
+target_include_directories(
+        ${CMAKE_PROJECT_NAME}
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/assimp/include
+)
+
 target_precompile_headers(
         ${CMAKE_PROJECT_NAME}
         PRIVATE
@@ -88,6 +94,7 @@ target_include_directories(
 )
 
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE external/tbb/lib/intel64/vc14)
+target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE external/assimp/lib)
 
 set(AGILITYD3D_PATH external/d3d12/lib/x64)
 
