@@ -34,6 +34,7 @@ private:
 
 private:
     ImGuiWindowFlags _window_flags;
+    ImGui::FileBrowser _mesh_file_dialog;
     std::shared_ptr<_ENGINE::RenderScreen> _screen;
     std::shared_ptr<ShaderPassMap> _shader_pass_map;
     std::shared_ptr<MeshMap> _mesh_map;

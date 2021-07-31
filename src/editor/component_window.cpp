@@ -16,13 +16,17 @@ ComponentWindow::ComponentWindow(
         std::shared_ptr<MeshMap> meshMap,
         std::weak_ptr<_ENGINE::Renderer> renderer
 )
-        :
-        IMGUIWindow("Components"),
-        _screen(screen),
-        _shader_pass_map(shaderPassMap),
-        _mesh_map(meshMap),
-        _renderer(renderer),
-        _window_flags(ImGuiWindowFlags_MenuBar) {}
+:
+IMGUIWindow("Components"),
+_screen(screen),
+_shader_pass_map(shaderPassMap),
+_mesh_map(meshMap),
+_renderer(renderer),
+_window_flags(ImGuiWindowFlags_MenuBar),
+_mesh_file_dialog(ImGuiFileBrowserFlags_MultipleSelection) {
+    _mesh_file_dialog.SetTitle("Load Mesh");
+    _mesh_file_dialog.SetTypeFilters({".fbx", ".obj"});
+}
 
 bool ComponentWindow::AddComponent(std::string name) {
     if (_screen->GetRenderObject(name) != nullptr) return false;
@@ -124,6 +128,10 @@ void ComponentWindow::OnUpdate(float delta) {
 
             if (ImGui::BeginPopup("Meshes")) {
                 auto names = _mesh_map->GetMeshList();
+                if (ImGui::Button("From Files...")) {
+                    _mesh_file_dialog.Open();
+                }
+
                 for (auto &name : names) {
                     ImGui::PushID(name.data());
                     if (ImGui::Button(name.data())) {
@@ -157,6 +165,16 @@ void ComponentWindow::OnUpdate(float delta) {
         ImGui::PopID();
     }
     ImGui::End();
+
+    /*file browsers*/
+    _mesh_file_dialog.Display();
+    if (_mesh_file_dialog.HasSelected()) {
+        auto selected = _mesh_file_dialog.GetMultiSelected();
+        for (UINT i  = 0; i < selected.size(); i++) {
+            APP_LOG_INFO(selected[i].string());
+        }
+        _mesh_file_dialog.ClearSelected();
+    }
 }
 
 void ComponentWindow::OnDestroy() {
