@@ -40,7 +40,7 @@ public:
     bool is_dynamic;
 };
 
-class AsyncMeshLoader : public _ENGINE::AsyncLoader<Model>{
+class AsyncMeshLoader : public _ENGINE::AsyncLoader<Model> {
 public:
     AsyncMeshLoader();
     virtual ~AsyncMeshLoader() = default;

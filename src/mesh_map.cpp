@@ -13,14 +13,10 @@ MeshMap::MeshMap(_ENGINE::Renderer *renderer) {
 }
 
 void MeshMap::AyncLoad(std::vector<std::string> paths) {
-    _mesh_loader.Wait();
-    if (_mesh_loader.Load(paths) == false) {
-        APP_LOG_ERROR("model load failed");
-    }
+    _mesh_loader.Load(paths);
 }
 
 void MeshMap::UpdateFromMeshLoader(std::weak_ptr<_ENGINE::Renderer> renderer) {
-    _mesh_loader.Wait();
     auto v = _mesh_loader.Get();
     for (auto& model : v) {
         auto renderer_shared = renderer.lock();

@@ -11,7 +11,7 @@ template <typename TData>
 class AsyncLoader{
 public:
     AsyncLoader();
-    virtual ~AsyncLoader() = default;
+    virtual ~AsyncLoader();
     AsyncLoader &operator=(const AsyncLoader &) = delete;
     AsyncLoader &operator=(AsyncLoader &&) noexcept = default;
     AsyncLoader(const AsyncLoader &) = delete;
@@ -22,14 +22,13 @@ public:
 
 public:
     std::vector<TData> Get();
-    bool Load(std::vector<std::string> paths);
-    bool IsBusy();
-    void Wait();
+    void Load(std::vector<std::string> paths);
 
 protected:
     void Push(const TData&&);
 
 private:
+    std::vector<std::thread> _threads;
     std::queue<TData> _loaded;
     std::atomic<bool> _is_busy;
     std::mutex _lock;
