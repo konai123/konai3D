@@ -3,6 +3,7 @@
 a simple directX12 engine.
 
 ## Acknowledgements
-- [ImGui](https://github.com/ocornut/imgui)
+- [imgui](https://github.com/ocornut/imgui)
 - [json](https://github.com/nlohmann/json)
 - [spdlog](https://github.com/gabime/spdlog)
+- [imgui-filebrowser](https://github.com/AirGuanZ/imgui-filebrowser)
