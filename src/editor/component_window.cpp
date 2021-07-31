@@ -135,6 +135,10 @@ void ComponentWindow::OnUpdate(float delta) {
                 for (auto &name : names) {
                     ImGui::PushID(name.data());
                     if (ImGui::Button(name.data())) {
+                        if (_mesh_names[r->GetName()] != name) {
+                            r->SetDrawInfo(_mesh_map->GetDrawInfo(name));
+                            _mesh_names[r->GetName()] = name;
+                        }
                         ImGui::CloseCurrentPopup();
                     }
                     ImGui::PopID();
