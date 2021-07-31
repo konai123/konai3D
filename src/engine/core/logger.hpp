@@ -25,8 +25,7 @@ public:
 
     template<typename Mutex>
     static void AddSink(std::shared_ptr<spdlog::sinks::base_sink<Mutex>> sink, std::string logFilePath) {
-        if (_spd_loggers.contains(logFilePath))
-            Instance(logFilePath)->sinks().push_back(sink);
+        Instance(logFilePath)->sinks().push_back(sink);
     }
 
 private:
