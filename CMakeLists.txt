@@ -27,6 +27,7 @@ add_executable(
         src/shader_pass_map.cpp
         src/vertex.cpp
         src/basic_shader_pass_attrbute.hpp
+        src/async_mesh_loader.cpp
 
         src/editor/imgui_window.cpp
         src/editor/log_window.cpp
@@ -113,7 +114,15 @@ target_link_libraries(
         dxguid
         imgui
         ShCore
+        assimp-vc142-mt.lib
 )
+
+add_custom_command(
+        TARGET ${CMAKE_PROJECT_NAME} PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/assimp/lib/assimp-vc142-mt.dll
+        $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>
+        DEPENDS ${CMAKE_PROJECT_NAME})
 
 add_custom_command (
         TARGET ${CMAKE_PROJECT_NAME} PRE_BUILD
