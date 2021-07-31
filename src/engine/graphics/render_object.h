@@ -26,6 +26,7 @@ public:
     void SetPosition(DirectX::XMVECTOR position);
     void SetRotation(DirectX::XMVECTOR rotation);
     void SetScale(DirectX::XMVECTOR scale);
+    void SetDrawInfo(std::shared_ptr<DrawInfo> drawInfo);
     std::shared_ptr<DrawInfo> GetDrawInfo();
     std::shared_ptr<ShaderPass> GetShaderPass();
     std::string GetName();

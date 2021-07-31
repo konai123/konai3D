@@ -50,6 +50,10 @@ void RenderObject::SetScale(DirectX::XMVECTOR scale) {
     DirectX::XMStoreFloat3(&_scale, scale);
 }
 
+void RenderObject::SetDrawInfo(std::shared_ptr<DrawInfo> drawInfo) {
+    _draw_info = drawInfo;
+}
+
 std::shared_ptr<DrawInfo> RenderObject::GetDrawInfo() {
     return _draw_info;
 };
