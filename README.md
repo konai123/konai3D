@@ -2,7 +2,7 @@
 
 a simple directX12 engine.
 
-## Dependencies
-````
-IMGUI: https://github.com/ocornut/imgui
-````
+## Acknowledgements
+- [ImGui](https://github.com/ocornut/imgui)
+- [json](https://github.com/nlohmann/json)
+- [spdlog](https://github.com/gabime/spdlog)
