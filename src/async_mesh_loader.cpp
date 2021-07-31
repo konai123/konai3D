@@ -17,6 +17,7 @@ void AsyncMeshLoader::Delegate(std::vector<std::string> paths) {
         Model model;
         std::string path = paths[i];
         model.Clear();
+        model.name = path.substr(path.find_last_of("/\\") + 1);
         const aiScene *scene = importer.ReadFile(path, aiProcess_ConvertToLeftHanded |
                                                        aiProcess_JoinIdenticalVertices |
                                                        aiProcess_Triangulate |
@@ -37,7 +38,6 @@ void AsyncMeshLoader::Delegate(std::vector<std::string> paths) {
 }
 
 void AsyncMeshLoader::Process(Model &model, aiNode *node, const aiScene *scene) {
-    model.name = std::string(node->mName.data);
     model.is_dynamic = false;
 
     for (UINT i = 0; i < node->mNumMeshes; i++) {
