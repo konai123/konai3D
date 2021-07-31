@@ -61,7 +61,10 @@ void ViewportWindow::OnUpdate(float delta) {
         return;
     }
 
-    ControlViewport();
+    if (ImGui::IsWindowHovered())
+    {
+        ControlViewport();
+    }
 
     ImVec2 size = ImGui::GetContentRegionAvail();
 
