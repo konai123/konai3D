@@ -7,3 +7,4 @@ a simple directX12 engine.
 - [json](https://github.com/nlohmann/json)
 - [spdlog](https://github.com/gabime/spdlog)
 - [imgui-filebrowser](https://github.com/AirGuanZ/imgui-filebrowser)
+- [assimp](https://github.com/assimp/assimp)
