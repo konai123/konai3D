@@ -12,6 +12,24 @@ MeshMap::MeshMap(_ENGINE::Renderer *renderer) {
     AddMeshes(_default_mesh, meshes, false, renderer);
 }
 
+void MeshMap::AyncLoad(std::vector<std::string> paths) {
+    _mesh_loader.Wait();
+    if (_mesh_loader.Load(paths) == false) {
+        APP_LOG_ERROR("model load failed");
+    }
+}
+
+void MeshMap::UpdateFromMeshLoader(std::weak_ptr<_ENGINE::Renderer> renderer) {
+    _mesh_loader.Wait();
+    auto v = _mesh_loader.Get();
+    for (auto& model : v) {
+        auto renderer_shared = renderer.lock();
+        if (renderer_shared == nullptr)
+            break;
+        AddMeshes(model.name, model.mesh, model.is_dynamic, renderer_shared.get());
+    }
+}
+
 bool MeshMap::AddMeshes(std::string name, std::vector<Mesh> meshes, bool isDynamicMeshes, _ENGINE::Renderer *renderer) {
     std::vector<Vertex> vertices;
     std::vector<UINT32> indices;
@@ -35,6 +53,7 @@ bool MeshMap::AddMeshes(std::string name, std::vector<Mesh> meshes, bool isDynam
     int current_index_location = 0;
     int current_vertex_location = 0;
     for (auto &mesh : meshes) {
+        _ENGINE::LocalWriteLock lock(_rw_lock);
         if (_map.contains(name)) {
             APP_LOG_WARNING("'{}' Already has been registered.", name);
             continue;
@@ -53,11 +72,13 @@ bool MeshMap::AddMeshes(std::string name, std::vector<Mesh> meshes, bool isDynam
 }
 
 std::shared_ptr<_ENGINE::DrawInfo> MeshMap::GetDrawInfo(std::string name) {
+    _ENGINE::LocalReadLock lock(_rw_lock);
     if (!_map.contains(name)) return nullptr;
     return _map[name];
 }
 
 std::vector<std::string> MeshMap::GetMeshList() {
+    _ENGINE::LocalReadLock lock(_rw_lock);
     std::vector<std::string> names;
     for (auto &p : _map) {
         names.push_back(p.first);

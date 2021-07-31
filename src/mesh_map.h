@@ -6,8 +6,10 @@
 #define KONAI3D_MESH_MAP_H
 
 #include "src/engine/graphics/renderer.h"
+#include "src/engine/core/rwlock.hpp"
 
 #include "src/vertex.h"
+#include "src/async_mesh_loader.h"
 #include "src/macros.h"
 
 _START_KONAI3D
@@ -77,7 +79,6 @@ namespace {
         i[33] = 20; i[34] = 22; i[35] = 23;
 
         mesh.indices.assign(&i[0], &i[36]);
-        mesh.name = "box";
         mesh.type = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
         mesh.index_bytes_size = 36 * sizeof(UINT32);
         mesh.vertex_bytes_size = static_cast<UINT>(vs.size() * sizeof(Vertex));
@@ -91,6 +92,8 @@ public:
     virtual ~MeshMap() = default;
 
 public:
+    void AyncLoad(std::vector<std::string> paths);
+    void UpdateFromMeshLoader(std::weak_ptr<_ENGINE::Renderer> renderer);
     bool AddMeshes(std::string name, std::vector<Mesh> meshes, bool isDynamicMeshes, _ENGINE::Renderer* renderer);
     std::shared_ptr<_ENGINE::DrawInfo> GetDrawInfo(std::string name);
     std::vector<std::string> GetMeshList();
@@ -100,6 +103,8 @@ public:
 
 private:
     std::unordered_map<std::string, std::shared_ptr<_ENGINE::DrawInfo>> _map;
+    AsyncMeshLoader _mesh_loader;
+    _ENGINE::RWLock _rw_lock;
 };
 
 _END_KONAI3D
