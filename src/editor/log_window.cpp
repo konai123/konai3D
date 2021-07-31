@@ -20,7 +20,6 @@ bool LogWindow::Initiate() {
 
     ImGuiIO &io = ImGui::GetIO();
     ImFontConfig config;
-    config.SizePixels = 24.f;
     _logFont = io.Fonts->AddFontDefault(&config);
     return true;
 }
