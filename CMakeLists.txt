@@ -93,7 +93,6 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/external/spdlog/include
 )
 
-target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE external/tbb/lib/intel64/vc14)
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE external/assimp/lib)
 
 set(AGILITYD3D_PATH external/d3d12/lib/x64)
