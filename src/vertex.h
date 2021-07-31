@@ -35,13 +35,5 @@ public:
     DirectX::XMFLOAT2 _tex_coord;
 };
 
-struct Mesh {
-    std::string name;
-    std::vector<Vertex> vertices;
-    std::vector<UINT32> indices;
-    UINT vertex_bytes_size;
-    UINT index_bytes_size;
-    D3D_PRIMITIVE_TOPOLOGY type;
-};
 _END_KONAI3D
 #endif //KONAI3D_VERTEX_H
