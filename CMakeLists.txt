@@ -67,12 +67,10 @@ target_include_directories(
         ${CMAKE_PROJECT_NAME}
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/external/d3d12/include
-)
-
-target_include_directories(
-        ${CMAKE_PROJECT_NAME}
-        PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/external/assimp/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/spdlog/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui-filebrowser
+        ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_precompile_headers(
@@ -80,24 +78,6 @@ target_precompile_headers(
         PRIVATE
         src/pch.h
         src/engine/pch.h
-)
-
-target_include_directories(
-        ${CMAKE_PROJECT_NAME}
-        PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-target_include_directories(
-        ${CMAKE_PROJECT_NAME}
-        PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/external/spdlog/include
-)
-
-target_include_directories(
-        ${CMAKE_PROJECT_NAME}
-        PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui-filebrowser
 )
 
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE external/assimp/lib)
