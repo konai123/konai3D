@@ -11,9 +11,9 @@
 #define _KONAI3D            ::konai3d
 
 /*assimp*/
-#include "assimp/Importer.hpp"
-#include "assimp/scene.h"
-#include "assimp/postprocess.h"
+#include "external/assimp/include/assimp/Importer.hpp"
+#include "external/assimp/include/assimp/scene.h"
+#include "external/assimp/include/assimp/postprocess.h"
 
 #include "src/engine/pch.h"
 
