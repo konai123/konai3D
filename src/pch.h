@@ -15,6 +15,9 @@
 #include "external/assimp/include/assimp/scene.h"
 #include "external/assimp/include/assimp/postprocess.h"
 
+/*DirectXTex*/
+#include "external/DirectXTex/include/DirectXTex.h"
+
 #include "src/engine/pch.h"
 
 /*std headers*/

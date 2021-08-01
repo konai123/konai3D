@@ -28,6 +28,7 @@ add_executable(
         src/vertex.cpp
         src/basic_shader_pass_attrbute.hpp
         src/async_mesh_loader.cpp
+        src/async_texture_loader.cpp
 
         src/editor/imgui_window.cpp
         src/editor/log_window.cpp
@@ -58,7 +59,7 @@ add_executable(
         src/engine/graphics/shader.cpp
         src/engine/graphics/shader_pass.cpp
         src/engine/graphics/upload_buffer.cpp
-)
+        src/texture_map.cpp src/texture_map.h)
 
 #set_target_properties(${PROJECT_NAME} PROPERTIES
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -68,6 +69,7 @@ target_include_directories(
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/external/d3d12/include
         ${CMAKE_CURRENT_SOURCE_DIR}/external/assimp/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTex/include
         ${CMAKE_CURRENT_SOURCE_DIR}/external/spdlog/include
         ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui-filebrowser
         ${CMAKE_CURRENT_SOURCE_DIR}
@@ -80,7 +82,10 @@ target_precompile_headers(
         src/engine/pch.h
 )
 
-target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE external/assimp/lib)
+target_link_directories(${CMAKE_PROJECT_NAME}
+        PRIVATE
+        external/assimp/lib
+)
 
 set(AGILITYD3D_PATH external/d3d12/lib/x64)
 
@@ -97,12 +102,27 @@ target_link_libraries(
         assimp-vc142-mt.lib
 )
 
+target_link_libraries(
+        ${CMAKE_PROJECT_NAME}
+        PRIVATE
+        debug
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTex/lib/Debug/DirectXTex.lib
+)
+
+target_link_libraries(
+        ${CMAKE_PROJECT_NAME}
+        PRIVATE
+        optimized
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTex/lib/Release/DirectXTex.lib
+)
+
 add_custom_command(
         TARGET ${CMAKE_PROJECT_NAME} PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_CURRENT_SOURCE_DIR}/external/assimp/lib/assimp-vc142-mt.dll
         $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>
-        DEPENDS ${CMAKE_PROJECT_NAME})
+        DEPENDS ${CMAKE_PROJECT_NAME}
+)
 
 add_custom_command (
         TARGET ${CMAKE_PROJECT_NAME} PRE_BUILD
