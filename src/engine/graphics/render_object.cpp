@@ -5,10 +5,10 @@
 #include "src/engine/graphics/render_object.h"
 
 _START_ENGINE
-RenderObject::RenderObject(std::shared_ptr<ShaderPass> shaderPass, std::shared_ptr<DrawInfo> drawInfo, std::string name)
+RenderObject::RenderObject(std::string shaderPassName, std::string drawInfoID, std::string name)
 :
-_shader_pass(std::move(shaderPass)),
-_draw_info(std::move(drawInfo)),
+_shader_pass_name(shaderPassName),
+_draw_info_id(drawInfoID),
 _name(std::move(name)),
 _position({0, 0, 0}),
 _rotation({0, 0, 0}),
@@ -50,16 +50,20 @@ void RenderObject::SetScale(DirectX::XMVECTOR scale) {
     DirectX::XMStoreFloat3(&_scale, scale);
 }
 
-void RenderObject::SetDrawInfo(std::shared_ptr<DrawInfo> drawInfo) {
-    _draw_info = drawInfo;
+void RenderObject::SetShaderPassName(std::string name) {
+    _shader_pass_name = name;
 }
 
-std::shared_ptr<DrawInfo> RenderObject::GetDrawInfo() {
-    return _draw_info;
+void RenderObject::SetDrawInfoID(std::string id) {
+    _draw_info_id = id;
+}
+
+std::string RenderObject::GetShaderPassName() {
+    return _shader_pass_name;
 };
 
-std::shared_ptr<ShaderPass> RenderObject::GetShaderPass() {
-    return _shader_pass;
+std::string RenderObject::GetDrawInfoID() {
+    return _draw_info_id;
 }
 
 std::string RenderObject::GetName() {

@@ -34,9 +34,7 @@ bool ComponentWindow::AddComponent(std::string name) {
     if (renderer_ptr == nullptr)
         return false;
 
-    auto mesh = _mesh_map->GetDrawInfo(_mesh_map->_default_mesh);
-    auto shader_pass = _shader_pass_map->GetShaderPass(_shader_pass_map->_default_shader_pass);
-    auto render_obj = std::make_shared<_ENGINE::RenderObject>(std::move(shader_pass), std::move(mesh), name);
+    auto render_obj = std::make_shared<_ENGINE::RenderObject>(_shader_pass_map->_default_shader_pass, _mesh_map->_default_mesh, name);
 
     auto cb_buffer = renderer_ptr->InstanceConstanceBuffer();
     AppAssert(cb_buffer != nullptr);
@@ -136,7 +134,7 @@ void ComponentWindow::OnUpdate(float delta) {
                     ImGui::PushID(name.data());
                     if (ImGui::Button(name.data())) {
                         if (_mesh_names[r->GetName()] != name) {
-                            r->SetDrawInfo(_mesh_map->GetDrawInfo(name));
+                            r->SetDrawInfoID(name);
                             _mesh_names[r->GetName()] = name;
                         }
                         ImGui::CloseCurrentPopup();

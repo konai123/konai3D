@@ -10,12 +10,12 @@
 _START_ENGINE
 class Rendered {
 public:
-    void AddConstantBuffer(std::string attributeName, std::shared_ptr<ConstantBuffer> cbBuffer);
-    std::shared_ptr<ConstantBuffer> GetConstantBuffer(std::string attributeName);
+    void AddConstantBuffer(std::string attributeName, std::unique_ptr<ConstantBuffer> cbBuffer);
+    ConstantBuffer* GetConstantBuffer(std::string attributeName);
     bool UpdateConstantBuffer(std::string attributeName, void *data, UINT currentFrameIndex);
 
 private:
-    std::unordered_map<std::string, std::shared_ptr<ConstantBuffer>> _cb_resource;
+    std::unordered_map<std::string, std::unique_ptr<ConstantBuffer>> _cb_resource;
 };
 
 _END_ENGINE

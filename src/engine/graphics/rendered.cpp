@@ -6,16 +6,16 @@
 #include "src/engine/graphics/macros.h"
 
 _START_ENGINE
-void Rendered::AddConstantBuffer(std::string attributeName, std::shared_ptr<ConstantBuffer> cbBuffer) {
-    _cb_resource[attributeName] = cbBuffer;
+void Rendered::AddConstantBuffer(std::string attributeName, std::unique_ptr<ConstantBuffer> cbBuffer) {
+    _cb_resource[attributeName] = std::move(cbBuffer);
 }
 
-std::shared_ptr<ConstantBuffer> Rendered::GetConstantBuffer(std::string attributeName) {
+ConstantBuffer* Rendered::GetConstantBuffer(std::string attributeName) {
     if (!_cb_resource.contains(attributeName)) {
         GRAPHICS_LOG_ERROR("cannot find constant resource '{}'", attributeName);
         return nullptr;
     }
-    return _cb_resource[attributeName];
+    return _cb_resource[attributeName].get();
 }
 
 bool Rendered::UpdateConstantBuffer(std::string attributeName, void *data, UINT currentFrameIndex) {

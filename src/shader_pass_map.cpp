@@ -38,10 +38,12 @@ ShaderPassMap::ShaderPassMap(_ENGINE::Renderer *renderer) {
     if (!ps->Build(attr)) {
         AppAssert(false);
     }
-    auto basic_shader_pass = renderer->InstanceShaderPass();
+
+    auto basic_shader_pass = std::move(renderer->InstanceShaderPass());
     if (basic_shader_pass == nullptr) {
         AppAssert(false);
     }
+
     UINT elementsSize = static_cast<UINT>(Vertex::GetInputElements().size());
     auto elements = renderer->InstanceInputElements(Vertex::GetInputElements().data(), elementsSize);
     _ENGINE::ShaderPassAttribute pass_atti;
@@ -55,22 +57,17 @@ ShaderPassMap::ShaderPassMap(_ENGINE::Renderer *renderer) {
         AppAssert(false);
     }
 
-    _map[_default_shader_pass] = basic_shader_pass;
+    _map[_default_shader_pass] = std::move(basic_shader_pass);
 }
 
-bool ShaderPassMap::AddShaderPass(std::string name, std::shared_ptr<_ENGINE::ShaderPass> shaderPass) {
+bool ShaderPassMap::AddShaderPass(std::string name, std::unique_ptr<_ENGINE::ShaderPass> shaderPass) {
     if (_map.contains(name)) {
         APP_LOG_ERROR("'{}' Already has been registered.", name);
         return false;
     }
 
-    _map[name] = shaderPass;
+    _map[name] = std::move(shaderPass);
     return true;
-}
-
-std::shared_ptr<_ENGINE::ShaderPass> ShaderPassMap::GetShaderPass(std::string name) {
-    if (!_map.contains(name)) return nullptr;
-    return _map[name];
 }
 
 std::vector<std::string> ShaderPassMap::GetShaderPasses() {
@@ -79,5 +76,21 @@ std::vector<std::string> ShaderPassMap::GetShaderPasses() {
         names.push_back(p.first);
     }
     return names;
+}
+
+bool ShaderPassMap::Contains(std::string name) {
+    return _map.contains(name);
+}
+
+_ENGINE::ShaderPass *ShaderPassMap::GetResource(std::string name) {
+    if (!Contains(name)) {
+        APP_LOG_ERROR("Cannot find shader pass : {}", name);
+        return nullptr;
+    }
+    return _map[name].get();
+}
+
+std::string ShaderPassMap::GetDefaultResourceName() {
+    return _default_shader_pass;
 }
 _END_KONAI3D

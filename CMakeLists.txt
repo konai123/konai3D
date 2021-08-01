@@ -59,7 +59,8 @@ add_executable(
         src/engine/graphics/shader.cpp
         src/engine/graphics/shader_pass.cpp
         src/engine/graphics/upload_buffer.cpp
-        src/texture_map.cpp src/texture_map.h)
+        src/engine/graphics/resource_map.h
+)
 
 #set_target_properties(${PROJECT_NAME} PROPERTIES
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

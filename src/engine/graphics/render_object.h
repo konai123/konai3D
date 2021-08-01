@@ -15,7 +15,7 @@
 _START_ENGINE
 class RenderObject : public Rendered {
 public:
-    RenderObject(std::shared_ptr<ShaderPass> shaderPass, std::shared_ptr<DrawInfo> drawInfo, std::string name);
+    RenderObject(std::string shaderPassName, std::string drawInfoID, std::string name);
     virtual ~RenderObject() = default;
 
 public:
@@ -26,15 +26,19 @@ public:
     void SetPosition(DirectX::XMVECTOR position);
     void SetRotation(DirectX::XMVECTOR rotation);
     void SetScale(DirectX::XMVECTOR scale);
-    void SetDrawInfo(std::shared_ptr<DrawInfo> drawInfo);
-    std::shared_ptr<DrawInfo> GetDrawInfo();
-    std::shared_ptr<ShaderPass> GetShaderPass();
+
+    void SetShaderPassName(std::string name);
+    void SetDrawInfoID(std::string name);
+
+    std::string GetShaderPassName();
+    std::string GetDrawInfoID();
     std::string GetName();
 
 private:
     std::string _name;
-    std::shared_ptr<ShaderPass> _shader_pass;
-    std::shared_ptr<DrawInfo> _draw_info;
+    std::string _draw_info_id;
+    std::string _texture_name;
+    std::string _shader_pass_name;
 
     DirectX::XMFLOAT3 _position;
     DirectX::XMFLOAT3 _rotation;

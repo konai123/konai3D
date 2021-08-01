@@ -6,6 +6,7 @@
 #define KONAI3D_MESH_MAP_H
 
 #include "src/engine/graphics/renderer.h"
+#include "src/engine/graphics/resource_map.h"
 #include "src/engine/core/rwlock.hpp"
 
 #include "src/vertex.h"
@@ -86,7 +87,7 @@ namespace {
     }
 }
 
-class MeshMap {
+class MeshMap : public _ENGINE::ResourceMap<_ENGINE::DrawInfo*>{
 public:
     MeshMap(_ENGINE::Renderer* renderer);
     virtual ~MeshMap() = default;
@@ -95,14 +96,18 @@ public:
     void AyncLoad(std::vector<std::filesystem::path> paths);
     void UpdateFromMeshLoader(std::weak_ptr<_ENGINE::Renderer> renderer);
     bool AddMeshes(std::string name, std::vector<Mesh> meshes, bool isDynamicMeshes, _ENGINE::Renderer* renderer);
-    std::shared_ptr<_ENGINE::DrawInfo> GetDrawInfo(std::string name);
     std::vector<std::string> GetMeshList();
+
+public:
+    virtual bool Contains(std::string name) override;
+    virtual _ENGINE::DrawInfo* GetResource(std::string name) override;
+    virtual std::string GetDefaultResourceName() override;
 
 public:
     inline static const std::string _default_mesh = "default_mesh";
 
 private:
-    std::unordered_map<std::string, std::shared_ptr<_ENGINE::DrawInfo>> _map;
+    std::unordered_map<std::string, std::unique_ptr<_ENGINE::DrawInfo>> _map;
     AsyncMeshLoader _mesh_loader;
     _ENGINE::RWLock _rw_lock;
 };

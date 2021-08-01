@@ -54,23 +54,17 @@ bool MeshMap::AddMeshes(std::string name, std::vector<Mesh> meshes, bool isDynam
             APP_LOG_WARNING("'{}' Already has been registered.", name);
             continue;
         }
-        std::shared_ptr<_ENGINE::DrawInfo> drawInfo = std::make_shared<_ENGINE::DrawInfo>();
+        std::unique_ptr<_ENGINE::DrawInfo> drawInfo = std::make_unique<_ENGINE::DrawInfo>();
         drawInfo->_index_count = static_cast<UINT>(mesh.indices.size());
         drawInfo->_start_index_location = current_index_location;
         drawInfo->_base_vertex_location = current_vertex_location;
         drawInfo->_type = mesh.type;
-        drawInfo->_vertex_buffer = vb;
-        _map[name] = drawInfo;
+        drawInfo->_vertex_buffer = std::move(vb);
+        _map[name] = std::move(drawInfo);
         current_index_location = mesh.index_bytes_size;
         current_vertex_location = mesh.vertex_bytes_size;
     }
     return true;
-}
-
-std::shared_ptr<_ENGINE::DrawInfo> MeshMap::GetDrawInfo(std::string name) {
-    _ENGINE::LocalReadLock lock(_rw_lock);
-    if (!_map.contains(name)) return nullptr;
-    return _map[name];
 }
 
 std::vector<std::string> MeshMap::GetMeshList() {
@@ -80,6 +74,22 @@ std::vector<std::string> MeshMap::GetMeshList() {
         names.push_back(p.first);
     }
     return names;
+}
+
+bool MeshMap::Contains(std::string name) {
+    return _map.contains(name);
+}
+
+_ENGINE::DrawInfo *MeshMap::GetResource(std::string name) {
+    if (!Contains(name)) {
+        APP_LOG_ERROR("Cannot find mesh resource: {}", name);
+        return nullptr;
+    }
+    return _map[name].get();
+}
+
+std::string MeshMap::GetDefaultResourceName() {
+    return _default_mesh;
 }
 
 _END_KONAI3D

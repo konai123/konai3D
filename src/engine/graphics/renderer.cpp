@@ -82,7 +82,13 @@ bool Renderer::Initiate(HWND hWnd, UINT width, UINT height, UINT renderWidth, UI
     return true;
 }
 
-void Renderer::OnRender(float delta, RenderScreen **renderScreens, UINT numRenderScreen) {
+void Renderer::OnRender(
+        float delta,
+        RenderScreen **renderScreens,
+        UINT numRenderScreen,
+        ResourceMap<DrawInfo*>* meshMap,
+        ResourceMap<ShaderPass*>* shaderPassMap
+        ) {
     auto frame_buffer = _frame_buffer_pool.RequestFrameBuffer(_device.get());
     frame_buffer->_allocator->Reset();
     _command_list->Reset(frame_buffer->_allocator.Get(), NULL);
@@ -126,15 +132,15 @@ void Renderer::OnRender(float delta, RenderScreen **renderScreens, UINT numRende
 
             auto renderObjs = render_screen->GetRenderObjects();
             DrawRenderObject(_command_list.Get(), ShaderPassPriority::SHADER_PASS_PRIORITY_BACKGROUND, renderObjs,
-                             render_screen);
+                             render_screen, meshMap, shaderPassMap);
             DrawRenderObject(_command_list.Get(), ShaderPassPriority::SHADER_PASS_PRIORITY_OPAQUE, renderObjs,
-                             render_screen);
+                             render_screen, meshMap, shaderPassMap);
             DrawRenderObject(_command_list.Get(), ShaderPassPriority::SHADER_PASS_PRIORITY_ALPHACUT, renderObjs,
-                             render_screen);
+                             render_screen, meshMap, shaderPassMap);
             DrawZOrderedRenderObject(_command_list.Get(), ShaderPassPriority::SHADER_PASS_PRIORITY_TRANSPARENCY,
-                                     renderObjs, render_screen->GetCameraPosition(), render_screen);
+                                     renderObjs, render_screen->GetCameraPosition(), render_screen, meshMap, shaderPassMap);
             DrawRenderObject(_command_list.Get(), ShaderPassPriority::SHADER_PASS_PRIORITY_OVERLAY, renderObjs,
-                             render_screen);
+                             render_screen, meshMap, shaderPassMap);
 
             barrier_enter = CD3DX12_RESOURCE_BARRIER::Transition(
                     render_target,
@@ -192,12 +198,23 @@ void Renderer::DrawRenderObject(
         ID3D12GraphicsCommandList *cmdList,
         ShaderPassPriority priority,
         std::vector<RenderObject *> renderObjects,
-        RenderScreen *renderScreen
+        RenderScreen *renderScreen,
+        ResourceMap<DrawInfo*>* meshMap,
+        ResourceMap<ShaderPass*>* shaderPassMap
 ) {
     std::unordered_map<ShaderPass *, std::vector<RenderObject *>> sorted_objs;
     std::vector<ShaderPass *> shader_passes;
     for (UINT i = 0; i < renderObjects.size(); i++) {
-        auto pass = renderObjects[i]->GetShaderPass().get();
+        auto pass_name = renderObjects[i]->GetShaderPassName();
+        if (!shaderPassMap->Contains(pass_name)) {
+            /*Change default shader pass*/
+            auto name = shaderPassMap->GetDefaultResourceName();
+            EngineAssert(shaderPassMap->Contains(name));
+            renderObjects[i]->SetShaderPassName(name);
+            pass_name = name;
+        }
+
+        auto pass = shaderPassMap->GetResource(pass_name);
         EngineAssert(pass != nullptr);
         if (pass->GetPassPriority() != priority) continue;
         sorted_objs[pass].push_back(renderObjects[i]);
@@ -219,7 +236,15 @@ void Renderer::DrawRenderObject(
             RenderObject *render_obj = obj;
             EngineAssert(render_obj != nullptr);
 
-            auto draw_info = render_obj->GetDrawInfo();
+            auto draw_info_id = render_obj->GetDrawInfoID();
+            if (!meshMap->Contains(draw_info_id)) {
+                auto name = meshMap->GetDefaultResourceName();
+                EngineAssert(meshMap->Contains(name));
+                obj->SetDrawInfoID(name);
+                draw_info_id = name;
+            }
+
+            auto draw_info = meshMap->GetResource(draw_info_id);
             VertexBuffer *vbBuffer = draw_info->_vertex_buffer.get();
 
             D3D_PRIMITIVE_TOPOLOGY topo_type = draw_info->_type;
@@ -241,14 +266,30 @@ void Renderer::DrawRenderObject(
     }
 }
 
-void Renderer::DrawZOrderedRenderObject(ID3D12GraphicsCommandList *cmdList, ShaderPassPriority priority,
-                                        std::vector<RenderObject *> renderObjects, DirectX::XMFLOAT3 cameraPosition,
-                                        RenderScreen *renderScreen) {
+void Renderer::DrawZOrderedRenderObject(ID3D12GraphicsCommandList *cmdList,
+                                        ShaderPassPriority priority,
+                                        std::vector<RenderObject *> renderObjects,
+                                        DirectX::XMFLOAT3 cameraPosition,
+                                        RenderScreen *renderScreen,
+                                        ResourceMap<DrawInfo*>* meshMap,
+                                        ResourceMap<ShaderPass*>* shaderPassMap
+                                        ) {
     std::priority_queue<std::pair<float, RenderObject *>> z_oreder_q;
 
     for (UINT i = 0; i < renderObjects.size(); ++i) {
         auto obj = renderObjects[i];
-        if (obj->GetShaderPass()->GetPassPriority() != priority) continue;
+        auto pass_name = obj->GetShaderPassName();
+        if (!shaderPassMap->Contains(pass_name)) {
+            /*Change default shader pass*/
+            auto name = shaderPassMap->GetDefaultResourceName();
+            EngineAssert(shaderPassMap->Contains(name));
+            renderObjects[i]->SetShaderPassName(name);
+            pass_name = name;
+        }
+
+        auto pass = shaderPassMap->GetResource(pass_name);
+
+        if (pass->GetPassPriority() != priority) continue;
         EngineAssert(obj != nullptr);
 
         auto x = obj->GetWorldMatrix().r[3].m128_f32[0];
@@ -267,7 +308,8 @@ void Renderer::DrawZOrderedRenderObject(ID3D12GraphicsCommandList *cmdList, Shad
     while (!z_oreder_q.empty()) {
         RenderObject *render_obj = z_oreder_q.top().second;
         z_oreder_q.pop();
-        auto pass = render_obj->GetShaderPass().get();
+        auto pass_name = render_obj->GetShaderPassName();
+        auto pass = shaderPassMap->GetResource(pass_name);
         if (is_first || last_pass != pass) {
             is_first = false;
             last_pass = pass;
@@ -285,7 +327,15 @@ void Renderer::DrawZOrderedRenderObject(ID3D12GraphicsCommandList *cmdList, Shad
             BindResource(cmdList, info, render_obj);
         }
 
-        auto draw_info = render_obj->GetDrawInfo();
+        auto draw_info_id = render_obj->GetDrawInfoID();
+        if (!meshMap->Contains(draw_info_id)) {
+            auto name = meshMap->GetDefaultResourceName();
+            EngineAssert(meshMap->Contains(name));
+            render_obj->SetDrawInfoID(name);
+            draw_info_id = name;
+        }
+
+        auto draw_info = meshMap->GetResource(draw_info_id);
         VertexBuffer *vbBuffer = draw_info->_vertex_buffer.get();
 
         D3D_PRIMITIVE_TOPOLOGY topo_type = draw_info->_type;
@@ -420,22 +470,39 @@ UINT Renderer::GetCurrentFrameIndex() {
     return _current_frame;
 }
 
-std::shared_ptr<RenderScreen> Renderer::InstanceRenderScreen(UINT width, UINT height) {
+std::unique_ptr<RenderScreen> Renderer::InstanceRenderScreen(UINT width, UINT height) {
     auto render_screen = std::make_unique<RenderScreen>(_device, _resource_heap, width, height, _backbuffer_format,
                                                         _depth_stencil_format, _clear_color);
     return std::move(render_screen);
 }
 
-std::shared_ptr<ShaderPass> Renderer::InstanceShaderPass() {
-    return std::make_shared<ShaderPass>(_device, _depth_stencil_format, _backbuffer_format);
+std::unique_ptr<ShaderPass> Renderer::InstanceShaderPass() {
+    return std::make_unique<ShaderPass>(_device, _depth_stencil_format, _backbuffer_format);
 }
 
-std::shared_ptr<ConstantBuffer> Renderer::InstanceConstanceBuffer() {
-    return std::make_shared<ConstantBuffer>(_device, _num_pre_frames);
+std::unique_ptr<ConstantBuffer> Renderer::InstanceConstanceBuffer() {
+    return std::make_unique<ConstantBuffer>(_device, _num_pre_frames);
 }
 
-std::shared_ptr<Sampler> Renderer::InstanceSampler() {
-    return std::make_shared<Sampler>(_device, _resource_heap);
+std::unique_ptr<Sampler> Renderer::InstanceSampler() {
+    return std::make_unique<Sampler>(_device, _resource_heap);
+}
+
+std::unique_ptr<VertexBuffer> Renderer::InstanceVertexBuffer(void *vertex, UINT numVertex,
+                                                             UINT vertexSize, UINT32 *indices, UINT numIndex,
+                                                             bool isDynamic) {
+    auto frame_buffer = _frame_buffer_pool.RequestFrameBuffer(_device.get());
+    frame_buffer->_allocator->Reset();
+    _command_list->Reset(frame_buffer->_allocator.Get(), NULL);
+    auto vb = std::make_unique<VertexBuffer>(_device.get(), _command_list.Get(), vertex, numVertex,
+                                             vertexSize, indices, numIndex, isDynamic);
+    ID3D12CommandList *cmd_list[] = {_command_list.Get()};
+
+    _command_list->Close();
+    _command_queue->ExecuteCommandLists(_countof(cmd_list), cmd_list);
+    _frame_buffer_pool.DiscardFrameBuffer(frame_buffer);
+    _current_frame = (_current_frame + 1) % (_num_pre_frames);
+    return std::move(vb);
 }
 
 std::vector<D3D12_INPUT_ELEMENT_DESC> Renderer::InstanceInputElements(InputElement *elements, UINT numElements) {
@@ -453,23 +520,6 @@ std::vector<D3D12_INPUT_ELEMENT_DESC> Renderer::InstanceInputElements(InputEleme
         descs.push_back(desc);
     }
     return descs;
-}
-
-std::shared_ptr<VertexBuffer> Renderer::InstanceVertexBuffer(void *vertex, UINT numVertex,
-                                                             UINT vertexSize, UINT32 *indices, UINT numIndex,
-                                                             bool isDynamic) {
-    auto frame_buffer = _frame_buffer_pool.RequestFrameBuffer(_device.get());
-    frame_buffer->_allocator->Reset();
-    _command_list->Reset(frame_buffer->_allocator.Get(), NULL);
-    auto vb = std::make_shared<VertexBuffer>(_device.get(), _command_list.Get(), vertex, numVertex,
-                                             vertexSize, indices, numIndex, isDynamic);
-    ID3D12CommandList *cmd_list[] = {_command_list.Get()};
-
-    _command_list->Close();
-    _command_queue->ExecuteCommandLists(_countof(cmd_list), cmd_list);
-    _frame_buffer_pool.DiscardFrameBuffer(frame_buffer);
-    _current_frame = (_current_frame + 1) % (_num_pre_frames);
-    return vb;
 }
 
 _END_ENGINE

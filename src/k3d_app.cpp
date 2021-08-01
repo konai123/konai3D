@@ -82,7 +82,7 @@ void K3DApp::OnUpdate(float delta) {
     _mesh_map->UpdateFromMeshLoader(_renderer);
 
     std::vector<_ENGINE::RenderScreen *> render_targets = {_viewport_window->GetRenderScreen().get()};
-    _renderer->OnRender(delta, render_targets.data(), 1);
+    _renderer->OnRender(delta, render_targets.data(), 1, _mesh_map.get(), _shader_pass_map.get());
 }
 
 void K3DApp::OnLateUpdate(float delta) {

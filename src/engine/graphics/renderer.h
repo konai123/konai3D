@@ -15,6 +15,7 @@
 #include "src/engine/graphics/rendered.h"
 #include "src/engine/graphics/sampler.h"
 #include "src/engine/graphics/macros.h"
+#include "src/engine/graphics/resource_map.h"
 
 _START_ENGINE
 struct RenderingOptions {
@@ -49,17 +50,23 @@ public:
 public:
     bool Initiate(HWND hWnd, UINT width, UINT height, UINT renderWidth, UINT renderHeight, UINT numCPUPreRender,
                   std::shared_ptr<UIRenderer> uiRenderer = nullptr);
-    void OnRender(float delta, RenderScreen **renderScreens, UINT numRenderScreen);
+    void OnRender(
+            float delta,
+            RenderScreen **renderScreens,
+            UINT numRenderScreen,
+            ResourceMap<DrawInfo*>* meshMap,
+            ResourceMap<ShaderPass*>* shaderPassMap
+    );
     void OnResizeFullFrame(UINT width, UINT height);
     void OnDestroy();
     void SetRenderingOptions(RenderingOptions options);
     void WaitAllFrame();
     UINT GetCurrentFrameIndex();
-    std::shared_ptr<RenderScreen> InstanceRenderScreen(UINT width, UINT height);
-    std::shared_ptr<ShaderPass> InstanceShaderPass();
-    std::shared_ptr<ConstantBuffer> InstanceConstanceBuffer();
-    std::shared_ptr<Sampler> InstanceSampler();
-    std::shared_ptr<VertexBuffer> InstanceVertexBuffer(void *vertex, UINT numVertex, UINT vertexSize,
+    std::unique_ptr<RenderScreen> InstanceRenderScreen(UINT width, UINT height);
+    std::unique_ptr<ShaderPass> InstanceShaderPass();
+    std::unique_ptr<ConstantBuffer> InstanceConstanceBuffer();
+    std::unique_ptr<Sampler> InstanceSampler();
+    std::unique_ptr<VertexBuffer> InstanceVertexBuffer(void *vertex, UINT numVertex, UINT vertexSize,
                                                        UINT32 *indices, UINT numIndex, bool isDynamic);
     std::vector<D3D12_INPUT_ELEMENT_DESC> InstanceInputElements(InputElement *elements, UINT numElements);
 
@@ -67,11 +74,21 @@ private:
     bool CreateDepthStencilBufferAndView(bool isRecreation, HeapDescriptor *heapDescriptor,
                                          Microsoft::WRL::ComPtr<ID3D12Resource> &resource, UINT width, UINT height);
     bool CreateFullFrameRenderTargetBufferAndView(bool isRecreation);
-    void DrawRenderObject(ID3D12GraphicsCommandList *cmdList, ShaderPassPriority priority,
-                          std::vector<RenderObject *> renderObjects, RenderScreen *renderScreen);
-    void DrawZOrderedRenderObject(ID3D12GraphicsCommandList *cmdList, ShaderPassPriority priority,
-                                  std::vector<RenderObject *> renderObjects, DirectX::XMFLOAT3 cameraPosition,
-                                  RenderScreen *renderScreen);
+    void DrawRenderObject(ID3D12GraphicsCommandList *cmdList,
+                          ShaderPassPriority priority,
+                          std::vector<RenderObject *> renderObjects,
+                          RenderScreen *renderScreen,
+                          ResourceMap<DrawInfo*>* meshMap,
+                          ResourceMap<ShaderPass*>* shaderPassMap
+                          );
+    void DrawZOrderedRenderObject(ID3D12GraphicsCommandList *cmdList,
+                                  ShaderPassPriority priority,
+                                  std::vector<RenderObject *> renderObjects,
+                                  DirectX::XMFLOAT3 cameraPosition,
+                                  RenderScreen *renderScreen,
+                                  ResourceMap<DrawInfo*>* meshMap,
+                                  ResourceMap<ShaderPass*>* shaderPassMap
+                                  );
     void BindResource(ID3D12GraphicsCommandList *cmdList, ShaderPass::BindInfo bindInfo, Rendered *rendered);
 
 private:

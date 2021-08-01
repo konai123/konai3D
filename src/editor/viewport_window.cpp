@@ -51,7 +51,7 @@ _screen(nullptr) {
     }
     _screen = renderer_ptr->InstanceRenderScreen(_width, _height);
     AppAssert(_screen != nullptr);
-    _screen->AddConstantBuffer(BasicShaderPassAttribute::_per_frame, per_frame_cb);
+    _screen->AddConstantBuffer(BasicShaderPassAttribute::_per_frame, std::move(per_frame_cb));
 }
 
 void ViewportWindow::OnUpdate(float delta) {

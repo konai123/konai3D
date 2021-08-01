@@ -11,15 +11,6 @@
 
 _START_ENGINE
 
-class VertexBuffer;
-struct DrawInfo {
-    UINT _index_count = 0;
-    UINT _start_index_location = 0;
-    UINT _base_vertex_location = 0;
-    std::shared_ptr<VertexBuffer> _vertex_buffer;
-    D3D_PRIMITIVE_TOPOLOGY _type;
-};
-
 class VertexBuffer {
 public:
     explicit VertexBuffer(DeviceCom *device,
