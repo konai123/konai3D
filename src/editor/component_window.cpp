@@ -52,8 +52,6 @@ bool ComponentWindow::AddComponent(std::string name) {
     render_obj->AddConstantBuffer(BasicShaderPassAttribute::_per_object, std::move(cb_buffer));
     UpdateRenderObjectConstant(render_obj.get());
 
-    _shader_pass_names[name] = _shader_pass_map->_default_shader_pass;
-    _mesh_names[name] = _mesh_map->_default_mesh;
     return _screen->AddRenderObject(std::move(render_obj));
 }
 
@@ -62,8 +60,7 @@ bool ComponentWindow::DeleteComponent(std::string name) {
         APP_LOG_ERROR("Failed to delete render object '{}'", name);
         return false;
     }
-    _shader_pass_names.erase(name);
-    _mesh_names.erase(name);
+
     return true;
 }
 
@@ -117,7 +114,7 @@ void ComponentWindow::OnUpdate(float delta) {
 
             ImGui::Text("Shader Pass: ");
             ImGui::SameLine();
-            if (ImGui::Button(_shader_pass_names[r->GetName()].data())) {
+            if (ImGui::Button(r->GetShaderPassName().data())) {
                 ImGui::OpenPopup("ShaderPasses");
             }
 
@@ -133,9 +130,8 @@ void ComponentWindow::OnUpdate(float delta) {
                 for (auto &name : names) {
                     ImGui::PushID(name.data());
                     if (ImGui::Button(name.data())) {
-                        if (_mesh_names[r->GetName()] != name) {
+                        if (r->GetDrawInfoID() != name) {
                             r->SetDrawInfoID(name);
-                            _mesh_names[r->GetName()] = name;
                         }
                         ImGui::CloseCurrentPopup();
                     }
@@ -156,7 +152,7 @@ void ComponentWindow::OnUpdate(float delta) {
                 ImGui::EndPopup();
             }
 
-            if (ImGui::Button(_mesh_names[r->GetName()].data())) {
+            if (ImGui::Button(r->GetDrawInfoID().data())) {
                 ImGui::OpenPopup("Meshes");
             }
 

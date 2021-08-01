@@ -38,8 +38,6 @@ private:
     std::shared_ptr<_ENGINE::RenderScreen> _screen;
     std::shared_ptr<ShaderPassMap> _shader_pass_map;
     std::shared_ptr<MeshMap> _mesh_map;
-    std::unordered_map<std::string, std::string> _shader_pass_names;
-    std::unordered_map<std::string, std::string> _mesh_names;
     std::weak_ptr<_ENGINE::Renderer> _renderer;
 };
 _END_KONAI3D
