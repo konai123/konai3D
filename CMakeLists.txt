@@ -59,7 +59,7 @@ add_executable(
         src/engine/graphics/shader.cpp
         src/engine/graphics/shader_pass.cpp
         src/engine/graphics/upload_buffer.cpp
-        src/engine/graphics/resource_map.h
+        src/engine/graphics/texture.cpp
 )
 
 #set_target_properties(${PROJECT_NAME} PROPERTIES
