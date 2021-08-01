@@ -320,15 +320,11 @@ std::vector<ShaderPass::BindInfo> ShaderPass::GetStaticResrouceBindInfo(UINT cur
         std::string name = p.first;
         Shader::ShaderResourceType type = p.second.first;
 
-        if (type == Shader::ShaderResourceType::SHADER_RESOURCE_CB) {
-            ShaderPass::BindInfo cbInfo;
-            cbInfo.resource_name = name;
-            cbInfo.resource_type = type;
-            cbInfo.parameter_idx = _resources_idx[name];
-            bind_info.push_back(cbInfo);
-        }
-        //else if ()
-        //Todo Inplementation order resources
+        ShaderPass::BindInfo info;
+        info.resource_name = name;
+        info.resource_type = type;
+        info.parameter_idx = _resources_idx[name];
+        bind_info.push_back(info);
     }
     return bind_info;
 }
@@ -339,15 +335,11 @@ std::vector<ShaderPass::BindInfo> ShaderPass::GetMutableResourceBindInfo(UINT cu
         std::string name = p.first;
         Shader::ShaderResourceType type = p.second.first;
 
-        if (type == Shader::ShaderResourceType::SHADER_RESOURCE_CB) {
-            ShaderPass::BindInfo cbInfo;
-            cbInfo.resource_name = name;
-            cbInfo.resource_type = type;
-            cbInfo.parameter_idx = _resources_idx[name];
-            bind_info.push_back(cbInfo);
-        }
-        //else if ()
-        //Todo Inplementation order resources
+        ShaderPass::BindInfo info;
+        info.resource_name = name;
+        info.resource_type = type;
+        info.parameter_idx = _resources_idx[name];
+        bind_info.push_back(info);
     }
     return bind_info;
 }
