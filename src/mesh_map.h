@@ -92,7 +92,7 @@ public:
     virtual ~MeshMap() = default;
 
 public:
-    void AyncLoad(std::vector<std::string> paths);
+    void AyncLoad(std::vector<std::filesystem::path> paths);
     void UpdateFromMeshLoader(std::weak_ptr<_ENGINE::Renderer> renderer);
     bool AddMeshes(std::string name, std::vector<Mesh> meshes, bool isDynamicMeshes, _ENGINE::Renderer* renderer);
     std::shared_ptr<_ENGINE::DrawInfo> GetDrawInfo(std::string name);

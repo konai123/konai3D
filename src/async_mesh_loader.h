@@ -46,7 +46,7 @@ public:
     virtual ~AsyncMeshLoader() = default;
 
 public:
-    virtual void Delegate(std::vector<std::string> paths) override;
+    virtual void Delegate(std::vector<std::filesystem::path> paths) override;
 
 private:
     void Process(Model& model, aiNode *node, const aiScene *scene);

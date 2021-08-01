@@ -38,8 +38,8 @@ void AsyncLoader<TData>::Push(const TData &&data) {
 }
 
 template<typename TData>
-void AsyncLoader<TData>::Load(std::vector<std::string> paths) {
-    auto future = std::thread([this](std::vector<std::string> paths) {
+void AsyncLoader<TData>::Load(std::vector<std::filesystem::path> paths) {
+    auto future = std::thread([this](std::vector<std::filesystem::path> paths) {
         Delegate(paths);
     }, paths);
     _threads.push_back(std::move(future));

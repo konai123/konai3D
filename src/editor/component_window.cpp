@@ -177,9 +177,8 @@ void ComponentWindow::OnUpdate(float delta) {
         std::vector<std::string> v;
         for (UINT i  = 0; i < selected.size(); i++) {
             APP_LOG_INFO("Load Model: {}", selected[i].string());
-            v.push_back(selected[i].string());
         }
-        _mesh_map->AyncLoad(v);
+        _mesh_map->AyncLoad(selected);
         _mesh_file_dialog.ClearSelected();
     }
 }

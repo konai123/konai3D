@@ -12,7 +12,7 @@ MeshMap::MeshMap(_ENGINE::Renderer *renderer) {
     AddMeshes(_default_mesh, meshes, false, renderer);
 }
 
-void MeshMap::AyncLoad(std::vector<std::string> paths) {
+void MeshMap::AyncLoad(std::vector<std::filesystem::path> paths) {
     _mesh_loader.Load(paths);
 }
 

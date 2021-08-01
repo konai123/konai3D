@@ -18,11 +18,11 @@ public:
     AsyncLoader(AsyncLoader &&) noexcept = default;
 
 public:
-    virtual void Delegate(std::vector<std::string> paths) = 0;
+    virtual void Delegate(std::vector<std::filesystem::path> paths) = 0;
 
 public:
     std::vector<TData> Get();
-    void Load(std::vector<std::string> paths);
+    void Load(std::vector<std::filesystem::path> paths);
 
 protected:
     void Push(const TData&&);

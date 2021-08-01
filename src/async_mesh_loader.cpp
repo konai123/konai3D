@@ -12,10 +12,10 @@ Assimp::Importer importer;
 
 AsyncMeshLoader::AsyncMeshLoader() {}
 
-void AsyncMeshLoader::Delegate(std::vector<std::string> paths) {
+void AsyncMeshLoader::Delegate(std::vector<std::filesystem::path> paths) {
     for (UINT i = 0; i < paths.size(); i++) {
         Model model;
-        std::string path = paths[i];
+        std::string path = paths[i].string();
         model.Clear();
         model.name = path.substr(path.find_last_of("/\\") + 1);
         const aiScene *scene = importer.ReadFile(path, aiProcess_ConvertToLeftHanded |
