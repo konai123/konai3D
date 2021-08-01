@@ -17,10 +17,6 @@ struct DrawInfo {
     D3D_PRIMITIVE_TOPOLOGY _type;
 };
 
-struct Texture {
-    ID3D12Resource* resource;
-};
-
 template <typename TResourceName>
 class ResourceMap {
 DECLARE_CLASS_AS_INTERFACE(ResourceMap)

@@ -79,6 +79,8 @@ bool Renderer::Initiate(HWND hWnd, UINT width, UINT height, UINT renderWidth, UI
         }
     }
 
+    _resource_uploader = std::make_unique<DirectX::ResourceUploadBatch>(_device->GetDevice());
+
     return true;
 }
 
@@ -503,6 +505,11 @@ std::unique_ptr<VertexBuffer> Renderer::InstanceVertexBuffer(void *vertex, UINT 
     _frame_buffer_pool.DiscardFrameBuffer(frame_buffer);
     _current_frame = (_current_frame + 1) % (_num_pre_frames);
     return std::move(vb);
+}
+
+std::unique_ptr<Texture> Renderer::InstanceTexture(DirectX::ScratchImage image) {
+    auto ret = std::make_unique<Texture>(_device, _resource_heap, std::move(image), _resource_uploader.get());
+    return std::move(ret);
 }
 
 std::vector<D3D12_INPUT_ELEMENT_DESC> Renderer::InstanceInputElements(InputElement *elements, UINT numElements) {

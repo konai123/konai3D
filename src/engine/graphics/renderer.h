@@ -16,6 +16,7 @@
 #include "src/engine/graphics/sampler.h"
 #include "src/engine/graphics/macros.h"
 #include "src/engine/graphics/resource_map.h"
+#include "src/engine/graphics/texture.h"
 
 _START_ENGINE
 struct RenderingOptions {
@@ -68,6 +69,7 @@ public:
     std::unique_ptr<Sampler> InstanceSampler();
     std::unique_ptr<VertexBuffer> InstanceVertexBuffer(void *vertex, UINT numVertex, UINT vertexSize,
                                                        UINT32 *indices, UINT numIndex, bool isDynamic);
+    std::unique_ptr<Texture> InstanceTexture(DirectX::ScratchImage image);
     std::vector<D3D12_INPUT_ELEMENT_DESC> InstanceInputElements(InputElement *elements, UINT numElements);
 
 private:
@@ -121,6 +123,8 @@ private:
     inline static DirectX::XMVECTORF32 _clear_color;
     UINT _current_frame;
     UINT _num_pre_frames;
+
+    std::unique_ptr<DirectX::ResourceUploadBatch> _resource_uploader;
 };
 
 _END_ENGINE
