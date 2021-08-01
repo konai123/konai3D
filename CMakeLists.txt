@@ -71,6 +71,7 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/external/d3d12/include
         ${CMAKE_CURRENT_SOURCE_DIR}/external/assimp/include
         ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTex/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTK12/include
         ${CMAKE_CURRENT_SOURCE_DIR}/external/spdlog/include
         ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui-filebrowser
         ${CMAKE_CURRENT_SOURCE_DIR}
@@ -108,6 +109,7 @@ target_link_libraries(
         PRIVATE
         debug
         ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTex/lib/Debug/DirectXTex.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTK12/lib/Debug/DirectXTK12.lib
 )
 
 target_link_libraries(
@@ -115,6 +117,7 @@ target_link_libraries(
         PRIVATE
         optimized
         ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTex/lib/Release/DirectXTex.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTK12/lib/Release/DirectXTK12.lib
 )
 
 add_custom_command(

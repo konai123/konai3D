@@ -17,6 +17,9 @@
 /*DirectXTex*/
 #include "external/DirectXTex/include/DirectXTex.h"
 
+/*DirectX12TK*/
+#include "external/DirectXTK12/include/ResourceUploadBatch.h"
+
 /*d3d12 external headers*/
 #include "external/d3d12/include/d3dx12.h"
 
