@@ -14,6 +14,9 @@
 #include <DirectXColors.h>
 #include <DirectXCollision.h>
 
+/*DirectXTex*/
+#include "external/DirectXTex/include/DirectXTex.h"
+
 /*d3d12 external headers*/
 #include "external/d3d12/include/d3dx12.h"
 
