@@ -25,7 +25,7 @@ public:
     void Load(std::vector<std::filesystem::path> paths);
 
 protected:
-    void Push(const TData&&);
+    void Push(TData&&);
 
 private:
     std::vector<std::thread> _threads;
