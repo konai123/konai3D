@@ -93,4 +93,15 @@ typedef std::wstring tString;
 #define VK_Y 0x59
 #define VK_Z 0x5A
 
+#define float4x4 DirectX::XMFLOAT4X4
+
+#define float2 DirectX::XMFLOAT2
+#define float3 DirectX::XMFLOAT3
+#define float4 DirectX::XMFLOAT4
+
+#define int2 DirectX::XMINT2
+#define int3 DirectX::XMINT3
+#define int4 DirectX::XMINT4
+
+
 #endif //KONAI3D_PCH_H
