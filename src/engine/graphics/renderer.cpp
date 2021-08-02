@@ -8,23 +8,23 @@
 _START_ENGINE
 Renderer::Renderer()
 :
-_command_queue(nullptr),
-_command_list(nullptr),
-_dsv_buffer_full_frame(nullptr),
-_render_target_width(0),
-_render_target_height(0),
-_full_frame_viewport({0}),
-_full_frame_scissor_rect({0}),
-_current_frame(0),
-_num_pre_frames(1) {
+        _command_queue(nullptr),
+        _command_list(nullptr),
+        _dsv_buffer_full_frame(nullptr),
+        _gui_render_target_width(0),
+        _gui_render_target_height(0),
+        _gui_viewport({0}),
+        _gui_scissor_rect({0}),
+        _current_frame(0),
+        _num_pre_frames(1) {
     _rendering_options = {.v_sync=true, .scale_factor = 1.0f};
 }
 
 bool Renderer::Initiate(HWND hWnd, UINT width, UINT height, UINT renderWidth, UINT renderHeight, UINT numCPUPreRender,
                         std::shared_ptr<UIRenderer> uiRenderer) {
     _num_pre_frames = numCPUPreRender;
-    _render_target_width = width;
-    _render_target_height = height;
+    _gui_render_target_width = width;
+    _gui_render_target_height = height;
 
     _device = std::make_shared<DeviceCom>();
     _resource_heap = std::make_shared<ResourceDescriptorHeap>();
@@ -60,11 +60,11 @@ bool Renderer::Initiate(HWND hWnd, UINT width, UINT height, UINT renderWidth, UI
         return false;
 
     if (!CreateDepthStencilBufferAndView(false, &_full_frame_depth_stencil_view, _dsv_buffer_full_frame,
-                                         _render_target_width, _render_target_height))
+                                         _gui_render_target_width, _gui_render_target_height))
         return false;
 
-    _full_frame_viewport = {0, 0, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
-    _full_frame_scissor_rect = {0, 0, static_cast<int>(width), static_cast<int>(height)};
+    _gui_viewport = {0, 0, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
+    _gui_scissor_rect = {0, 0, static_cast<int>(width), static_cast<int>(height)};
 
     _gui_view = _resource_heap->GetShaderResourceHeapDescriptor();
 
@@ -153,8 +153,8 @@ void Renderer::OnRender(
         }
     }
 
-    _command_list->RSSetViewports(1, &_full_frame_viewport);
-    _command_list->RSSetScissorRects(1, &_full_frame_scissor_rect);
+    _command_list->RSSetViewports(1, &_gui_viewport);
+    _command_list->RSSetScissorRects(1, &_gui_scissor_rect);
 
     D3D12_RESOURCE_BARRIER barrier_enter = CD3DX12_RESOURCE_BARRIER::Transition(
             _device->GetCurrentBackBuffer().Get(),
@@ -371,17 +371,17 @@ void Renderer::BindResource(ID3D12GraphicsCommandList *cmdList, ShaderPass::Bind
     }
 }
 
-void Renderer::OnResizeFullFrame(UINT width, UINT height) {
-    _render_target_width = width;
-    _render_target_height = height;
-    _full_frame_viewport.Width = static_cast<float>(width);
-    _full_frame_viewport.Height = static_cast<float>(height);
-    _full_frame_scissor_rect = {0, 0, static_cast<int>(width), static_cast<int>(height)};
+void Renderer::OnResizeGUI(UINT width, UINT height) {
+    _gui_render_target_width = width;
+    _gui_render_target_height = height;
+    _gui_viewport.Width = static_cast<float>(width);
+    _gui_viewport.Height = static_cast<float>(height);
+    _gui_scissor_rect = {0, 0, static_cast<int>(width), static_cast<int>(height)};
 
     WaitAllFrame();
-    _device->ResizeSwapchain(_render_target_width, _render_target_height);
-    CreateDepthStencilBufferAndView(true, &_full_frame_depth_stencil_view, _dsv_buffer_full_frame, _render_target_width,
-                                    _render_target_height);
+    _device->ResizeSwapchain(_gui_render_target_width, _gui_render_target_height);
+    CreateDepthStencilBufferAndView(true, &_full_frame_depth_stencil_view, _dsv_buffer_full_frame, _gui_render_target_width,
+                                    _gui_render_target_height);
     CreateFullFrameRenderTargetBufferAndView(true);
 
     _ui_renderer->OnResize(width, height);

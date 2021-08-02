@@ -95,7 +95,7 @@ void K3DApp::OnResizeStart(int width, int height) {
 
 void K3DApp::OnResizeEnd() {
     App::OnResizeEnd();
-    _renderer->OnResizeFullFrame(GetWidth(), GetHeight());
+    _renderer->OnResizeGUI(GetWidth(), GetHeight());
 }
 
 void K3DApp::OnDPIUpdate(float dpiFactor) {

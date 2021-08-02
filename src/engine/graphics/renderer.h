@@ -58,7 +58,7 @@ public:
             ResourceMap<DrawInfo*>* meshMap,
             ResourceMap<ShaderPass*>* shaderPassMap
     );
-    void OnResizeFullFrame(UINT width, UINT height);
+    void OnResizeGUI(UINT width, UINT height);
     void OnDestroy();
     void SetRenderingOptions(RenderingOptions options);
     void WaitAllFrame();
@@ -112,10 +112,10 @@ private:
     std::shared_ptr<DeviceCom> _device;
     std::shared_ptr<ResourceDescriptorHeap> _resource_heap;
 
-    UINT _render_target_width;
-    UINT _render_target_height;
-    D3D12_VIEWPORT _full_frame_viewport;
-    D3D12_RECT _full_frame_scissor_rect;
+    UINT _gui_render_target_width;
+    UINT _gui_render_target_height;
+    D3D12_VIEWPORT _gui_viewport;
+    D3D12_RECT _gui_scissor_rect;
     FrameBufferPool _frame_buffer_pool;
     RenderingOptions _rendering_options;
 
