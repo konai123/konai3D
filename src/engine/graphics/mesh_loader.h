@@ -9,11 +9,11 @@
 
 _START_ENGINE
 struct Mesh {
-    std::string name;
-    std::vector<_ENGINE::Vertex> vertices;
-    std::vector<UINT32> indices;
-    UINT vertex_bytes_size;
-    UINT index_bytes_size;
+    std::string Name;
+    std::vector<_ENGINE::Vertex> Vertices;
+    std::vector<UINT32> Indices;
+    UINT VertexBytesSize;
+    UINT IndexBytesSize;
 };
 
 struct MeshFile {
@@ -24,18 +24,18 @@ public:
 
 public:
     bool Valid() {
-        if (mesh.empty()) return false;
+        if (Mesh.empty()) return false;
         return true;
     }
 
     void Clear() {
-        name = "";
-        mesh.clear();
+        Name = "";
+        Mesh.clear();
     }
 
 public:
-    std::string name;
-    std::vector<Mesh> mesh;
+    std::string Name;
+    std::vector<Mesh> Mesh;
 };
 
 class MeshLoader : public _ENGINE::AsyncLoader<MeshFile> {

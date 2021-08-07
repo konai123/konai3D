@@ -18,7 +18,7 @@ void MeshMap::AsyncLoad(std::vector<std::filesystem::path> paths) {
 void MeshMap::UpdateFromMeshLoader(DirectX::ResourceUploadBatch* uploader) {
     auto v = _mesh_loader.Get();
     for (auto& meshFile : v) {
-        AddMeshes(std::move(meshFile.mesh), uploader);
+        AddMeshes(std::move(meshFile.Mesh), uploader);
     }
 }
 
@@ -27,14 +27,14 @@ bool MeshMap::AddMeshes(std::vector<Mesh>&& meshes, DirectX::ResourceUploadBatch
 
         std::unique_ptr<MeshResources> drawInfo = std::make_unique<MeshResources>();
 
-        auto name = mesh.name;
+        auto name = mesh.Name;
         if (_map.contains(name)) {
             GRAPHICS_LOG_WARNING("'{}' Already has been registered.", name);
             continue;
         }
 
         {
-            UINT vertex_bytes_size = mesh.vertex_bytes_size;
+            UINT vertex_bytes_size = mesh.VertexBytesSize;
             CD3DX12_RESOURCE_DESC vb_desc = CD3DX12_RESOURCE_DESC::Buffer(vertex_bytes_size);
             auto properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
             auto vertexBuffer = _device->CreateResource(&properties, &vb_desc, nullptr, D3D12_HEAP_FLAG_NONE, D3D12_RESOURCE_STATE_COMMON);
@@ -45,7 +45,7 @@ bool MeshMap::AddMeshes(std::vector<Mesh>&& meshes, DirectX::ResourceUploadBatch
             }
 
             D3D12_SUBRESOURCE_DATA subresource = {};
-            subresource.pData = mesh.vertices.data();
+            subresource.pData = mesh.Vertices.data();
             subresource.RowPitch = vertex_bytes_size;
             subresource.SlicePitch = vertex_bytes_size;
 
@@ -56,7 +56,7 @@ bool MeshMap::AddMeshes(std::vector<Mesh>&& meshes, DirectX::ResourceUploadBatch
         }
 
         {
-            UINT index_bytes_size = mesh.index_bytes_size;
+            UINT index_bytes_size = mesh.IndexBytesSize;
             CD3DX12_RESOURCE_DESC ib_desc = CD3DX12_RESOURCE_DESC::Buffer(index_bytes_size);
             auto properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
             auto indexBuffer = _device->CreateResource(&properties, &ib_desc, nullptr, D3D12_HEAP_FLAG_NONE, D3D12_RESOURCE_STATE_COMMON);
@@ -67,7 +67,7 @@ bool MeshMap::AddMeshes(std::vector<Mesh>&& meshes, DirectX::ResourceUploadBatch
             }
 
             D3D12_SUBRESOURCE_DATA subresource = {};
-            subresource.pData = mesh.indices.data();
+            subresource.pData = mesh.Indices.data();
             subresource.RowPitch = index_bytes_size;
             subresource.SlicePitch = index_bytes_size;
 

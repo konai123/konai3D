@@ -25,7 +25,7 @@ std::optional<MeshFile> MeshLoader::LoadMesh(std::filesystem::path path) {
     MeshFile mesh_file;
     std::string path_str = path.string();
     mesh_file.Clear();
-    mesh_file.name = path_str;
+    mesh_file.Name = path_str;
     const aiScene *scene = importer.ReadFile(path_str, aiProcess_ConvertToLeftHanded |
                                                    aiProcess_JoinIdenticalVertices |
                                                    aiProcess_Triangulate |
@@ -71,19 +71,19 @@ void MeshLoader::To(MeshFile &meshFile, aiMesh *_aiMesh) {
         vertex.Normal = {aiNormal.x, aiNormal.y, aiNormal.z};
         vertex.TangentU = {aiTangent.x, aiTangent.y, aiTangent.z};
         vertex.TexCoord = {aiTexCoord.x, aiTexCoord.y};
-        mesh.vertices.push_back(vertex);
+        mesh.Vertices.push_back(vertex);
     }
-    mesh.vertex_bytes_size = static_cast<UINT>(mesh.vertices.size() * sizeof(Vertex));
+    mesh.VertexBytesSize = static_cast<UINT>(mesh.Vertices.size() * sizeof(Vertex));
 
     for (UINT i = 0; i < _aiMesh->mNumFaces; i++) {
         auto face = _aiMesh->mFaces[i];
         for (UINT j = 0; j < face.mNumIndices; j++) {
-            mesh.indices.push_back(face.mIndices[j]);
+            mesh.Indices.push_back(face.mIndices[j]);
         }
     }
-    mesh.index_bytes_size = static_cast<UINT>(mesh.indices.size() * sizeof(UINT));
-    mesh.name = _aiMesh->mName.C_Str();
-    meshFile.mesh.push_back(mesh);
+    mesh.IndexBytesSize = static_cast<UINT>(mesh.Indices.size() * sizeof(UINT));
+    mesh.Name = _aiMesh->mName.C_Str();
+    meshFile.Mesh.push_back(mesh);
 }
 
 _END_ENGINE
