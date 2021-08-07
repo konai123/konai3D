@@ -23,10 +23,6 @@ add_executable(
         src/global.cpp
         src/imgui_renderer.cpp
         src/camera.cpp
-        src/engine/graphics/mesh_map.cpp
-        src/engine/graphics/vertex.cpp
-        src/engine/graphics/mesh_loader.cpp
-        src/engine/graphics/texture_loader.cpp
 
         src/editor/imgui_window.cpp
         src/editor/log_window.cpp
@@ -57,7 +53,11 @@ add_executable(
         src/engine/graphics/texture_map.cpp
         src/engine/graphics/rw_resource_buffer.cpp
         src/engine/graphics/material_map.cpp
-        shaders/sampler.hlsl)
+        src/engine/graphics/mesh_map.cpp
+        src/engine/graphics/vertex.cpp
+        src/engine/graphics/mesh_loader.cpp
+        src/engine/graphics/texture_loader.cpp
+)
 
 #set_target_properties(${PROJECT_NAME} PROPERTIES
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
