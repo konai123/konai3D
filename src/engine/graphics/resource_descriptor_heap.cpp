@@ -15,13 +15,10 @@ _sampler_heap(nullptr),
 _render_target_pool(NumRenderTargetDescriptors, false),
 _depth_stencil_pool(NumDepthStencilDescriptors, false),
 _sampler_pool(NumSamplerDescriptors, false),
-_shader_resource_pool(NumShaderResourceDescriptors, false),
-_rtv_inc_size(0),
-_dsv_inc_size(0),
-_sampler_inc_size(0),
-_srv_cbv_uav_inc_size(0) {}
+_shader_resource_pool(NumShaderResourceDescriptors, false)
+{}
 
-bool ResourceDescriptorHeap::Initiate(DeviceCom *device) {
+bool ResourceDescriptorHeap::Initiate(DeviceCom* device) {
     _rtv_heap = device->CreateRtvHeap(NumRenderTargetDescriptors);
     _dsv_heap = device->CreateDsvHeap(NumDepthStencilDescriptors);
     _srv_cbv_uav_heap = device->CreateSrvCbvUavHeap(NumShaderResourceDescriptors,
@@ -38,45 +35,40 @@ bool ResourceDescriptorHeap::Initiate(DeviceCom *device) {
         return false;
     }
 
-    _rtv_inc_size = device->_rtv_desc_size;
-    _dsv_inc_size = device->_dsv_desc_size;
-    _sampler_inc_size = device->_sampler_desc_size;
-    _srv_cbv_uav_inc_size = device->_srv_cbv_uav_desc_size;
-
     return true;
 }
 
-HeapDescriptor ResourceDescriptorHeap::GetRenderTargetHeapDescriptor() {
+HeapDescriptorHandle ResourceDescriptorHeap::AllocRenderTargetHeapDescriptor() {
     int idx = _render_target_pool.allocate();
     auto cpu_start = _rtv_heap->GetCPUDescriptorHandleForHeapStart();
     auto gpu_handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(CD3DX12_DEFAULT());
-    auto cpu_handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(cpu_start, idx, _rtv_inc_size);
+    auto cpu_handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(cpu_start, idx, DeviceCom::RtvDescSize);
     return {cpu_handle, gpu_handle, idx};
 }
 
-HeapDescriptor ResourceDescriptorHeap::GetSamplerHeapDescriptor() {
+HeapDescriptorHandle ResourceDescriptorHeap::AllocSamplerHeapDescriptor() {
     int idx = _sampler_pool.allocate();
     auto gpu_start = _sampler_heap->GetGPUDescriptorHandleForHeapStart();
     auto cpu_start = _sampler_heap->GetCPUDescriptorHandleForHeapStart();
-    auto gpu_handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpu_start, idx, _sampler_inc_size);
-    auto cpu_handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(cpu_start, idx, _sampler_inc_size);
+    auto gpu_handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpu_start, idx, DeviceCom::SamplerDescSize);
+    auto cpu_handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(cpu_start, idx, DeviceCom::SamplerDescSize);
     return {cpu_handle, gpu_handle, idx};
 }
 
-HeapDescriptor ResourceDescriptorHeap::GetDepthStencilHeapDescriptor() {
+HeapDescriptorHandle ResourceDescriptorHeap::AllocDepthStencilHeapDescriptor() {
     int idx = _depth_stencil_pool.allocate();
     auto cpu_start = _dsv_heap->GetCPUDescriptorHandleForHeapStart();
     auto gpu_handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(CD3DX12_DEFAULT());
-    auto cpu_handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(cpu_start, idx, _dsv_inc_size);
+    auto cpu_handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(cpu_start, idx, DeviceCom::DsvDescSize);
     return {cpu_handle, gpu_handle, idx};
 }
 
-HeapDescriptor ResourceDescriptorHeap::GetShaderResourceHeapDescriptor() {
+HeapDescriptorHandle ResourceDescriptorHeap::AllocShaderResourceHeapDescriptor() {
     int idx = _shader_resource_pool.allocate();
     auto gpu_start = _srv_cbv_uav_heap->GetGPUDescriptorHandleForHeapStart();
     auto cpu_start = _srv_cbv_uav_heap->GetCPUDescriptorHandleForHeapStart();
-    auto gpu_handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpu_start, idx, _srv_cbv_uav_inc_size);
-    auto cpu_handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(cpu_start, idx, _srv_cbv_uav_inc_size);
+    auto gpu_handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(gpu_start, idx, DeviceCom::SrvCbvUavDescSize);
+    auto cpu_handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(cpu_start, idx, DeviceCom::SrvCbvUavDescSize);
     return {cpu_handle, gpu_handle, idx};
 }
 

@@ -5,7 +5,7 @@
 #include "src/k3d_app.h"
 #include "src/global.h"
 #include "src/macros.h"
-#include "src/vertex.h"
+#include "src/engine/graphics/vertex.h"
 
 _START_KONAI3D
 K3DApp::K3DApp()
@@ -31,16 +31,11 @@ bool K3DApp::Prepare(HWND hwnd, int width, int height, float dpiFactor) {
     _imgui_renderer = std::make_shared<IMGUIRenderer>();
     _renderer = std::make_shared<_ENGINE::Renderer>();
     if (!_renderer->Initiate(
-            hwnd, width, height, 480 * 2, 720 * 2, 3, _imgui_renderer
+            hwnd, width, height, global::ShaderPath, _imgui_renderer
     )) {
         APP_LOG_ERROR("Failed to initialize render system.");
         return false;
     }
-
-    //Global Map initialize ============================================================================================
-    _mesh_map = std::make_shared<MeshMap>(_renderer.get());
-    _shader_pass_map = std::make_shared<ShaderPassMap>(_renderer.get());
-    //==================================================================================================================
 
     _log_window = std::make_shared<LogWindow>();
     _main_window = std::make_shared<MainWindow>();
@@ -58,13 +53,26 @@ bool K3DApp::Prepare(HWND hwnd, int width, int height, float dpiFactor) {
     _imgui_renderer->AddFont(_ui_font_path.c_str(), 16);
     _imgui_renderer->SetScale(dpiFactor);
 
-    _viewport_window = std::make_shared<ViewportWindow>(_renderer);
-    _component_window = std::make_shared<ComponentWindow>(_viewport_window->GetRenderScreen(), _shader_pass_map,
-                                                          _mesh_map, _renderer);
+    _viewport_window = std::make_shared<ViewportWindow>(_renderer.get());
+    _component_window = std::make_shared<ComponentWindow>(_viewport_window->GetRenderScreen(), _renderer->RenderResourceMap);
 
     _main_window->AttachWindow(_log_window);
     _main_window->AttachWindow(_viewport_window);
     _main_window->AttachWindow(_component_window);
+
+    {
+        /* Load System Mesh, Texture */
+        auto system_texture_path = global::AssetPath / "textures" / "default_texture.jpg";
+        auto system_mesh_path = global::AssetPath / "meshes" / "cube.obj";
+
+        _renderer->RenderResourceMap->TextureMap->AsyncLoad({system_texture_path});
+        _renderer->RenderResourceMap->MeshMap->AsyncLoad({system_mesh_path});
+
+        _ENGINE::MaterialDesc mat_desc {
+            .DiffuseTexturePath = system_texture_path.string()
+        };
+        _renderer->RenderResourceMap->MaterialMap->AddMaterial(DefaultMaterialName, mat_desc);
+    }
     return true;
 }
 
@@ -79,10 +87,8 @@ void K3DApp::OnDestroy() {
 
 void K3DApp::OnUpdate(float delta) {
     App::OnUpdate(delta);
-    _mesh_map->UpdateFromMeshLoader(_renderer);
-
     std::vector<_ENGINE::RenderScreen *> render_targets = {_viewport_window->GetRenderScreen().get()};
-    _renderer->OnRender(delta, render_targets.data(), 1, _mesh_map.get(), _shader_pass_map.get());
+    _renderer->OnRender(delta, render_targets);
 }
 
 void K3DApp::OnLateUpdate(float delta) {

@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-08.
 //
 
-#ifndef KONAI3D_DX_COM_H
-#define KONAI3D_DX_COM_H
+#pragma once
 
 _START_ENGINE
 struct DXGIFeature {
@@ -43,5 +42,3 @@ private:
 };
 _END_ENGINE
 
-
-#endif //KONAI3D_DX_COM_H

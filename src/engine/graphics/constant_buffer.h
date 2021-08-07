@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-28.
 //
 
-#ifndef KONAI3D_CONSTANT_BUFFER_H
-#define KONAI3D_CONSTANT_BUFFER_H
+#pragma once
 
 #include "src/engine/graphics/device_com.h"
 #include "src/engine/graphics/upload_buffer.h"
@@ -24,4 +23,3 @@ private:
     UINT _num_pre_frames;
 };
 _END_ENGINE
-#endif //KONAI3D_CONSTANT_BUFFER_H

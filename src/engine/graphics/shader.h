@@ -2,74 +2,64 @@
 // Created by khhan on 2021-06-21.
 //
 
-#ifndef KONAI3D_SHADER_H
-#define KONAI3D_SHADER_H
+
+#pragma once
+
+#include "src/engine/graphics/macros.h"
 
 _START_ENGINE
-enum class ShaderType {
-    SHADER_TYPE_VS,
-    SHADER_TYPE_GS,
-    SHADER_TYPE_HS,
-    SHADER_TYPE_DS,
-    SHADER_TYPE_PS
-};
-enum class ShaderParameterVariableType {
-    SHADER_PARAMETER_VARIABLE_TYPE_SR_STATIC,
-    SHADER_PARAMETER_VARIABLE_TYPE_UA_STATIC,
-    SHADER_PARAMETER_VARIABLE_TYPE_CB_STATIC,
-    SHADER_PARAMETER_VARIABLE_TYPE_SR_MUTABLE,
-    SHADER_PARAMETER_VARIABLE_TYPE_UA_MUTABLE,
-    SHADER_PARAMETER_VARIABLE_TYPE_CB_MUTABLE
+class ShaderVersionedType{
+public:
+    static inline std::string SHADER_TYPE_VS_5_1 = "vs_5_1";
+    static inline std::string SHADER_TYPE_GS_5_1 = "gs_5_1";
+    static inline std::string SHADER_TYPE_HS_5_1 = "hs_5_1";
+    static inline std::string SHADER_TYPE_DS_5_1 = "ds_5_1";
+    static inline std::string SHADER_TYPE_PS_5_1 = "ps_5_1";
 };
 
-struct ShaderAttribute {
-    struct ParameterType {
-        ParameterType(std::string name, ShaderParameterVariableType type, D3D12_SHADER_VISIBILITY visibility=D3D12_SHADER_VISIBILITY_ALL)
-        :
-        name(name),
-        type(type),
-        visivility(visibility)
-        {}
-        std::string name;
-        ShaderParameterVariableType type;
-        D3D12_SHADER_VISIBILITY visivility;
-    };
-
-
-    ParameterType* parameter_types;
-    UINT num_parameter_types;
-    tString filePath;
-    std::string entry_point;
-    std::string shader_version;
-    ShaderType shader_type;
-};
-
-class Shader
+struct Shader
 {
-friend class ShaderPass;
 public:
-    enum ShaderResourceType {
-        SHADER_RESOURCE_CB,
-        SHADER_RESOURCE_SR,
-        SHADER_RESOURCE_UA
+    struct _RenderPass {
+    public:
+        Microsoft::WRL::ComPtr<ID3DBlob> VS;
+        Microsoft::WRL::ComPtr<ID3DBlob> PS;
+
+        bool Build(std::filesystem::path path) {
+            if (!Shader::Build(path / "render_pass.hlsl", ShaderVersionedType::SHADER_TYPE_VS_5_1, "VS", VS.GetAddressOf())) {
+                return false;
+            }
+            if (!Shader::Build(path / "render_pass.hlsl", ShaderVersionedType::SHADER_TYPE_PS_5_1, "PS", PS.GetAddressOf())) {
+                return false;
+            }
+            return true;
+        }
     };
 
 public:
-    Shader();
-    virtual ~Shader() = default;
+    inline static _RenderPass RenderPass;
 
 public:
-    bool Build(ShaderAttribute attribute);
-    void Clear();
-
-private:
-    ShaderAttribute _attribute;
-    std::unordered_map<std::string, ShaderResourceType> _static_resource;
-    std::unordered_map<std::string, ShaderResourceType> _mutable_resource;
-    std::unordered_map<std::string, D3D12_SHADER_VISIBILITY> _visivility;
-
-    Microsoft::WRL::ComPtr<ID3DBlob> _shader_byte_code;
+    static bool Build(std::filesystem::path path, std::string type, std::string entry, ID3DBlob** outBlob) {
+        HRESULT hr = S_OK;
+        unsigned int compile_flag = D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES;
+#if defined(DEBUG) || defined(_DEBUG)
+        compile_flag |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+        Microsoft::WRL::ComPtr<ID3DBlob> errors;
+        Microsoft::WRL::ComPtr<ID3DBlob> shader_byte_code = nullptr;
+        hr = ::D3DCompileFromFile(path.c_str(), nullptr,
+                                  D3D_COMPILE_STANDARD_FILE_INCLUDE, entry.c_str(),
+                                  type.c_str(), compile_flag, 0,
+                                  outBlob, &errors
+        );
+        if (errors != nullptr || FAILED(hr)) {
+            if (errors != nullptr)
+                GRAPHICS_LOG_ERROR("Shader Build Failed: {}", reinterpret_cast<char *>(errors->GetBufferPointer()));
+            return false;
+        }
+        errors.Reset();
+        return true;
+    }
 };
 _END_ENGINE
-
-#endif //KONAI3D_SHADER_H

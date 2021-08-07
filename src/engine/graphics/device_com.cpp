@@ -10,11 +10,8 @@ DeviceCom::DeviceCom()
 :
 _dx_com(nullptr),
 _swapchain(nullptr),
-_command_queue(nullptr),
-_rtv_desc_size(0),
-_dsv_desc_size(0),
-_sampler_desc_size(0),
-_srv_cbv_uav_desc_size(0) {}
+_command_queue(nullptr)
+{}
 
 bool DeviceCom::Initiate(const HWND hWnd, const UINT width, const UINT height, const size_t swapchainCount,
                          const DXGI_FORMAT backbufferFormat) {
@@ -35,10 +32,10 @@ bool DeviceCom::Initiate(const HWND hWnd, const UINT width, const UINT height, c
     }
 
     ID3D12Device *device = _dx_com->Device();
-    _rtv_desc_size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    _dsv_desc_size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    _srv_cbv_uav_desc_size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    _sampler_desc_size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+    RtvDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    DsvDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    SrvCbvUavDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    SamplerDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
     return true;
 }
 
@@ -247,12 +244,11 @@ Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> DeviceCom::CreateSamplerHeap(
 }
 
 Microsoft::WRL::ComPtr<ID3D12RootSignature> DeviceCom::CreateRootSignature(
-        const CD3DX12_ROOT_PARAMETER *parameters,
+        const CD3DX12_ROOT_PARAMETER1 *parameters,
         const CD3DX12_STATIC_SAMPLER_DESC *staticSamplers,
         const UINT numStaticSampler,
         const UINT numParameter,
-        const D3D12_ROOT_SIGNATURE_FLAGS flag,
-        const D3D_ROOT_SIGNATURE_VERSION version
+        const D3D12_ROOT_SIGNATURE_FLAGS flag
 ) {
     EngineAssert(_dx_com.get());
     ID3D12Device *device = _dx_com->Device();
@@ -261,11 +257,23 @@ Microsoft::WRL::ComPtr<ID3D12RootSignature> DeviceCom::CreateRootSignature(
     }
 
     Microsoft::WRL::ComPtr<ID3D12RootSignature> root_signature;
-    CD3DX12_ROOT_SIGNATURE_DESC root_sig_desc(numParameter, parameters, numStaticSampler, staticSamplers, flag);
-    Microsoft::WRL::ComPtr<ID3DBlob> serialized_root_sig = nullptr;
-    HRESULT hr = D3D12SerializeRootSignature(&root_sig_desc, version,
-                                             serialized_root_sig.GetAddressOf(), nullptr);
+    D3D12_ROOT_SIGNATURE_DESC1 root_sig_desc {
+        .NumParameters = numParameter,
+        .pParameters = parameters,
+        .NumStaticSamplers = numStaticSampler,
+        .pStaticSamplers = staticSamplers,
+        .Flags = flag
+    };
+    D3D12_VERSIONED_ROOT_SIGNATURE_DESC desc {
+        .Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
+        .Desc_1_1 = root_sig_desc
+    };
 
+    Microsoft::WRL::ComPtr<ID3DBlob> serialized_root_sig = nullptr;
+    HRESULT hr = D3D12SerializeVersionedRootSignature(&desc, serialized_root_sig.GetAddressOf(), nullptr);
+
+//    _com_error err(hr);
+//    MessageBox(NULL, err.ErrorMessage(), reinterpret_cast<LPCWSTR>("ASD"), 0);
     ReturnNullHRFailed(hr);
     ReturnNullHRFailed(device->CreateRootSignature(
             0,

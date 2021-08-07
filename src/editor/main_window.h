@@ -2,8 +2,7 @@
 // Created by khhan on 2021-06-18.
 //
 
-#ifndef KONAI3D_MAIN_WINDOW_H
-#define KONAI3D_MAIN_WINDOW_H
+#pragma once
 
 #include "src/editor/imgui_window.h"
 
@@ -34,4 +33,3 @@ private:
 };
 
 _END_KONAI3D
-#endif //KONAI3D_MAIN_WINDOW_H

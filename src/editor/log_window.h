@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-17.
 //
 
-#ifndef KONAI3D_LOG_WINDOW_H
-#define KONAI3D_LOG_WINDOW_H
+#pragma once
 
 #include "src/editor/imgui_window.h"
 #include "src/engine/core/rwlock.hpp"
@@ -28,7 +27,7 @@ private:
     class SpdlogSink : public spdlog::sinks::base_sink<std::mutex> {
     public:
         SpdlogSink() {
-            _line_offset.push_back(0);
+            LineOffset.push_back(0);
         }
 
         /*
@@ -45,12 +44,12 @@ private:
             spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
             std::string log = fmt::to_string(formatted);
 
-            _ENGINE::LocalWriteLock rwlock(_rw_lock);
-            int old = _buffer.size();
-            _buffer.append(log.data());
-            for (int i = old; i < _buffer.size(); i++) {
-                if (_buffer[i] == '\n')
-                    _line_offset.push_back(i + 1);
+            _ENGINE::LocalWriteLock rwlock(RwLock);
+            int old = Buffer.size();
+            Buffer.append(log.data());
+            for (int i = old; i < Buffer.size(); i++) {
+                if (Buffer[i] == '\n')
+                    LineOffset.push_back(i + 1);
             }
 
         }
@@ -58,9 +57,9 @@ private:
         virtual void flush_() override {}
 
     public:
-        ImGuiTextBuffer _buffer;
-        ImVector<int> _line_offset;
-        _ENGINE::RWLock _rw_lock;
+        ImGuiTextBuffer Buffer;
+        ImVector<int> LineOffset;
+        _ENGINE::RWLock RwLock;
     };
 
 private:
@@ -70,5 +69,3 @@ private:
     bool _auto_scroll;
 };
 _END_KONAI3D
-
-#endif //KONAI3D_LOG_WINDOW_H

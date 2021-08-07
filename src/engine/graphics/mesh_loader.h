@@ -2,24 +2,23 @@
 // Created by korona on 2021-07-31.
 //
 
-#ifndef KONAI3D_ASYNC_MESH_LOADER_H
-#define KONAI3D_ASYNC_MESH_LOADER_H
+#pragma once
 
 #include "src/engine/core/async_loader.h"
-#include "src/vertex.h"
+#include "src/engine/graphics/vertex.h"
 
-_START_KONAI3D
+_START_ENGINE
 struct Mesh {
-    std::vector<Vertex> vertices;
+    std::string name;
+    std::vector<_ENGINE::Vertex> vertices;
     std::vector<UINT32> indices;
     UINT vertex_bytes_size;
     UINT index_bytes_size;
-    D3D_PRIMITIVE_TOPOLOGY type;
 };
 
-struct Model {
+struct MeshFile {
 public:
-    Model() {
+    MeshFile() {
         Clear();
     }
 
@@ -37,22 +36,20 @@ public:
 public:
     std::string name;
     std::vector<Mesh> mesh;
-    bool is_dynamic;
 };
 
-class AsyncMeshLoader : public _ENGINE::AsyncLoader<Model> {
+class MeshLoader : public _ENGINE::AsyncLoader<MeshFile> {
 public:
-    AsyncMeshLoader();
-    virtual ~AsyncMeshLoader() = default;
+    MeshLoader();
+    virtual ~MeshLoader() = default;
 
 public:
     virtual void Delegate(std::vector<std::filesystem::path> paths) override;
+    std::optional<MeshFile> LoadMesh(std::filesystem::path path);
 
 private:
-    void Process(Model& model, aiNode *node, const aiScene *scene);
-    void To(Model& model, aiMesh* mesh);
+    void Process(MeshFile& model, aiNode *node, const aiScene *scene);
+    void To(MeshFile& model, aiMesh* mesh);
 };
 
-_END_KONAI3D
-
-#endif //KONAI3D_ASYNC_MESH_LOADER_H
+_END_ENGINE

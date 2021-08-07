@@ -23,12 +23,10 @@ add_executable(
         src/global.cpp
         src/imgui_renderer.cpp
         src/camera.cpp
-        src/mesh_map.cpp
-        src/shader_pass_map.cpp
-        src/vertex.cpp
-        src/basic_shader_pass_attrbute.hpp
-        src/async_mesh_loader.cpp
-        src/async_texture_loader.cpp
+        src/engine/graphics/mesh_map.cpp
+        src/engine/graphics/vertex.cpp
+        src/engine/graphics/mesh_loader.cpp
+        src/engine/graphics/texture_loader.cpp
 
         src/editor/imgui_window.cpp
         src/editor/log_window.cpp
@@ -49,18 +47,17 @@ add_executable(
         src/engine/graphics/renderer.cpp
         src/engine/graphics/frame_buffer_pool.cpp
         src/engine/graphics/resource_descriptor_heap.cpp
-        src/engine/graphics/vertex_buffer.cpp
         src/engine/graphics/utils.hpp
         src/engine/graphics/constant_buffer.cpp
         src/engine/graphics/render_object.cpp
         src/engine/graphics/render_screen.cpp
-        src/engine/graphics/rendered.cpp
         src/engine/graphics/sampler.cpp
-        src/engine/graphics/shader.cpp
-        src/engine/graphics/shader_pass.cpp
         src/engine/graphics/upload_buffer.cpp
-        src/engine/graphics/texture.cpp
-)
+        src/engine/graphics/render_pass.cpp
+        src/engine/graphics/texture_map.cpp
+        src/engine/graphics/rw_resource_buffer.cpp
+        src/engine/graphics/material_map.cpp
+        shaders/sampler.hlsl)
 
 #set_target_properties(${PROJECT_NAME} PROPERTIES
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -109,14 +106,11 @@ target_link_libraries(
         PRIVATE
         debug
         ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTex/lib/Debug/DirectXTex.lib
+        debug
         ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTK12/lib/Debug/DirectXTK12.lib
-)
-
-target_link_libraries(
-        ${CMAKE_PROJECT_NAME}
-        PRIVATE
         optimized
         ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTex/lib/Release/DirectXTex.lib
+        optimized
         ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTK12/lib/Release/DirectXTK12.lib
 )
 

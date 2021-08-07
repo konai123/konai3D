@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-07.
 //
 
-#ifndef KONAI3D_PCH_H
-#define KONAI3D_PCH_H
+#pragma once
 
 #define _START_ENGINE      namespace engine{
 #define _END_ENGINE        }
@@ -102,6 +101,3 @@ typedef std::wstring tString;
 #define int2 DirectX::XMINT2
 #define int3 DirectX::XMINT3
 #define int4 DirectX::XMINT4
-
-
-#endif //KONAI3D_PCH_H

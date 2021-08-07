@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-20.
 //
 
-#ifndef KONAI3D_UPLOAD_BUFFER_H
-#define KONAI3D_UPLOAD_BUFFER_H
+#pragma once
 
 #include "src/engine/graphics/utils.hpp"
 
@@ -20,12 +19,11 @@ public:
     void Copy(int elementIndex, void *data);
 
 public:
-    unsigned char *_mapped_data;
-    size_t _byte_size;
-    size_t _element_byte_size;
+    unsigned char *MappedData;
+    size_t ByteSize;
+    size_t ElementByteSize;
 
 private:
     Microsoft::WRL::ComPtr<ID3D12Resource> _upload_buffer;
 };
 _END_ENGINE
-#endif //KONAI3D_UPLOAD_BUFFER_H

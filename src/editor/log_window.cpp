@@ -57,27 +57,27 @@ void LogWindow::OnUpdate(float delta) {
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
     ImGui::PushFont(_logFont);
-    _ENGINE::LocalReadLock lock(_log_sink->_rw_lock);
-    const char *buf = _log_sink->_buffer.begin();
-    const char *buf_end = _log_sink->_buffer.end();
+    _ENGINE::LocalReadLock lock(_log_sink->RwLock);
+    const char *buf = _log_sink->Buffer.begin();
+    const char *buf_end = _log_sink->Buffer.end();
     if (_filter.IsActive()) {
-        for (int line_no = 0; line_no < _log_sink->_line_offset.Size; line_no++) {
-            const char *line_start = buf + _log_sink->_line_offset[line_no];
-            const char *line_end = (line_no + 1 < _log_sink->_line_offset.Size) ?
-                                   (buf + _log_sink->_line_offset[line_no + 1] - 1) : buf_end;
+        for (int line_no = 0; line_no < _log_sink->LineOffset.Size; line_no++) {
+            const char *line_start = buf + _log_sink->LineOffset[line_no];
+            const char *line_end = (line_no + 1 < _log_sink->LineOffset.Size) ?
+                                   (buf + _log_sink->LineOffset[line_no + 1] - 1) : buf_end;
             if (_filter.PassFilter(line_start, line_end))
                 ImGui::TextUnformatted(line_start, line_end);
         }
     } else {
         ImGuiListClipper clipper;
-        clipper.Begin(_log_sink->_line_offset.Size);
+        clipper.Begin(_log_sink->LineOffset.Size);
         while (clipper.Step()) {
             for (int line_no = clipper.DisplayStart; line_no < clipper.DisplayEnd; line_no++) {
-                const char *line_start = buf + _log_sink->_line_offset[line_no];
-                const char *line_end = (line_no + 1 < _log_sink->_line_offset.Size) ? (buf +
-                                                                                       _log_sink->_line_offset[line_no +
-                                                                                                               1] - 1)
-                                                                                    : buf_end;
+                const char *line_start = buf + _log_sink->LineOffset[line_no];
+                const char *line_end = (line_no + 1 < _log_sink->LineOffset.Size) ? (buf +
+                                                                                     _log_sink->LineOffset[line_no +
+                                                                                                           1] - 1)
+                                                                                  : buf_end;
                 ImGui::TextUnformatted(line_start, line_end);
             }
         }
@@ -95,10 +95,10 @@ void LogWindow::OnUpdate(float delta) {
 }
 
 void LogWindow::Clear() {
-    _ENGINE::LocalWriteLock lock(_log_sink->_rw_lock);
-    _log_sink->_buffer.clear();
-    _log_sink->_line_offset.clear();
-    _log_sink->_line_offset.push_back(0);
+    _ENGINE::LocalWriteLock lock(_log_sink->RwLock);
+    _log_sink->Buffer.clear();
+    _log_sink->LineOffset.clear();
+    _log_sink->LineOffset.push_back(0);
 }
 
 void LogWindow::OnDestroy() {

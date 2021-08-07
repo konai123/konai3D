@@ -2,9 +2,7 @@
 // Created by korona on 2021-07-31.
 //
 
-#ifndef KONAI3D_ASYNC_LOADER_H
-#define KONAI3D_ASYNC_LOADER_H
-
+#pragma once
 
 _START_ENGINE
 template <typename TData>
@@ -22,7 +20,7 @@ public:
 
 public:
     std::vector<TData> Get();
-    void Load(std::vector<std::filesystem::path> paths);
+    void AsyncLoad(std::vector<std::filesystem::path> paths);
 
 protected:
     void Push(TData&&);
@@ -37,5 +35,3 @@ private:
 _END_ENGINE
 
 #include "src/engine/core/async_loader.tcc"
-
-#endif //KONAI3D_ASYNC_LOADER_H

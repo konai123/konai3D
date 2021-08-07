@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-16.
 //
 
-#ifndef KONAI3D_IMGUI_RENDERER_H
-#define KONAI3D_IMGUI_RENDERER_H
+#pragma once
 
 #include "src/engine/graphics/device_com.h"
 #include "src/engine/graphics/resource_descriptor_heap.h"
@@ -23,7 +22,7 @@ public:
             _ENGINE::DeviceCom *device,
             const DXGI_FORMAT backbufferFormat,
             ID3D12DescriptorHeap *srvDescriptorHeap,
-            _ENGINE::HeapDescriptor *shaderResourceView,
+            _ENGINE::HeapDescriptorHandle *shaderResourceView,
             const UINT appWidth,
             const UINT appHeight,
             const UINT numFrameFlight = 3u
@@ -45,5 +44,3 @@ private:
     float _scale_factor = 1.0f;
 };
 _END_KONAI3D
-
-#endif //KONAI3D_IMGUI_RENDERER_H

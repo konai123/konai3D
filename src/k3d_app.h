@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-11.
 //
 
-#ifndef KONAI3D_K3D_APP_H
-#define KONAI3D_K3D_APP_H
+#pragma once
 
 #include "src/engine/core/app.h"
 #include "src/engine/graphics/renderer.h"
@@ -13,7 +12,7 @@
 #include "src/editor/viewport_window.h"
 #include "src/editor/component_window.h"
 #include "src/imgui_renderer.h"
-#include "src/mesh_map.h"
+#include "src/engine/graphics/mesh_map.h"
 
 _START_KONAI3D
 class K3DApp : public _ENGINE::App {
@@ -31,6 +30,10 @@ public:
     virtual void OnResizeEnd() override;
     virtual void OnDPIUpdate(float dpiFactor) override;
 
+public:
+    static inline const std::string DefaultMaterialName = "default";
+    static inline const std::string DefaultMeshName = "cube";
+
 private:
     _ENGINE::RenderingOptions _rendering_options;
 
@@ -40,12 +43,9 @@ private:
     std::shared_ptr<ViewportWindow> _viewport_window;
     std::shared_ptr<ComponentWindow> _component_window;
     std::shared_ptr<IMGUIRenderer> _imgui_renderer;
-    std::shared_ptr<MeshMap> _mesh_map;
-    std::shared_ptr<ShaderPassMap> _shader_pass_map;
 
     std::string _ui_font_path;
     UINT _viewport_width;
     UINT _viewport_height;
 };
 _END_KONAI3D
-#endif //KONAI3D_K3D_APP_H

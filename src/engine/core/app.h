@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-09.
 //
 
-#ifndef KONAI3D_D3DAPP_H
-#define KONAI3D_D3DAPP_H
+#pragma once
 
 #include "src/engine/core/timer.h"
 #include "src/engine/core/input.h"
@@ -54,5 +53,3 @@ private:
     float _dpi_scale_factor;
 };
 _END_ENGINE
-
-#endif //KONAI3D_D3DAPP_H

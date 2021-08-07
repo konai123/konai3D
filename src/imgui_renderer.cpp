@@ -17,7 +17,7 @@ bool IMGUIRenderer::Initiate(const HWND hwnd,
                              _ENGINE::DeviceCom *device,
                              const DXGI_FORMAT backbufferFormat,
                              ID3D12DescriptorHeap *srvDescriptorHeap,
-                             _ENGINE::HeapDescriptor *shaderResourceView,
+                             _ENGINE::HeapDescriptorHandle *shaderResourceView,
                              const UINT appWidth,
                              const UINT appHeight,
                              const UINT numFrameFlight
@@ -54,8 +54,8 @@ bool IMGUIRenderer::Initiate(const HWND hwnd,
     }
     if (!ImGui_ImplDX12_Init(device->GetDevice(), static_cast<int>(numFrameFlight),
                              backbufferFormat, srvDescriptorHeap,
-                             shaderResourceView->_cpu_handle,
-                             shaderResourceView->_gpu_handle)) {
+                             shaderResourceView->CpuHandle,
+                             shaderResourceView->GpuHandle)) {
         CORE_LOG_ERROR("Failed to initialize ImplDX12.");
         return false;
     }

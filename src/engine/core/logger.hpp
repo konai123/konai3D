@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-08.
 //
 
-#ifndef KONAI3D_LOGGER_HPP
-#define KONAI3D_LOGGER_HPP
+#pragma once
 
 _START_ENGINE
 class Logger {
@@ -35,5 +34,3 @@ private:
     Logger() = delete;
 };
 _END_ENGINE
-
-#endif //KONAI3D_LOGGER_HPP

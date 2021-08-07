@@ -2,8 +2,7 @@
 // Created by khhan on 2021-06-17.
 //
 
-#ifndef KONAI3D_GLOBAL_H
-#define KONAI3D_GLOBAL_H
+#pragma once
 
 /*externals*/
 _START_KONAI3D
@@ -16,4 +15,3 @@ extern std::filesystem::path ShaderPath;
 tString GetErrorMessageFromHR(HRESULT hr);
 }//end namespace global
 _END_KONAI3D
-#endif //KONAI3D_GLOBAL_H

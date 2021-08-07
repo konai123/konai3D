@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-05.
 //
 
-#ifndef KONAI3D_MACROS_H
-#define KONAI3D_MACROS_H
+#pragma once
 
 #include "src/engine/core/logger.hpp"
 #include "src/engine/core/com_exception.hpp"
@@ -35,5 +34,3 @@
       ClassName & operator = (const ClassName & ) { return *this ; }         \
       ClassName(ClassName && ) noexcept {}                                   \
       ClassName & operator = (ClassName && ) noexcept { return *this ; }
-
-#endif //KONAI3D_MACROS_H

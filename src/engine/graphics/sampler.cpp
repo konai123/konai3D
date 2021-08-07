@@ -17,15 +17,15 @@ Sampler::~Sampler() {
 }
 
 bool Sampler::SetSamplerDesc(D3D12_SAMPLER_DESC desc) {
-    _heap_desc = _resource_heap->GetSamplerHeapDescriptor();
-    if (!_device->CreateSamplerResource(&desc, _heap_desc._cpu_handle)) {
+    _heap_desc = _resource_heap->AllocSamplerHeapDescriptor();
+    if (!_device->CreateSamplerResource(&desc, _heap_desc.CpuHandle)) {
         GRAPHICS_LOG_ERROR("Failed to create sampler.");
         return false;
     }
     return true;
 }
 
-HeapDescriptor *Sampler::GetHeapDescriptor() {
+HeapDescriptorHandle *Sampler::GetHeapDescriptor() {
     return &_heap_desc;
 }
 

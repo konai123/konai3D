@@ -25,7 +25,7 @@ std::vector<TData> AsyncLoader<TData>::Get() {
     std::vector<TData> v;
     std::lock_guard lock(_lock);
     while (!_loaded.empty()) {
-        v.push_back(_loaded.front());
+        v.push_back(std::move(_loaded.front()));
         _loaded.pop();
     }
     return v;
@@ -38,7 +38,7 @@ void AsyncLoader<TData>::Push(TData &&data) {
 }
 
 template<typename TData>
-void AsyncLoader<TData>::Load(std::vector<std::filesystem::path> paths) {
+void AsyncLoader<TData>::AsyncLoad(std::vector<std::filesystem::path> paths) {
     auto future = std::thread([this](std::vector<std::filesystem::path> paths) {
         Delegate(paths);
     }, paths);

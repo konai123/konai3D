@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-20.
 //
 
-#ifndef KONAI3D_UTILS_HPP
-#define KONAI3D_UTILS_HPP
+#pragma once
 
 #include "src/engine/graphics/device_com.h"
 #include "src/engine/core/macros.h"
@@ -71,4 +70,3 @@ unsigned int GetConstantBufferBytes(int elementCount, int elementSize) {
 
 } //end namespace
 _END_ENGINE
-#endif //KONAI3D_UTILS_HPP

@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-28.
 //
 
-#ifndef KONAI3D_SAMPLER_H
-#define KONAI3D_SAMPLER_H
+#pragma once
 
 #include <utility>
 
@@ -23,14 +22,12 @@ public:
 
 public:
     bool SetSamplerDesc(D3D12_SAMPLER_DESC desc);
-    HeapDescriptor *GetHeapDescriptor();
+    HeapDescriptorHandle *GetHeapDescriptor();
 
 private:
     std::shared_ptr<DeviceCom> _device;
     std::shared_ptr<ResourceDescriptorHeap> _resource_heap;
-    HeapDescriptor _heap_desc;
+    HeapDescriptorHandle _heap_desc;
 };
 
 _END_ENGINE
-
-#endif //KONAI3D_SAMPLER_H

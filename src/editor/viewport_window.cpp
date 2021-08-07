@@ -7,23 +7,21 @@
 #include <utility>
 #include "src/macros.h"
 #include "src/math.h"
-#include "src/basic_shader_pass_attrbute.hpp"
 
 _START_KONAI3D
-ViewportWindow::ViewportWindow(std::weak_ptr<_ENGINE::Renderer> renderer)
+ViewportWindow::ViewportWindow(_ENGINE::Renderer *renderer)
 :
-IMGUIWindow("Viewport"),
-_width(1920),
-_height(1080),
-_fps(0),
-_frame_cnt(0),
-_elapsed_time(0.0f),
-_show_fps_counter(false),
-_zoom_speed(1.0f),
-_camera_x_angle(0.0f),
-_camera_y_angle(0.0f),
-_renderer(renderer),
-_screen(nullptr) {
+        IMGUIWindow("Viewport"),
+        _width(1920),
+        _height(1080),
+        _fps(0),
+        _frame_cnt(0),
+        _elapsed_time(0.0f),
+        _show_fps_counter(false),
+        ZoomSpeed(1.0f),
+        _camera_x_angle(0.0f),
+        _camera_y_angle(0.0f),
+        _screen(nullptr) {
     _camera = std::make_shared<Camera>(
         0.25f,
         static_cast<float>(_width) / static_cast<float>(_height),
@@ -34,24 +32,14 @@ _screen(nullptr) {
     _camera->SetPosition(DirectX::XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f));
     _camera->LookAt(DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
 
-    _drag_speed = 1.0f / static_cast<float>(_width);
-    auto renderer_ptr = _renderer.lock();
-    if (renderer_ptr == nullptr) {
-        AppAssert(false);
-    }
-    auto per_frame_cb = renderer_ptr->InstanceConstanceBuffer();
-    AppAssert(per_frame_cb != nullptr);
+    DragSpeed = 1.0f / static_cast<float>(_width);
 
-    BasicShaderPassAttribute::PerFrame per_frame;
-    DirectX::XMStoreFloat4x4(&per_frame.view_mat, _camera->GetViewMatrix());
-    DirectX::XMStoreFloat4x4(&per_frame.inverse_view_mat, _camera->GetInverseViewMatrix());
-    DirectX::XMStoreFloat4x4(&per_frame.projection_mat, _camera->GetProjectionMatrix());
-    if (!per_frame_cb->SetData(&per_frame, sizeof(BasicShaderPassAttribute::PerFrame))) {
-        AppAssert(false);
-    }
-    _screen = renderer_ptr->InstanceRenderScreen(_width, _height);
+    _screen = renderer->InstanceRenderScreen(_width, _height);
     AppAssert(_screen != nullptr);
-    _screen->AddConstantBuffer(BasicShaderPassAttribute::_per_frame, std::move(per_frame_cb));
+
+    DirectX::XMStoreFloat4x4(&_screen->ViewMatrix, _camera->GetViewMatrix());
+    DirectX::XMStoreFloat4x4(&_screen->ProjectionMatrix, _camera->GetProjectionMatrix());
+    DirectX::XMStoreFloat4x4(&_screen->InverseViewMatrix, _camera->GetInverseViewMatrix());
 }
 
 void ViewportWindow::OnUpdate(float delta) {
@@ -96,9 +84,9 @@ void ViewportWindow::OnUpdate(float delta) {
         draw_list->AddText(text_pos, IM_COL32_WHITE, fps.c_str());
     }
 
-    UpdatePerFrameBuffer();
+    UpdateScreen();
 
-    ImGui::Image(reinterpret_cast<void *>(_screen->GetShaderResourceHeapDesc()->_gpu_handle.ptr), size);
+    ImGui::Image(reinterpret_cast<void *>(_screen->GetShaderResourceHeapDesc()->GpuHandle.ptr), size);
     ImGui::End();
 }
 
@@ -123,7 +111,7 @@ void ViewportWindow::ControlViewport() {
     EngineAssert(_camera != nullptr);
     if (m_wheel_delta != 0) {
         float distance = _camera->GetCameraDistance();
-        distance -= m_wheel_delta * _zoom_speed;
+        distance -= m_wheel_delta * ZoomSpeed;
         if (distance <= 1.0f) {
             distance = 1.0f;
         }
@@ -142,12 +130,12 @@ void ViewportWindow::ControlViewport() {
         if (io.KeyShift) {
             //Move
             _camera->MoveOnViewSpace(DirectX::XMVectorSet(
-                    -mouse_delta.x * _drag_speed, mouse_delta.y * _drag_speed, 0.0f, 0.0f)
+                    -mouse_delta.x * DragSpeed, mouse_delta.y * DragSpeed, 0.0f, 0.0f)
             );
         } else {
             //rotation
-            _camera_x_angle -= (mouse_delta.x * _drag_speed) * F_PI;
-            _camera_y_angle += (mouse_delta.y * _drag_speed) * F_PI;
+            _camera_x_angle -= (mouse_delta.x * DragSpeed) * F_PI;
+            _camera_y_angle += (mouse_delta.y * DragSpeed) * F_PI;
             if (_camera_x_angle >= 360.0f * F_PI) _camera_x_angle = 0.0f;
             if (_camera_x_angle <= -360.0f * F_PI) _camera_x_angle = 0.0f;
             if (_camera_y_angle >= 360.0f * F_PI) _camera_y_angle = 0.0f;
@@ -175,16 +163,10 @@ void ViewportWindow::ControlViewport() {
     }
 }
 
-void ViewportWindow::UpdatePerFrameBuffer() {
-    BasicShaderPassAttribute::PerFrame per_frame;
-    DirectX::XMStoreFloat4x4(&per_frame.view_mat, _camera->GetViewMatrix());
-    DirectX::XMStoreFloat4x4(&per_frame.inverse_view_mat, _camera->GetInverseViewMatrix());
-    DirectX::XMStoreFloat4x4(&per_frame.projection_mat, _camera->GetProjectionMatrix());
-
-    auto renderer_ptr = _renderer.lock();
-    if (renderer_ptr == nullptr) return;
-    _screen->UpdateConstantBuffer(BasicShaderPassAttribute::_per_frame, &per_frame,
-                                  renderer_ptr->GetCurrentFrameIndex());
+void ViewportWindow::UpdateScreen() {
+    DirectX::XMStoreFloat4x4(&_screen->ViewMatrix, _camera->GetViewMatrix());
+    DirectX::XMStoreFloat4x4(&_screen->ProjectionMatrix, _camera->GetProjectionMatrix());
+    DirectX::XMStoreFloat4x4(&_screen->InverseViewMatrix, _camera->GetInverseViewMatrix());
 }
 
 std::shared_ptr<_ENGINE::RenderScreen> ViewportWindow::GetRenderScreen() const {

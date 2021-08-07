@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-14.
 //
 
-#ifndef GRAPHICS_KONAI3D_MACROS_H
-#define GRAPHICS_KONAI3D_MACROS_H
+#pragma once
 
 #include "src/engine/core/logger.hpp"
 
@@ -30,5 +29,3 @@
 #define GRAPHICS_LOG_INFO(...)       _ENGINE::Logger::Instance(GRAPHICS_LOG_FILE_PATH)->info(__VA_ARGS__)
 #define GRAPHICS_LOG_WARNING(...)    _ENGINE::Logger::Instance(GRAPHICS_LOG_FILE_PATH)->warn(__VA_ARGS__)
 #define GRAPHICS_LOG_ERROR(...)      _ENGINE::Logger::Instance(GRAPHICS_LOG_FILE_PATH)->error(__VA_ARGS__)
-
-#endif //GRAPHICS_KONAI3D_MACROS_H

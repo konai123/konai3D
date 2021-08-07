@@ -2,8 +2,8 @@
 // Created by korona on 2021-06-13.
 //
 
-#ifndef KONAI3D_POOL_HPP
-#define KONAI3D_POOL_HPP
+
+#pragma once
 
 #include "src/engine/core/macros.h"
 
@@ -39,7 +39,7 @@ public:
     Pool(Pool &&) noexcept = default;
     Pool &operator=(const Pool &) = delete;
     Pool &operator=(Pool &&) noexcept = default;
-    auto &operator[](int idx) const {
+    auto &operator[](int idx) {
         return _elements[idx]._object;
     }
 
@@ -47,7 +47,7 @@ public:
     virtual int allocate() {
         std::lock_guard<std::mutex> lock(_lock);
         if (_curr > _capacity - 1) {
-            if (_auto_increment == false)
+            if (!_auto_increment)
                 return -1;
 
             PoolElement<T> e;
@@ -90,5 +90,3 @@ private:
     std::vector<PoolElement<T>> _elements;
 };
 _END_ENGINE
-
-#endif //KONAI3D_POOL_HPP

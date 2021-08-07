@@ -3,6 +3,7 @@
 //
 
 #include "src/engine/graphics/render_screen.h"
+#include "src/engine/graphics/renderer.h"
 
 _START_ENGINE
 RenderScreen::RenderScreen(
@@ -10,16 +11,13 @@ RenderScreen::RenderScreen(
         std::shared_ptr<ResourceDescriptorHeap> resource_heap_pool,
         UINT width,
         UINT height,
-        DXGI_FORMAT backbuffer_format,
-        DXGI_FORMAT depth_stencil_format,
         DirectX::XMVECTORF32 _clear_color
 )
 :
 _device(std::move(device)),
 _resource_heap(std::move(resource_heap_pool)),
-_backbuffer_format(backbuffer_format),
-_depth_stencil_format(depth_stencil_format),
-_clear_color(_clear_color) {
+_clear_color(_clear_color)
+{
     CreateRenderTargets(false, width, height);
 };
 
@@ -29,41 +27,25 @@ RenderScreen::~RenderScreen() {
     _resource_heap->DiscardRenderTargetHeapDescriptor(_depth_stencil_view._heap_index);
 }
 
-bool RenderScreen::AddRenderObject(std::shared_ptr<RenderObject> renderObject) {
-    _render_objects.push_back(std::move(renderObject));
+bool RenderScreen::AddRenderObject(RenderObject* renderObject) {
+    if (_render_objects.contains(renderObject->ObjectID)) {
+        GRAPHICS_LOG_WARNING("RenderObject ID:{} already exist", renderObject->ObjectID);
+        return false;
+    }
+    _render_objects[renderObject->ObjectID] = renderObject;
     return true;
 };
 
-//Delete at front.
-bool RenderScreen::DeleteRenderObject(std::string name) {
-    for (auto i = _render_objects.begin(); i != _render_objects.end(); i++) {
-        auto &r = *i;
-        if (r->GetName() == name) {
-            _deleted_queue.push(r);
-            _render_objects.erase(i);
-            return true;
-        }
+bool RenderScreen::UnRegisterRenderObject(UINT objID) {
+    if (_render_objects.contains(objID)) {
+        _render_objects.erase(objID);
     }
     return false;
 }
 
-UINT RenderScreen::DeletedQueueSize() {
-    return static_cast<UINT>(_deleted_queue.size());
-}
-
-void RenderScreen::CollectGarbage() {
-    if (_deleted_queue.size() <= 0) return;
-    while (!_deleted_queue.empty()) {
-        _deleted_queue.pop();
-    }
-}
-
-std::shared_ptr<RenderObject> RenderScreen::GetRenderObject(std::string name) {
-    for (auto i = _render_objects.begin(); i != _render_objects.end(); i++) {
-        auto &r = *i;
-        if (r->GetName() == name) {
-            return *i;
-        }
+RenderObject* RenderScreen::GetRenderObject(UINT objID) {
+    if (_render_objects.contains(objID)) {
+        return _render_objects[objID];
     }
     return nullptr;
 }
@@ -71,7 +53,7 @@ std::shared_ptr<RenderObject> RenderScreen::GetRenderObject(std::string name) {
 std::vector<RenderObject *> RenderScreen::GetRenderObjects() {
     std::vector<RenderObject *> ret;
     for (auto &r : _render_objects) {
-        ret.push_back(r.get());
+        ret.push_back(r.second);
     }
     return ret;
 }
@@ -96,20 +78,16 @@ ID3D12Resource *RenderScreen::GetDepthStencilResource() {
     return _dsv_buffer.Get();
 }
 
-HeapDescriptor *RenderScreen::GetRenderTargetHeapDesc() {
+HeapDescriptorHandle *RenderScreen::GetRenderTargetHeapDesc() {
     return &_render_target_view;
 };
 
-HeapDescriptor *RenderScreen::GetShaderResourceHeapDesc() {
+HeapDescriptorHandle *RenderScreen::GetShaderResourceHeapDesc() {
     return &_shader_view;
 };
 
-HeapDescriptor *RenderScreen::GetDepthStencilHeapDesc() {
+HeapDescriptorHandle *RenderScreen::GetDepthStencilHeapDesc() {
     return &_depth_stencil_view;
-}
-
-DirectX::XMFLOAT3 RenderScreen::GetCameraPosition() {
-    return {0.0f, 0.0f, 0.0f};
 }
 
 bool RenderScreen::Resize(UINT width, UINT height) {
@@ -142,14 +120,14 @@ bool RenderScreen::CreateRenderTargetResourceAndView(bool isRecreation, UINT wid
     render_target_desc.Height = height;
     render_target_desc.DepthOrArraySize = 1;
     render_target_desc.MipLevels = 1;
-    render_target_desc.Format = _backbuffer_format;
+    render_target_desc.Format = Renderer::BackbufferFormat;
     render_target_desc.SampleDesc.Count = 1;
     render_target_desc.SampleDesc.Quality = 0;
     render_target_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
     render_target_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
     CD3DX12_CLEAR_VALUE clear_value;
-    clear_value.Format = _backbuffer_format;
+    clear_value.Format = Renderer::BackbufferFormat;
     clear_value.Color[0] = _clear_color.f[0];
     clear_value.Color[1] = _clear_color.f[1];
     clear_value.Color[2] = _clear_color.f[2];
@@ -166,8 +144,8 @@ bool RenderScreen::CreateRenderTargetResourceAndView(bool isRecreation, UINT wid
     );
 
     if (!isRecreation) {
-        _shader_view = _resource_heap->GetShaderResourceHeapDescriptor();
-        _render_target_view = _resource_heap->GetRenderTargetHeapDescriptor();
+        _shader_view = _resource_heap->AllocShaderResourceHeapDescriptor();
+        _render_target_view = _resource_heap->AllocRenderTargetHeapDescriptor();
     }
 
     if (!_render_target_view.IsVaild()) {
@@ -181,11 +159,11 @@ bool RenderScreen::CreateRenderTargetResourceAndView(bool isRecreation, UINT wid
     }
 
     _device->CreatDescriptorHeapView<D3D12_RENDER_TARGET_VIEW_DESC>(
-            _render_target.Get(), nullptr, _render_target_view._cpu_handle, nullptr
+            _render_target.Get(), nullptr, _render_target_view.CpuHandle, nullptr
     );
 
     _device->CreatDescriptorHeapView<D3D12_SHADER_RESOURCE_VIEW_DESC>(
-            _render_target.Get(), nullptr, _shader_view._cpu_handle, nullptr
+            _render_target.Get(), nullptr, _shader_view.CpuHandle, nullptr
     );
     return true;
 }
@@ -198,14 +176,14 @@ bool RenderScreen::CreateDepthStencilBufferAndView(bool isRecreation, UINT width
     depth_stencil_desc.Height = height;
     depth_stencil_desc.DepthOrArraySize = 1;
     depth_stencil_desc.MipLevels = 1;
-    depth_stencil_desc.Format = _depth_stencil_format;
+    depth_stencil_desc.Format = Renderer::DepthStencilFormat;
     depth_stencil_desc.SampleDesc.Count = 1;
     depth_stencil_desc.SampleDesc.Quality = 0;
     depth_stencil_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
     depth_stencil_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
     CD3DX12_CLEAR_VALUE clear_value;
-    clear_value.Format = _depth_stencil_format;
+    clear_value.Format = Renderer::DepthStencilFormat;
     clear_value.DepthStencil.Depth = 1.0f;
     clear_value.DepthStencil.Stencil = 0;
 
@@ -220,13 +198,13 @@ bool RenderScreen::CreateDepthStencilBufferAndView(bool isRecreation, UINT width
     );
 
     if (!isRecreation)
-        _depth_stencil_view = _resource_heap->GetDepthStencilHeapDescriptor();
+        _depth_stencil_view = _resource_heap->AllocDepthStencilHeapDescriptor();
     if (!_depth_stencil_view.IsVaild()) {
         GRAPHICS_LOG_ERROR("Failed to create depth stencil view.");
         return false;
     }
     _device->CreatDescriptorHeapView<D3D12_DEPTH_STENCIL_VIEW_DESC>(
-            _dsv_buffer.Get(), nullptr, _depth_stencil_view._cpu_handle, nullptr
+            _dsv_buffer.Get(), nullptr, _depth_stencil_view.CpuHandle, nullptr
     );
     return true;
 }

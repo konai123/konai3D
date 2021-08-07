@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-09.
 //
 
-#ifndef KONAI3D_APP_CONTAINER_H
-#define KONAI3D_APP_CONTAINER_H
+#pragma once
 
 #include "src/engine/core/timer.h"
 
@@ -30,17 +29,15 @@ public:
     inline static tString ExecutablePath;
 
 public:
-    WND_PROC_WITH_CONTAINER _wnd_proc;
-    Timer _timer;
-    HWND _hwnd;
+    WND_PROC_WITH_CONTAINER WndProc;
+    Timer Timer;
+    HWND Hwnd;
 
-    bool _app_minimized;
-    bool _app_maximized;
-    bool _app_resizing;
+    bool AppMinimized;
+    bool AppMaximized;
+    bool AppResizing;
 
 private:
     std::unique_ptr<App> _app;
 };
 _END_ENGINE
-
-#endif //KONAI3D_APP_CONTAINER_H

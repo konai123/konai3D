@@ -2,8 +2,7 @@
 // Created by khhan on 2021-06-18.
 //
 
-#ifndef KONAI3D_IMGUI_WINDOW_H
-#define KONAI3D_IMGUI_WINDOW_H
+#pragma once
 
 #include "src/engine/graphics/renderer.h"
 
@@ -29,5 +28,3 @@ protected:
     bool _open = false;
 };
 _END_KONAI3D
-
-#endif //KONAI3D_IMGUI_WINDOW_H

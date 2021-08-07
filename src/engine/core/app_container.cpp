@@ -9,12 +9,12 @@
 _START_ENGINE
 AppContainer::AppContainer()
 :
-_hwnd(nullptr),
-_app_minimized(false),
-_app_maximized(false),
-_app_resizing(false),
-_app(nullptr) {
-    _wnd_proc = DefaultWndProc;
+        Hwnd(nullptr),
+        AppMinimized(false),
+        AppMaximized(false),
+        AppResizing(false),
+        _app(nullptr) {
+    WndProc = DefaultWndProc;
 }
 
 bool AppContainer::Initiate(int width, int height, std::unique_ptr<App> app, tString exePath,
@@ -27,7 +27,7 @@ bool AppContainer::Initiate(int width, int height, std::unique_ptr<App> app, tSt
 
     _app = std::move(app);
     tString window_name = _app->GetAppName();
-    if (wndProc != nullptr) _wnd_proc = wndProc;
+    if (wndProc != nullptr) WndProc = wndProc;
 
     /*
      * WndProc Decorated With Lambda expression To pass instance.
@@ -38,7 +38,7 @@ bool AppContainer::Initiate(int width, int height, std::unique_ptr<App> app, tSt
         AppContainer *context = reinterpret_cast<AppContainer *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
         if (context == nullptr)
             return ::DefWindowProc(hWnd, msg, wParam, lParam);
-        return context->_wnd_proc(context, hWnd, msg, wParam, lParam);
+        return context->WndProc(context, hWnd, msg, wParam, lParam);
     };
 
     WNDCLASSEXW wc = {
@@ -48,12 +48,12 @@ bool AppContainer::Initiate(int width, int height, std::unique_ptr<App> app, tSt
     };
 
     ::RegisterClassExW(&wc);
-    _hwnd = ::CreateWindowW(wc.lpszClassName, window_name.c_str(), WS_OVERLAPPEDWINDOW,
-                            100, 100, width, height, nullptr, nullptr, wc.hInstance, nullptr);
+    Hwnd = ::CreateWindowW(wc.lpszClassName, window_name.c_str(), WS_OVERLAPPEDWINDOW,
+                           100, 100, width, height, nullptr, nullptr, wc.hInstance, nullptr);
 
-    ::SetWindowLongPtr(_hwnd, GWLP_USERDATA, (LONG_PTR) this);
+    ::SetWindowLongPtr(Hwnd, GWLP_USERDATA, (LONG_PTR) this);
 
-    if (_hwnd == nullptr) {
+    if (Hwnd == nullptr) {
         CORE_LOG_INFO("Failed to create window.");
         return false;
     }
@@ -61,10 +61,10 @@ bool AppContainer::Initiate(int width, int height, std::unique_ptr<App> app, tSt
     /*
      * Getting Monitors dpi factor.
      * */
-    UINT dpi = GetDpiForWindow(_hwnd);
+    UINT dpi = GetDpiForWindow(Hwnd);
     float dpiFactor = dpi / static_cast<float>(USER_DEFAULT_SCREEN_DPI);
 
-    if (!_app->Prepare(_hwnd, width, height, dpiFactor)) {
+    if (!_app->Prepare(Hwnd, width, height, dpiFactor)) {
         CORE_LOG_ERROR("Failed to prepare application.");
         return false;
     }
@@ -78,10 +78,10 @@ void AppContainer::Quit() {
 int AppContainer::Run() {
     EngineAssert(_app.get());
     MSG msg = {0};
-    _timer.Reset();
+    Timer.Reset();
     _app->OnStart();
-    ::ShowWindow(_hwnd, SW_SHOW);
-    ::UpdateWindow(_hwnd);
+    ::ShowWindow(Hwnd, SW_SHOW);
+    ::UpdateWindow(Hwnd);
 
     while (msg.message != WM_QUIT) {
         if (_app->HasAppQuited()) Quit();
@@ -90,16 +90,16 @@ int AppContainer::Run() {
             ::DispatchMessage(&msg);
             _app->GetInput()->HandleMessage(&msg);
         } else {
-            _timer.Tick();
+            Timer.Tick();
 
-            float delta = _timer.DeltaTime();
+            float delta = Timer.DeltaTime();
             _app->OnUpdate(delta);
             _app->OnLateUpdate(delta);
         }
     }
 
     _app->OnDestroy();
-    ::DestroyWindow(_hwnd);
+    ::DestroyWindow(Hwnd);
     return static_cast<int>(msg.wParam);
 }
 
@@ -115,16 +115,16 @@ WINAPI AppContainer::DefaultWndProc(AppContainer *appContainer, HWND hWnd, UINT 
             int height = HIWORD(lParam);
             appContainer->GetApp()->OnResizeStart(width, height);
             if (wParam == SIZE_MINIMIZED) {
-                appContainer->_app_minimized = true;
-                appContainer->_app_maximized = false;
+                appContainer->AppMinimized = true;
+                appContainer->AppMaximized = false;
             } else if (wParam == SIZE_MAXIMIZED) {
-                appContainer->_app_minimized = false;
-                appContainer->_app_maximized = true;
+                appContainer->AppMinimized = false;
+                appContainer->AppMaximized = true;
                 appContainer->GetApp()->OnResizeEnd();
             } else if (wParam == SIZE_RESTORED) {
-                if (appContainer->_app_minimized) appContainer->_app_minimized = false;
-                if (appContainer->_app_maximized) appContainer->_app_maximized = false;
-                if (appContainer->_app_resizing) {
+                if (appContainer->AppMinimized) appContainer->AppMinimized = false;
+                if (appContainer->AppMaximized) appContainer->AppMaximized = false;
+                if (appContainer->AppResizing) {
                     return 0;
                 }
                 appContainer->GetApp()->OnResizeEnd();
@@ -132,15 +132,15 @@ WINAPI AppContainer::DefaultWndProc(AppContainer *appContainer, HWND hWnd, UINT 
             return 0;
         }
         case WM_ENTERSIZEMOVE:
-            appContainer->_app_resizing = true;
-            appContainer->_timer.Stop();
+            appContainer->AppResizing = true;
+            appContainer->Timer.Stop();
             return 0;
         case WM_EXITSIZEMOVE: {
             int width = LOWORD(lParam);
             int height = HIWORD(lParam);
-            appContainer->_app_resizing = false;
+            appContainer->AppResizing = false;
             appContainer->GetApp()->OnResizeEnd();
-            appContainer->_timer.Start();
+            appContainer->Timer.Start();
             return 0;
         }
         case WM_DESTROY:

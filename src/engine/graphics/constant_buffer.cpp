@@ -6,9 +6,9 @@
 
 _START_ENGINE
 ConstantBuffer::ConstantBuffer(std::shared_ptr <DeviceCom> device, UINT numPreFrames)
-        :
-        _device(device),
-        _num_pre_frames(numPreFrames) {}
+:
+_device(device),
+_num_pre_frames(numPreFrames) {}
 
 ID3D12Resource *ConstantBuffer::GetResource(UINT currentFrameIdx) {
     return _cb_buffers[currentFrameIdx]->Resource();

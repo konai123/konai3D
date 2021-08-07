@@ -2,13 +2,11 @@
 // Created by khhan on 2021-06-21.
 //
 
-#ifndef KONAI3D_UI_RENDERER_H
-#define KONAI3D_UI_RENDERER_H
+#pragma once
 
 #include "src/engine/core/macros.h"
 
 _START_ENGINE
-struct RenderOutput;
 class UIRenderer
 {
 DECLARE_CLASS_AS_INTERFACE(UIRenderer);
@@ -19,7 +17,7 @@ public:
             DeviceCom *device,
             const DXGI_FORMAT backbufferFormat,
             ID3D12DescriptorHeap *srvDescriptorHeap,
-            HeapDescriptor *shaderResourceView,
+            HeapDescriptorHandle *shaderResourceView,
             const UINT appWidth,
             const UINT appHeight,
             const UINT numFrameFlight
@@ -29,4 +27,3 @@ public:
     virtual void OnDestroy() = 0;
 };
 _END_ENGINE
-#endif //KONAI3D_UI_RENDERER_H

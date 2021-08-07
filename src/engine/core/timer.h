@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-09.
 //
 
-#ifndef KONAI3D_TIMER_H
-#define KONAI3D_TIMER_H
+#pragma once
 
 _START_ENGINE
 class Timer {
@@ -27,5 +26,3 @@ private:
     bool _has_stopped;
 };
 _END_ENGINE
-
-#endif //KONAI3D_TIMER_H

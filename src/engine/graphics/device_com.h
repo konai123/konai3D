@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-10.
 //
 
-#ifndef KONAI3D_DEVICE_COM_H
-#define KONAI3D_DEVICE_COM_H
+#pragma once
 
 #include "src/engine/graphics/dx_com.h"
 
@@ -60,12 +59,11 @@ public:
             const D3D12_GRAPHICS_PIPELINE_STATE_DESC *desc
     );
     Microsoft::WRL::ComPtr<ID3D12RootSignature> CreateRootSignature(
-            const CD3DX12_ROOT_PARAMETER *parameters,
+            const CD3DX12_ROOT_PARAMETER1 *parameters,
             const CD3DX12_STATIC_SAMPLER_DESC *staticSamplers,
             const UINT numStaticSampler,
             const UINT numParameter,
-            const D3D12_ROOT_SIGNATURE_FLAGS flag = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT,
-            const D3D_ROOT_SIGNATURE_VERSION version = D3D_ROOT_SIGNATURE_VERSION_1
+            const D3D12_ROOT_SIGNATURE_FLAGS flag = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
     );
     Microsoft::WRL::ComPtr<ID3D12Resource> CreateResource(
             CD3DX12_HEAP_PROPERTIES *heapProperties,
@@ -102,10 +100,10 @@ private:
     bool LoadDxCom();
 
 public:
-    UINT _rtv_desc_size;
-    UINT _srv_cbv_uav_desc_size;
-    UINT _dsv_desc_size;
-    UINT _sampler_desc_size;
+    inline static UINT RtvDescSize = -1;
+    inline static UINT SrvCbvUavDescSize = -1;
+    inline static UINT DsvDescSize = -1;
+    inline static UINT SamplerDescSize = -1;
 
 private:
     std::unique_ptr<DXCom> _dx_com;
@@ -115,5 +113,3 @@ private:
 _END_ENGINE
 
 #include "device_com.tcc"
-
-#endif //KONAI3D_DEVICE_COM_H

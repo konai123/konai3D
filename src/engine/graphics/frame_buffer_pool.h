@@ -2,8 +2,7 @@
 // Created by khhan on 2021-06-16.
 //
 
-#ifndef KONAI3D_FRAME_BUFFER_POOL_H
-#define KONAI3D_FRAME_BUFFER_POOL_H
+#pragma once
 
 #include "src/engine/graphics/device_com.h"
 
@@ -56,5 +55,3 @@ private:
     D3D12_COMMAND_LIST_TYPE _type;
 };
 _END_ENGINE
-
-#endif //KONAI3D_FRAME_BUFFER_POOL_H

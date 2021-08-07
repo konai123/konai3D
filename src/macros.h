@@ -4,8 +4,7 @@
 
 #include "src/engine/core/logger.hpp"
 
-#ifndef MACROS_H
-#define MACROS_H
+#pragma once
 
 #define APP_LOG_FILE_PATH      "logs/app.txt"
 #define APP_LOG_DEBUG(...)      _ENGINE::Logger::Instance(APP_LOG_FILE_PATH)->debug(__VA_ARGS__)
@@ -25,4 +24,3 @@
 #else
 #define AppAssert(x) void(x)
 #endif /*DEBUG*/
-#endif //MACROS_H

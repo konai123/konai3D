@@ -2,8 +2,7 @@
 // Created by khhan on 2021-06-18.
 //
 
-#ifndef KONAI3D_RWLOCK_HPP
-#define KONAI3D_RWLOCK_HPP
+#pragma once
 
 _START_ENGINE
 class RWLock : public SRWLOCK {
@@ -60,5 +59,3 @@ public:
     RWLock &_lock;
 };
 _END_ENGINE
-
-#endif //KONAI3D_RWLOCK_HPP

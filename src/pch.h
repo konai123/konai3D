@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-19.
 //
 
-#ifndef PCH_H
-#define PCH_H
+#pragma once
 
 #define _START_KONAI3D      namespace konai3d{
 #define _END_KONAI3D        }
@@ -26,5 +25,3 @@
 
 /*externals*/
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-#endif //PCH_H

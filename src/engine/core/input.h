@@ -2,8 +2,8 @@
 // Created by korona on 2021-06-11.
 //
 
-#ifndef KONAI3D_INPUT_H
-#define KONAI3D_INPUT_H
+
+#pragma once
 
 _START_ENGINE
 struct MousePosition {
@@ -53,5 +53,3 @@ private:
 
 };
 _END_ENGINE
-
-#endif //KONAI3D_INPUT_H

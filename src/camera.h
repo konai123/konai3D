@@ -2,8 +2,7 @@
 // Created by korona on 2021-06-30.
 //
 
-#ifndef KONAI3D_CAMERA_H
-#define KONAI3D_CAMERA_H
+#pragma once
 
 _START_KONAI3D
 class Camera {
@@ -44,5 +43,3 @@ private:
     float _far;
 };
 _END_KONAI3D
-
-#endif //KONAI3D_CAMERA_H
