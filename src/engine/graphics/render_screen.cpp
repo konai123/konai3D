@@ -27,33 +27,34 @@ RenderScreen::~RenderScreen() {
     _resource_heap->DiscardRenderTargetHeapDescriptor(_depth_stencil_view._heap_index);
 }
 
-bool RenderScreen::AddRenderObject(RenderObject* renderObject) {
-    if (_render_objects.contains(renderObject->ObjectID)) {
-        GRAPHICS_LOG_WARNING("RenderObject ID:{} already exist", renderObject->ObjectID);
+bool RenderScreen::AddRenderObject(std::string name, RenderObject* renderObject) {
+    if (_render_objects.contains(name)) {
+        GRAPHICS_LOG_WARNING("RenderObject {} already exist", name);
         return false;
     }
-    _render_objects[renderObject->ObjectID] = renderObject;
+    _render_objects[name] = renderObject;
     return true;
 };
 
-bool RenderScreen::UnRegisterRenderObject(UINT objID) {
-    if (_render_objects.contains(objID)) {
-        _render_objects.erase(objID);
+bool RenderScreen::UnRegisterRenderObject(std::string name) {
+    if (_render_objects.contains(name)) {
+        _render_objects.erase(name);
+        return true;
     }
     return false;
 }
 
-RenderObject* RenderScreen::GetRenderObject(UINT objID) {
-    if (_render_objects.contains(objID)) {
-        return _render_objects[objID];
+RenderObject* RenderScreen::GetRenderObject(std::string name) {
+    if (_render_objects.contains(name)) {
+        return _render_objects[name];
     }
     return nullptr;
 }
 
-std::vector<RenderObject *> RenderScreen::GetRenderObjects() {
-    std::vector<RenderObject *> ret;
+std::vector<std::string> RenderScreen::GetRenderObjectList() {
+    std::vector<std::string> ret;
     for (auto &r : _render_objects) {
-        ret.push_back(r.second);
+        ret.push_back(r.first);
     }
     return ret;
 }

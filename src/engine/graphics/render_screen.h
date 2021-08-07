@@ -26,10 +26,10 @@ public:
     virtual ~RenderScreen();
 
 public:
-    bool AddRenderObject(RenderObject* renderObject);
-    bool UnRegisterRenderObject(UINT objID);
-    RenderObject *GetRenderObject(UINT objID);
-    std::vector<RenderObject *> GetRenderObjects();
+    bool AddRenderObject(std::string name, RenderObject* renderObject);
+    bool UnRegisterRenderObject(std::string name);
+    RenderObject *GetRenderObject(std::string name);
+    std::vector<std::string> GetRenderObjectList();
 
     D3D12_VIEWPORT *GetViewPort();
     D3D12_RECT *GetScissorRect();
@@ -56,7 +56,7 @@ private:
 private:
     std::shared_ptr<DeviceCom> _device;
     std::shared_ptr<ResourceDescriptorHeap> _resource_heap;
-    std::unordered_map<UINT, RenderObject*> _render_objects;
+    std::unordered_map<std::string, RenderObject*> _render_objects;
 
     Microsoft::WRL::ComPtr<ID3D12Resource> _dsv_buffer;
     Microsoft::WRL::ComPtr<ID3D12Resource> _render_target;

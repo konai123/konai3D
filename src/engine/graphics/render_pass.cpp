@@ -142,9 +142,11 @@ void RenderPass::Render(
             command_list->SetGraphicsRootConstantBufferView(1, _cb_buffer_per_frames->
                     GetResource(currentFrameIndex)->GetGPUVirtualAddress());
 
-            auto render_objs = render_screen->GetRenderObjects();
+            auto names = render_screen->GetRenderObjectList();
             int obj_count = 0;
-            for (auto &obj : render_objs) {
+            for (auto& name : names) {
+                auto obj = render_screen->GetRenderObject(name);
+
                 if (obj_count >= MAX_RENDER_OBJECT) {
                     GRAPHICS_LOG_WARNING("Maximum render object overed!");
                     break;

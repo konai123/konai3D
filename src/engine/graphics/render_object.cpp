@@ -5,6 +5,17 @@
 #include "src/engine/graphics/render_object.h"
 
 _START_ENGINE
+RenderObject::RenderObject() {
+    Position = {0.0f, 0.0f, 0.0f};
+    Rotation = {0.0f, 0.0f, 0.0f};
+    Scale = {1.0f, 1.0f, 1.0f};
+    UpdateTransform();
+}
+
+RenderObject::~RenderObject() {
+    _ENGINE::RenderObject::DiscardRenderObject(this);
+}
+
 RenderObject *RenderObject::AllocRenderObject() {
     int idx = _pool.allocate();
     if (idx < 0) return nullptr;
@@ -21,30 +32,24 @@ void RenderObject::DiscardRenderObject(RenderObject* obj) {
     _pool.free(obj->ObjectID);
 }
 
+void RenderObject::UpdateTransform() {
+    DirectX::XMMATRIX ts = {
+            Scale.x, 0, 0, 0,
+            0, Scale.y, 0, 0,
+            0, 0, Scale.z, 0,
+            Position.x, Position.y, Position.z, 1
+    };
 
+    DirectX::XMMATRIX rot = DirectX::XMMatrixRotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
+    DirectX::XMStoreFloat4x4(&WorldMatrix, DirectX::XMMatrixMultiply(ts, rot));
+}
 
-//DirectX::XMMATRIX RenderObject::UpdateWorldMatrix() {
-//    DirectX::XMMATRIX ts = {
-//            _scale.x, 0, 0, 0,
-//            0, _scale.y, 0, 0,
-//            0, 0, _scale.z, 0,
-//            _position.x, _position.y, _position.z, 1
-//    };
-//
-//    DirectX::XMMATRIX rot = DirectX::XMMatrixRotationRollPitchYaw(_rotation.x, _rotation.y, _rotation.z);
-//    return DirectX::XMMatrixMultiply(ts, rot);
-//};
-//
-//DirectX::XMVECTOR RenderObject::GetPosition() {
-//    return DirectX::XMVectorSet(_position.x, _position.y, _position.z, 1.0f);
-//}
-//
-//DirectX::XMVECTOR RenderObject::GetRotation() {
-//    return DirectX::XMVectorSet(_rotation.x, _rotation.y, _rotation.z, 1.0f);
-//}
-//
-//DirectX::XMVECTOR RenderObject::GetScale() {
-//    return DirectX::XMVectorSet(_scale.x, _scale.y, _scale.z, 1.0f);
-//}
+void RenderObject::UpdateMaterial (std::string materialName) {
+    MaterialName = materialName;
+}
+
+void RenderObject::UpdateMesh (std::string meshName) {
+    MeshID = meshName;
+}
 
 _END_ENGINE

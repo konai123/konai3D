@@ -26,35 +26,21 @@ _mesh_file_dialog(ImGuiFileBrowserFlags_MultipleSelection)
 }
 
 bool ComponentWindow::AddComponent(std::string name) {
-    if (_map.contains(name)) {
-        APP_LOG_ERROR("Component {} already registered", name);
+    auto newRenderObj = _ENGINE::RenderObject::AllocRenderObject();
+    newRenderObj->MaterialName = K3DApp::DefaultMaterialName;
+    newRenderObj->MeshID = K3DApp::DefaultMeshName;
+
+    if (!_screen->AddRenderObject(name, newRenderObj)) {
         return false;
     }
-
-    std::unique_ptr<Component> new_cmp = std::make_unique<Component>(K3DApp::DefaultMaterialName, K3DApp::DefaultMeshName);
-    if (!_screen->AddRenderObject(new_cmp->renderObject)) {
-        return false;
-    }
-
-    _map[name] = std::move(new_cmp);
     return true;
 }
 
 bool ComponentWindow::DeleteComponent(std::string name) {
-    if (!_map.contains(name)) {
-        APP_LOG_ERROR("Component {} Unregistered", name);
-        return false;
-    }
-
-    auto ptr = std::move(_map[name]);
-
-    if (!_screen->UnRegisterRenderObject(ptr->renderObject->ObjectID)) {
+    if (!_screen->UnRegisterRenderObject(name)) {
         APP_LOG_ERROR("Failed to delete render object '{}'", name);
-        _map[name] = std::move(ptr);
         return false;
     }
-
-    _map.erase(name);
     return true;
 }
 
@@ -82,12 +68,14 @@ void ComponentWindow::OnUpdate(float delta) {
         ImGui::OpenPopup("AddComponent");
     }
 
-    for (auto& cmp : _map){
-        ImGui::PushID(cmp.first.data());
-        if (ImGui::CollapsingHeader(cmp.first.data())) {
-            auto& p = cmp.second->Position;
-            auto& ro = cmp.second->Rotation;
-            auto& s = cmp.second->Scale;
+    auto names = _screen->GetRenderObjectList();
+    for(auto& name : names) {
+        auto cmp = _screen->GetRenderObject(name);
+        ImGui::PushID(name.data());
+        if (ImGui::CollapsingHeader(name.data())) {
+            auto& p = cmp->Position;
+            auto& ro = cmp->Rotation;
+            auto& s = cmp->Scale;
             float input_p[3] = {p.x, p.y, p.z};
             float input_r[3] = {(ro.x * 180.0f) / F_PI, (ro.y * 180.0f) / F_PI, (ro.z * 180.0f) / F_PI};
             float input_s[3] = {s.x, s.y, s.z};
@@ -101,13 +89,22 @@ void ComponentWindow::OnUpdate(float delta) {
             if (ImGui::InputFloat3("Scale", input_s)) {
                 s = {input_s[0], input_s[1], input_s[2]};
             }
-            cmp.second->UpdateTransform();
+            cmp->UpdateTransform();
 
-            ImGui::Text("Material");
+            ImGui::Text("Material: ");
             ImGui::SameLine();
-            std::string mat_name = cmp.second->renderObject->MaterialName;
+            std::string mat_name = cmp->MaterialName;
             if (ImGui::Button(mat_name.data())) {
                 ImGui::OpenPopup("Material Selector");
+            }
+
+            auto mat_desc = _render_resource_map->MaterialMap->GetMaterialDesc(mat_name);
+            auto texture_resource = _render_resource_map->TextureMap->GetResource(mat_desc->DiffuseTexturePath);
+            if (texture_resource) {
+                ImVec2 image_size(100.0f, 100.0f);
+                ImGui::Image(reinterpret_cast<void *>(texture_resource.value().Handle.GpuHandle.ptr), image_size);
+            }else {
+                ImGui::Text("Texture load failed.");
             }
 
             ImGui::Text("Mesh: ");
@@ -122,7 +119,7 @@ void ComponentWindow::OnUpdate(float delta) {
                 for (auto &name : names) {
                     ImGui::PushID(name.data());
                     if (ImGui::Button(name.data())) {
-                        cmp.second->UpdateMesh(name);
+                        cmp->UpdateMesh(name);
                         ImGui::CloseCurrentPopup();
                     }
                     ImGui::PopID();
@@ -130,12 +127,12 @@ void ComponentWindow::OnUpdate(float delta) {
                 ImGui::EndPopup();
             }
 
-            if (ImGui::BeginPopup("ShaderPasses")) {
+            if (ImGui::BeginPopup("Material")) {
                 auto names = _render_resource_map->MaterialMap->GetMaterialList();
                 for (auto &name : names) {
                     ImGui::PushID(name.data());
                     if (ImGui::Button(name.data())) {
-                        cmp.second->UpdateMaterial(name);
+                        cmp->UpdateMaterial(name);
                         ImGui::CloseCurrentPopup();
                     }
                     ImGui::PopID();
@@ -143,12 +140,12 @@ void ComponentWindow::OnUpdate(float delta) {
                 ImGui::EndPopup();
             }
 
-            if (ImGui::Button(cmp.second->renderObject->MeshID.c_str())) {
+            if (ImGui::Button(cmp->MeshID.c_str())) {
                 ImGui::OpenPopup("Meshes");
             }
 
             if (ImGui::Button("Delete")) {
-                DeleteComponent(cmp.first);
+                DeleteComponent(name);
             }
         }
         ImGui::PopID();
