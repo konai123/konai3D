@@ -21,7 +21,7 @@ _window_flags(ImGuiWindowFlags_MenuBar),
 _render_resource_map(resourceMap),
 _mesh_file_dialog(ImGuiFileBrowserFlags_MultipleSelection)
 {
-    _mesh_file_dialog.SetTitle("AsyncLoad Mesh");
+    _mesh_file_dialog.SetTitle("Load meshes");
     _mesh_file_dialog.SetTypeFilters({".fbx", ".obj"});
 }
 
@@ -151,7 +151,7 @@ void ComponentWindow::OnUpdate(float delta) {
         auto selected = _mesh_file_dialog.GetMultiSelected();
         std::vector<std::string> v;
         for (UINT i  = 0; i < selected.size(); i++) {
-            APP_LOG_INFO("AsyncLoad Model: {}", selected[i].string());
+            APP_LOG_INFO("Load Model: {}", selected[i].string());
         }
         _render_resource_map->MeshMap->AsyncLoad(selected);
         _mesh_file_dialog.ClearSelected();
