@@ -99,13 +99,6 @@ void ComponentWindow::OnUpdate(float delta) {
             }
 
             auto mat_desc = _render_resource_map->MaterialMap->GetMaterialDesc(mat_name);
-            auto texture_resource = _render_resource_map->TextureMap->GetResource(mat_desc->DiffuseTexturePath);
-            if (texture_resource) {
-                ImVec2 image_size(100.0f, 100.0f);
-                ImGui::Image(reinterpret_cast<void *>(texture_resource.value().Handle.GpuHandle.ptr), image_size);
-            }else {
-                ImGui::Text("Texture load failed.");
-            }
 
             ImGui::Text("Mesh: ");
             ImGui::SameLine();

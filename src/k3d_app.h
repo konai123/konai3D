@@ -11,6 +11,8 @@
 #include "src/editor/main_window.h"
 #include "src/editor/viewport_window.h"
 #include "src/editor/component_window.h"
+#include "src/editor/material_window.h"
+
 #include "src/imgui_renderer.h"
 #include "src/engine/graphics/mesh_map.h"
 
@@ -42,6 +44,7 @@ private:
     std::shared_ptr<MainWindow> _main_window;
     std::shared_ptr<ViewportWindow> _viewport_window;
     std::shared_ptr<ComponentWindow> _component_window;
+    std::shared_ptr<MaterialWindow> _material_window;
     std::shared_ptr<IMGUIRenderer> _imgui_renderer;
 
     std::string _ui_font_path;

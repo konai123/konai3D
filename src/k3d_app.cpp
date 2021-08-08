@@ -55,10 +55,12 @@ bool K3DApp::Prepare(HWND hwnd, int width, int height, float dpiFactor) {
 
     _viewport_window = std::make_shared<ViewportWindow>(_renderer.get());
     _component_window = std::make_shared<ComponentWindow>(_viewport_window->GetRenderScreen(), _renderer->RenderResourceMap);
+    _material_window = std::make_shared<MaterialWindow>(_renderer->RenderResourceMap);;
 
     _main_window->AttachWindow(_log_window);
     _main_window->AttachWindow(_viewport_window);
     _main_window->AttachWindow(_component_window);
+    _main_window->AttachWindow(_material_window);
 
     {
         /* Load System Mesh, Texture */
