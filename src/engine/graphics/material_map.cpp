@@ -24,6 +24,18 @@ bool MaterialMap::AddMaterial(std::string name, engine::MaterialDesc descriptor)
     return true;
 }
 
+bool MaterialMap::UpdateMaterial(std::string name, MaterialDesc descriptor) {
+    if (!_map.contains(name)) {
+        GRAPHICS_LOG_ERROR("Material name : {} Unregistered", name);
+        return false;
+    }
+
+    auto idx = GetMaterialID(name);
+    if (idx == -1) return false;
+    _map[name] = std::make_pair(descriptor, idx);
+    return true;
+}
+
 void MaterialMap::DeleteMaterial(std::string name) {
     if (!_map.contains(name)) {
         GRAPHICS_LOG_ERROR("Unregistered material : {}", name);

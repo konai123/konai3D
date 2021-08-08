@@ -20,6 +20,7 @@ public:
 
 public:
     bool AddMaterial(std::string name, MaterialDesc descriptor);
+    bool UpdateMaterial(std::string name, MaterialDesc descriptor);
     void DeleteMaterial(std::string name);
     int GetMaterialID(std::string name);
     std::optional<MaterialDesc> GetMaterialDesc(std::string name);
