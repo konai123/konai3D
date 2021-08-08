@@ -85,8 +85,6 @@ void IMGUIRenderer::OnGUIRender(float delta, ID3D12GraphicsCommandList *cmd_list
         _window->OnUpdate(delta);
     }
 
-    ImGui::ShowDemoWindow();
-
     // Rendering
     ImGui::Render();
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmd_list);
