@@ -22,7 +22,7 @@ _render_resource_map(resourceMap),
 _mesh_file_dialog(ImGuiFileBrowserFlags_MultipleSelection)
 {
     _mesh_file_dialog.SetTitle("Load meshes");
-    _mesh_file_dialog.SetTypeFilters({".fbx", ".obj"});
+    _mesh_file_dialog.SetTypeFilters({".fbx", ".obj", ".ply"});
 }
 
 bool ComponentWindow::AddComponent(std::string name) {
