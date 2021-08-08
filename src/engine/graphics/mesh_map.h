@@ -33,11 +33,15 @@ public:
     bool Contains(std::string name);
     MeshResources* GetResource(std::string name);
 
+public:
+    inline static const std::string NoNamedText = "NoName";
+
 private:
     std::shared_ptr<DeviceCom> _device;
     std::unordered_map<std::string, std::unique_ptr<MeshResources>> _map;
     MeshLoader _mesh_loader;
     RWLock _rw_lock;
+    UINT64 _nonamed_index;
 };
 
 _END_ENGINE

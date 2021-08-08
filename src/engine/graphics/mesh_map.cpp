@@ -7,7 +7,8 @@
 _START_ENGINE
 MeshMap::MeshMap(std::shared_ptr<DeviceCom> deviceCom)
 :
-_device(deviceCom)
+_device(deviceCom),
+_nonamed_index(0)
 {
 }
 
@@ -28,6 +29,11 @@ bool MeshMap::AddMeshes(std::vector<Mesh>&& meshes, DirectX::ResourceUploadBatch
         std::unique_ptr<MeshResources> drawInfo = std::make_unique<MeshResources>();
 
         auto name = mesh.Name;
+        if (name.empty()) {
+            name = NoNamedText + std::to_string(_nonamed_index);
+            _nonamed_index++;
+        }
+
         if (_map.contains(name)) {
             GRAPHICS_LOG_WARNING("'{}' Already has been registered.", name);
             continue;
