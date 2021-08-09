@@ -6,10 +6,12 @@
 
 _START_ENGINE
 RenderObject::RenderObject() {
-    Position = {0.0f, 0.0f, 0.0f};
-    Rotation = {0.0f, 0.0f, 0.0f};
-    Scale = {1.0f, 1.0f, 1.0f};
-    UpdateTransform();
+    WorldMatrix = {
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+    };
 }
 
 RenderObject::~RenderObject() {
@@ -30,18 +32,6 @@ RenderObject *RenderObject::AllocRenderObject() {
 void RenderObject::DiscardRenderObject(RenderObject* obj) {
     EngineAssert(obj != nullptr);
     _pool.free(obj->ObjectID);
-}
-
-void RenderObject::UpdateTransform() {
-    DirectX::XMMATRIX ts = {
-            Scale.x, 0, 0, 0,
-            0, Scale.y, 0, 0,
-            0, 0, Scale.z, 0,
-            Position.x, Position.y, Position.z, 1
-    };
-
-    DirectX::XMMATRIX rot = DirectX::XMMatrixRotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
-    DirectX::XMStoreFloat4x4(&WorldMatrix, DirectX::XMMatrixMultiply(ts, rot));
 }
 
 void RenderObject::UpdateMaterial (std::string materialName) {

@@ -54,7 +54,7 @@ bool K3DApp::Prepare(HWND hwnd, int width, int height, float dpiFactor) {
     _imgui_renderer->SetScale(dpiFactor);
 
     _viewport_window = std::make_shared<ViewportWindow>(_renderer.get());
-    _component_window = std::make_shared<ComponentWindow>(_viewport_window->GetRenderScreen(), _renderer->RenderResourceMap);
+    _component_window = std::make_shared<ComponentWindow>(_viewport_window, _renderer->RenderResourceMap);
     _material_window = std::make_shared<MaterialWindow>(_renderer->RenderResourceMap);;
 
     _main_window->AttachWindow(_log_window);
@@ -89,7 +89,7 @@ void K3DApp::OnDestroy() {
 
 void K3DApp::OnUpdate(float delta) {
     App::OnUpdate(delta);
-    std::vector<_ENGINE::RenderScreen *> render_targets = {_viewport_window->GetRenderScreen().get()};
+    std::vector<_ENGINE::RenderScreen *> render_targets = {_viewport_window->GetRenderScreen()};
     _renderer->OnRender(delta, render_targets);
 }
 

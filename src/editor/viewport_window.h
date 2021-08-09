@@ -20,12 +20,16 @@ public:
     virtual void ControlViewport();
     virtual UINT GetWidth() const;
     virtual UINT GetHeight() const;
-    virtual std::shared_ptr<_ENGINE::RenderScreen> GetRenderScreen() const;
-    virtual std::shared_ptr<Camera> GetCamera() const;
+    virtual _ENGINE::RenderScreen* GetRenderScreen() const;
+    virtual Camera* GetCamera() const;
+
+private:
+    void EditTransform(_ENGINE::RenderObject* targetObject);
 
 public:
     float ZoomSpeed;
     float DragSpeed;
+    _ENGINE::RenderObject* SelectedObject;
 
 private:
     ImGuiWindowFlags _window_flags = ImGuiWindowFlags_MenuBar;
@@ -37,9 +41,11 @@ private:
     float _camera_x_angle;
     float _camera_y_angle;
     bool _show_fps_counter;
+    ImGuizmo::OPERATION _guizmo_oper;
+    ImGuizmo::MODE _guizmo_mode;
 
 private:
-    std::shared_ptr<_ENGINE::RenderScreen> _screen;
-    std::shared_ptr<Camera> _camera;
+    std::unique_ptr<_ENGINE::RenderScreen> _screen;
+    std::unique_ptr<Camera> _camera;
 };
 _END_KONAI3D

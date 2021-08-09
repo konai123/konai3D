@@ -19,10 +19,13 @@ _frame_cnt(0),
 _elapsed_time(0.0f),
 _show_fps_counter(false),
 ZoomSpeed(1.0f),
+SelectedObject(nullptr),
 _camera_x_angle(0.0f),
 _camera_y_angle(0.0f),
+_guizmo_oper(ImGuizmo::OPERATION::TRANSLATE),
+_guizmo_mode(ImGuizmo::MODE::WORLD),
 _screen(nullptr) {
-    _camera = std::make_shared<Camera>(
+    _camera = std::make_unique<Camera>(
         0.25f,
         static_cast<float>(_width) / static_cast<float>(_height),
         0.1f,
@@ -74,6 +77,31 @@ void ViewportWindow::OnUpdate(float delta) {
             }
             ImGui::EndMenu();
         }
+
+        if (ImGui::BeginMenu("Control")) {
+            if (ImGui::MenuItem("Translate", NULL, _guizmo_oper == ImGuizmo::OPERATION::TRANSLATE, true)) {
+                _guizmo_oper = ImGuizmo::OPERATION::TRANSLATE;
+            }
+
+            if (ImGui::MenuItem("Rotate", NULL, _guizmo_oper == ImGuizmo::OPERATION::ROTATE, true)) {
+                _guizmo_oper = ImGuizmo::OPERATION::ROTATE;
+            }
+
+            if (ImGui::MenuItem("Scale", NULL, _guizmo_oper == ImGuizmo::OPERATION::SCALE, true)) {
+                _guizmo_oper = ImGuizmo::OPERATION::SCALE;
+            }
+
+            ImGui::Separator();
+            if (ImGui::MenuItem("World", NULL, _guizmo_mode == ImGuizmo::MODE::WORLD, true)) {
+                _guizmo_mode = ImGuizmo::MODE::WORLD;
+            }
+
+            if (ImGui::MenuItem("Local", NULL, _guizmo_mode == ImGuizmo::MODE::LOCAL, true)) {
+                _guizmo_mode = ImGuizmo::MODE::LOCAL;
+            }
+            ImGui::EndMenu();
+        }
+
         menu_size = ImGui::GetItemRectSize();
         ImGui::EndMenuBar();
     }
@@ -102,6 +130,8 @@ void ViewportWindow::OnUpdate(float delta) {
     ImGuizmo::SetRect(cursor_pos.x, cursor_pos.y, size.x, size.y);
 
     ImGui::Image(reinterpret_cast<void *>(_screen->GetShaderResourceHeapDesc()->GpuHandle.ptr), size);
+    if (SelectedObject != nullptr)
+        EditTransform(SelectedObject);
     ImGui::End();
 }
 
@@ -117,8 +147,8 @@ UINT ViewportWindow::GetHeight() const {
     return _height;
 }
 
-std::shared_ptr<Camera> ViewportWindow::GetCamera() const {
-    return _camera;
+Camera* ViewportWindow::GetCamera() const {
+    return _camera.get();
 }
 
 void ViewportWindow::ControlViewport() {
@@ -184,7 +214,24 @@ void ViewportWindow::UpdateScreen() {
     DirectX::XMStoreFloat4x4(&_screen->InverseViewMatrix, _camera->GetInverseViewMatrix());
 }
 
-std::shared_ptr<_ENGINE::RenderScreen> ViewportWindow::GetRenderScreen() const {
-    return _screen;
+_ENGINE::RenderScreen* ViewportWindow::GetRenderScreen() const {
+    return _screen.get();
 }
+
+void ViewportWindow::EditTransform(_ENGINE::RenderObject* targetObject) {
+    ImGuizmo::DrawCubes(
+            reinterpret_cast<float*>(&_screen->ViewMatrix),
+            reinterpret_cast<float*>(&_screen->ProjectionMatrix),
+            reinterpret_cast<float*>(&targetObject->WorldMatrix),
+            1
+            );
+    ImGuizmo::Manipulate(
+            reinterpret_cast<float*>(&_screen->ViewMatrix),
+            reinterpret_cast<float*>(&_screen->ProjectionMatrix),
+            _guizmo_oper,
+            _guizmo_mode,
+            reinterpret_cast<float*>(&targetObject->WorldMatrix)
+    );
+}
+
 _END_KONAI3D

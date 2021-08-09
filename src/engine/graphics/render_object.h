@@ -22,16 +22,11 @@ public:
 public:
     float4x4 WorldMatrix;
 
-    float3 Position = {0.0f, 0.0f, 0.0f};
-    float3 Rotation = {0.0f, 0.0f, 0.0f};
-    float3 Scale = {1.0f, 1.0f, 1.0f};
-
     std::string MaterialName;
     UINT ObjectID;
     std::string MeshID;
 
 public:
-    void UpdateTransform();
     void UpdateMaterial (std::string materialName);
     void UpdateMesh (std::string meshName);
 
