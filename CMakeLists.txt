@@ -99,6 +99,7 @@ target_link_libraries(
         imgui
         ShCore
         assimp-vc142-mt.lib
+        ImGuizmo
 )
 
 target_link_libraries(
