@@ -47,21 +47,18 @@
 /*d3d headers*/
 #include "src/d3d_definition.h"
 
-/*IMGUI header*/
+/*IMGUI headers*/
 #include "external/imgui/imgui.h"
 #include "external/imgui/backends/imgui_impl_win32.h"
 #include "external/imgui/backends/imgui_impl_dx12.h"
 
-/*ImGuizmo*/
-#include "external/ImGuizmo/ImGuizmo.h"
-
-/*spdlog*/
+/*spdlog headers*/
 #include "external/spdlog/include/spdlog/spdlog.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/base_sink.h"
 
-/*json*/
+/*json header*/
 #include "external/json/include/json.hpp"
 
 /*types*/
