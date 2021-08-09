@@ -11,17 +11,17 @@
 _START_KONAI3D
 ViewportWindow::ViewportWindow(_ENGINE::Renderer *renderer)
 :
-        IMGUIWindow("Viewport"),
-        _width(1920),
-        _height(1080),
-        _fps(0),
-        _frame_cnt(0),
-        _elapsed_time(0.0f),
-        _show_fps_counter(false),
-        ZoomSpeed(1.0f),
-        _camera_x_angle(0.0f),
-        _camera_y_angle(0.0f),
-        _screen(nullptr) {
+IMGUIWindow("Viewport"),
+_width(1920),
+_height(1080),
+_fps(0),
+_frame_cnt(0),
+_elapsed_time(0.0f),
+_show_fps_counter(false),
+ZoomSpeed(1.0f),
+_camera_x_angle(0.0f),
+_camera_y_angle(0.0f),
+_screen(nullptr) {
     _camera = std::make_shared<Camera>(
         0.25f,
         static_cast<float>(_width) / static_cast<float>(_height),
@@ -55,6 +55,8 @@ void ViewportWindow::OnUpdate(float delta) {
     }
 
     ImVec2 size = ImGui::GetContentRegionAvail();
+    ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
+    ImVec2 window_pos = ImGui::GetWindowPos();
 
     _elapsed_time += delta;
     _frame_cnt++;
@@ -83,8 +85,21 @@ void ViewportWindow::OnUpdate(float delta) {
         std::string fps = fmt::format("FPS: {}, DeltaTime: {}", _fps, delta);
         draw_list->AddText(text_pos, IM_COL32_WHITE, fps.c_str());
     }
+    static const float identityMatrix[16] =
+            { 1.f, 0.f, 0.f, 0.f,
+              0.f, 1.f, 0.f, 0.f,
+              0.f, 0.f, 1.f, 0.f,
+              0.f, 0.f, 0.f, 1.f };
 
     UpdateScreen();
+    ImGuizmo::SetDrawlist();
+    ImGuizmo::DrawGrid(
+            reinterpret_cast<float*>(&_screen->ViewMatrix),
+            reinterpret_cast<float*>(&_screen->ProjectionMatrix),
+            identityMatrix,
+            100.0f);
+
+    ImGuizmo::SetRect(cursor_pos.x, cursor_pos.y, size.x, size.y);
 
     ImGui::Image(reinterpret_cast<void *>(_screen->GetShaderResourceHeapDesc()->GpuHandle.ptr), size);
     ImGui::End();
