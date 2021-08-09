@@ -8,3 +8,4 @@ a simple directX12 engine.
 - [spdlog](https://github.com/gabime/spdlog)
 - [imgui-filebrowser](https://github.com/AirGuanZ/imgui-filebrowser)
 - [assimp](https://github.com/assimp/assimp)
+- [ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo)
