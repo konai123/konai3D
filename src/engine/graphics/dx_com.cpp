@@ -56,7 +56,7 @@ bool DXCom::Initiate() {
     return true;
 }
 
-ID3D12Device4 *DXCom::Device() const {
+ID3D12Device5 *DXCom::Device() const {
     return _dxgi_device.Get();
 }
 
@@ -96,21 +96,22 @@ bool DXCom::PrepareDevice() {
         }
 
         HRESULT hr = D3D12CreateDevice(
-                adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&_dxgi_device)
+                adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&_dxgi_device)
         );
 
         if (SUCCEEDED(hr)) {
             GRAPHICS_LOG_INFO("using Primary Adapter.");
+            GRAPHICS_LOG_INFO("checking raytracing feature...");
+            D3D12_FEATURE_DATA_D3D12_OPTIONS5 features = {};
+            _dxgi_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &features, sizeof(features));
+            if (features.RaytracingTier < D3D12_RAYTRACING_TIER_1_0) {
+                GRAPHICS_LOG_ERROR("feature check failed");
+                return false;
+            }
+            GRAPHICS_LOG_INFO("feature check succeed : [D3D12_RAYTRACING_TIER: {}]", features.RaytracingTier);
             return true;
         }
-
-        adapter = nullptr;
-        GRAPHICS_LOG_INFO("Failed to use Primary Adapter. Using WarpAdapter.");
-        ReturnFalseHRFailed(_dxgi_factory->EnumWarpAdapter(IID_PPV_ARGS(&adapter)));
-        ReturnFalseHRFailed(D3D12CreateDevice(
-                adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&_dxgi_device))
-        );
-        return true;
+        return false;
     }
     return false;
 }

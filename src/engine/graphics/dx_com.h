@@ -23,7 +23,7 @@ public:
     virtual void Close();
 
 public:
-    ID3D12Device4 *Device() const;
+    ID3D12Device5 *Device() const;
     IDXGIFactory4 *Factory() const;
     DXGIFeature GetFeatures() const;
 
@@ -35,7 +35,7 @@ private:
 
 private:
     Microsoft::WRL::ComPtr<IDXGIFactory4> _dxgi_factory;
-    Microsoft::WRL::ComPtr<ID3D12Device4> _dxgi_device;
+    Microsoft::WRL::ComPtr<ID3D12Device5> _dxgi_device;
 
 private:
     DXGIFeature _features;
