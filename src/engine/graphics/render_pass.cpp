@@ -186,14 +186,16 @@ void RenderPass::Render(
                     GRAPHICS_LOG_ERROR("Cannot find mesh id : {}", obj->MeshID);
                     continue;
                 }
-                auto mesh_resource = meshMap->GetResource(obj->MeshID);
+                auto mesh_resources = meshMap->GetResources(obj->MeshID);
 
-                command_list->SetGraphicsRootShaderResourceView(2,
-                                                                mesh_resource->_vertex_buffer->GetGPUVirtualAddress());
-                command_list->SetGraphicsRootShaderResourceView(3,
-                                                                mesh_resource->_index_buffer->GetGPUVirtualAddress());
-                command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-                command_list->DrawInstanced(mesh_resource->_ib_byte_size / sizeof(UINT), 1, 0, 0);
+                for (auto& mesh_resource : mesh_resources) {
+                    command_list->SetGraphicsRootShaderResourceView(2,
+                                                                    mesh_resource.VertexBuffer->GetGPUVirtualAddress() + mesh_resource.BaseVertexLocation * sizeof(Vertex));
+                    command_list->SetGraphicsRootShaderResourceView(3,
+                                                                    mesh_resource.IndexBuffer->GetGPUVirtualAddress() + mesh_resource.StartIndexLocation * sizeof(UINT));
+                    command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+                    command_list->DrawInstanced(mesh_resource.IndexBufferByteSize / sizeof(UINT), 1, 0, 0);
+                }
                 obj_count++;
             }
             barrier_enter = CD3DX12_RESOURCE_BARRIER::Transition(

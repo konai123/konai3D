@@ -34,6 +34,13 @@ void TextureMap::UpdateFromTextureLoader(DirectX::ResourceUploadBatch* uploader)
 
 void TextureMap::AddTexture(std::vector<Texture> &&textures, DirectX::ResourceUploadBatch* uploader) {
     for (auto &&texture : textures) {
+
+        LocalWriteLock lock(_rw_lock);
+        if (_map.contains(texture.path.string())) {
+            GRAPHICS_LOG_ERROR("texture '{}' already registered", texture.path.string());
+            continue;
+        }
+
         DirectX::ScratchImage image = std::move(texture.image);
         DirectX::TexMetadata meta = image.GetMetadata();
 
@@ -85,7 +92,6 @@ void TextureMap::AddTexture(std::vector<Texture> &&textures, DirectX::ResourceUp
                 resource.Get(), nullptr, heapDescriptor.CpuHandle, nullptr
         );
 
-        LocalWriteLock lock(_rw_lock);
         _map[texture.path.string()] = { .Handle = heapDescriptor, .Resource = resource};
     }
 }

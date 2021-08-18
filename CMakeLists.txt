@@ -29,6 +29,7 @@ add_executable(
         src/editor/main_window.cpp
         src/editor/viewport_window.cpp
         src/editor/component_window.cpp
+        src/editor/material_window.cpp
 
         src/engine/core/timer.cpp
         src/engine/core/app_container.cpp
@@ -57,7 +58,7 @@ add_executable(
         src/engine/graphics/vertex.cpp
         src/engine/graphics/mesh_loader.cpp
         src/engine/graphics/texture_loader.cpp
-        src/editor/material_window.cpp src/editor/material_window.h)
+)
 
 #set_target_properties(${PROJECT_NAME} PROPERTIES
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

@@ -12,10 +12,13 @@
 
 _START_ENGINE
 struct MeshResources {
-    int _vb_byte_size;
-    int _ib_byte_size;
-    Microsoft::WRL::ComPtr<ID3D12Resource> _vertex_buffer;
-    Microsoft::WRL::ComPtr<ID3D12Resource> _index_buffer;
+    int VertexBufferByteSize;
+    int IndexBufferByteSize;
+    UINT StartIndexLocation;
+    UINT BaseVertexLocation;
+    Microsoft::WRL::ComPtr<ID3D12Resource> VertexBuffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource> IndexBuffer;
+    std::string Name;
 };
 
 class MeshMap {
@@ -26,19 +29,16 @@ public:
 public:
     void AsyncLoad(std::vector<std::filesystem::path> paths);
     void UpdateFromMeshLoader(DirectX::ResourceUploadBatch* uploader);
-    bool AddMeshes(std::vector<Mesh>&& meshes, DirectX::ResourceUploadBatch* uploader);
+    bool AddMeshes(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploader);
     std::vector<std::string> GetMeshList();
 
 public:
     bool Contains(std::string name);
-    MeshResources* GetResource(std::string name);
-
-public:
-    inline static const std::string NoNamedText = "NoName";
+    std::vector<MeshResources> GetResources(std::string name);
 
 private:
     std::shared_ptr<DeviceCom> _device;
-    std::unordered_map<std::string, std::unique_ptr<MeshResources>> _map;
+    std::unordered_map<std::string, std::vector<MeshResources>> _map;
     MeshLoader _mesh_loader;
     RWLock _rw_lock;
     UINT64 _nonamed_index;
