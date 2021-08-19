@@ -26,6 +26,8 @@ public:
     DirectX::XMFLOAT3 Normal;
     DirectX::XMFLOAT3 TangentU;
     DirectX::XMFLOAT2 TexCoord;
+    inline static const DXGI_FORMAT VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+    inline static const DXGI_FORMAT IndexFormat = DXGI_FORMAT_R32_UINT;
 };
 
 _END_ENGINE
