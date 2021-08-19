@@ -34,7 +34,7 @@ public:
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CreateCommandAllocator(
             const D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT
     );
-    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> CreateGraphicsCommandList(
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList6> CreateGraphicsCommandList(
             const D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT,
             const D3D12_COMMAND_LIST_FLAGS flags = D3D12_COMMAND_LIST_FLAG_NONE
     );

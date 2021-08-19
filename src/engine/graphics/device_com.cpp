@@ -122,17 +122,17 @@ Microsoft::WRL::ComPtr<ID3D12CommandAllocator> DeviceCom::CreateCommandAllocator
 }
 
 
-Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> DeviceCom::CreateGraphicsCommandList(
+Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList6> DeviceCom::CreateGraphicsCommandList(
         const D3D12_COMMAND_LIST_TYPE type,
         const D3D12_COMMAND_LIST_FLAGS flags
 ) {
     EngineAssert(_dx_com.get());
-    ID3D12Device4 *device = _dx_com->Device();
+    auto *device = _dx_com->Device();
     if (device == nullptr) {
         return nullptr;
     }
 
-    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> command_list;
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList6> command_list;
     ReturnNullHRFailed(
             device->CreateCommandList1(0, type, flags, IID_PPV_ARGS(&command_list))
     );
