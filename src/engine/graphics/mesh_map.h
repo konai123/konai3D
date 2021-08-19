@@ -11,10 +11,14 @@
 #include "src/engine/graphics/device_com.h"
 
 _START_ENGINE
+struct BLAS;
 struct MeshResources {
     struct MeshResource {
-        int VertexBufferByteSize;
-        int IndexBufferByteSize;
+        UINT VertexBufferByteSize;
+        UINT IndexBufferByteSize;
+        UINT IndexCount;
+        UINT VertexCount;
+
         UINT StartIndexLocation;
         UINT BaseVertexLocation;
         Microsoft::WRL::ComPtr<ID3D12Resource> VertexBuffer;
@@ -23,6 +27,7 @@ struct MeshResources {
     };
 
     std::vector<MeshResource> Meshes;
+    std::unique_ptr<BLAS> Blas;
 };
 
 class MeshMap {
@@ -32,8 +37,8 @@ public:
 
 public:
     void AsyncLoad(std::vector<std::filesystem::path> paths);
-    void UpdateFromMeshLoader(DirectX::ResourceUploadBatch* uploader);
-    bool AddMeshes(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploader);
+    void UpdateFromMeshLoader(DirectX::ResourceUploadBatch* uploader, ID3D12GraphicsCommandList6* cmd_list);
+    bool AddMeshes(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploader, ID3D12GraphicsCommandList6* cmd_list);
     std::vector<std::string> GetMeshList();
 
 public:
