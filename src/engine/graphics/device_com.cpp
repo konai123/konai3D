@@ -355,7 +355,7 @@ bool DeviceCom::LoadDxCom() {
     return true;
 }
 
-ID3D12Device *DeviceCom::GetDevice() const {
+ID3D12Device5 *DeviceCom::GetDevice() const {
     return _dx_com->Device();
 }
 

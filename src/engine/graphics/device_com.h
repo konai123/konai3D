@@ -91,7 +91,7 @@ public:
     );
 
 public:
-    ID3D12Device *GetDevice() const;
+    ID3D12Device5 *GetDevice() const;
     bool Present(bool VSync);
     bool ResizeSwapchain(const UINT width, const UINT height);
     void Close();
