@@ -12,13 +12,17 @@
 
 _START_ENGINE
 struct MeshResources {
-    int VertexBufferByteSize;
-    int IndexBufferByteSize;
-    UINT StartIndexLocation;
-    UINT BaseVertexLocation;
-    Microsoft::WRL::ComPtr<ID3D12Resource> VertexBuffer;
-    Microsoft::WRL::ComPtr<ID3D12Resource> IndexBuffer;
-    std::string Name;
+    struct MeshResource {
+        int VertexBufferByteSize;
+        int IndexBufferByteSize;
+        UINT StartIndexLocation;
+        UINT BaseVertexLocation;
+        Microsoft::WRL::ComPtr<ID3D12Resource> VertexBuffer;
+        Microsoft::WRL::ComPtr<ID3D12Resource> IndexBuffer;
+        std::string Name;
+    };
+
+    std::vector<MeshResource> Meshes;
 };
 
 class MeshMap {
@@ -34,11 +38,11 @@ public:
 
 public:
     bool Contains(std::string name);
-    std::vector<MeshResources> GetResources(std::string name);
+    MeshResources* GetResources(std::string name);
 
 private:
     std::shared_ptr<DeviceCom> _device;
-    std::unordered_map<std::string, std::vector<MeshResources>> _map;
+    std::unordered_map<std::string, std::unique_ptr<MeshResources>> _map;
     MeshLoader _mesh_loader;
     RWLock _rw_lock;
     UINT64 _nonamed_index;

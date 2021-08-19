@@ -188,7 +188,7 @@ void RenderPass::Render(
                 }
                 auto mesh_resources = meshMap->GetResources(obj->MeshID);
 
-                for (auto& mesh_resource : mesh_resources) {
+                for (auto& mesh_resource : mesh_resources->Meshes) {
                     command_list->SetGraphicsRootShaderResourceView(2,
                                                                     mesh_resource.VertexBuffer->GetGPUVirtualAddress() + mesh_resource.BaseVertexLocation * sizeof(Vertex));
                     command_list->SetGraphicsRootShaderResourceView(3,

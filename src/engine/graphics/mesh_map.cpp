@@ -75,12 +75,12 @@ bool MeshMap::AddMeshes(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploade
 
     uploader->Upload(indexBuffer.Get(), 0, &subresource, 1);
 
-    std::vector<MeshResources> mesh_resources;
+    auto mesh_resources = std::make_unique<MeshResources>();
     UINT ib_offset = 0;
     UINT vb_offset = 0;
     for (UINT i = 0; i < meshes.Mesh.size(); i++) {
         auto& mesh = meshes.Mesh[i];
-        MeshResources info;
+        MeshResources::MeshResource info;
 
         info.Name = mesh.Name;
         info.IndexBuffer = indexBuffer;
@@ -91,10 +91,10 @@ bool MeshMap::AddMeshes(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploade
         info.BaseVertexLocation = vb_offset;
         ib_offset += mesh.Indices.size();
         vb_offset += mesh.Vertices.size();
-        mesh_resources.push_back(info);
+        mesh_resources->Meshes.push_back(info);
     }
 
-    _map[name] = mesh_resources;
+    _map[name] = std::move(mesh_resources);
     return true;
 }
 
@@ -112,14 +112,14 @@ bool MeshMap::Contains(std::string name) {
     return _map.contains(name);
 }
 
-std::vector<MeshResources> MeshMap::GetResources(std::string name) {
+MeshResources* MeshMap::GetResources(std::string name) {
     if (!Contains(name)) {
         GRAPHICS_LOG_ERROR("Cannot find mesh resource: {}", name);
         return {};
     }
 
     LocalReadLock lock(_rw_lock);
-    return _map[name];
+    return _map[name].get();
 }
 
 _END_ENGINE
