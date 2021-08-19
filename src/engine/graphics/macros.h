@@ -29,3 +29,5 @@
 #define GRAPHICS_LOG_INFO(...)       _ENGINE::Logger::Instance(GRAPHICS_LOG_FILE_PATH)->info(__VA_ARGS__)
 #define GRAPHICS_LOG_WARNING(...)    _ENGINE::Logger::Instance(GRAPHICS_LOG_FILE_PATH)->warn(__VA_ARGS__)
 #define GRAPHICS_LOG_ERROR(...)      _ENGINE::Logger::Instance(GRAPHICS_LOG_FILE_PATH)->error(__VA_ARGS__)
+
+#define ALIGN(_alignment, _val) (((_val + _alignment - 1) / _alignment) * _alignment)
