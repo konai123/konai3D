@@ -58,6 +58,7 @@ add_executable(
         src/engine/graphics/vertex.cpp
         src/engine/graphics/mesh_loader.cpp
         src/engine/graphics/texture_loader.cpp
+        src/engine/graphics/blas.cpp
 )
 
 #set_target_properties(${PROJECT_NAME} PROPERTIES
