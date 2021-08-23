@@ -11,6 +11,7 @@ _START_ENGINE
 struct TLAS {
     bool Generate(DeviceCom* deviceCom, ID3D12GraphicsCommandList5* cmdList);
     void AddInstance(D3D12_RAYTRACING_INSTANCE_DESC& instDesc);
+    void Clear();
 
     std::vector<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs;
     Microsoft::WRL::ComPtr<ID3D12Resource>  InstanceDescsResource;

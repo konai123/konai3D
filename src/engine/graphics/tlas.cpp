@@ -7,19 +7,21 @@
 
 _START_ENGINE
 bool TLAS::Generate(DeviceCom *deviceCom, ID3D12GraphicsCommandList5 *cmdList) {
-    auto properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-    CD3DX12_RESOURCE_DESC resource_desc = CD3DX12_RESOURCE_DESC::Buffer(
-            sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * InstanceDescs.size(),
-            D3D12_RESOURCE_FLAG_NONE,
-            0
-            );
-    InstanceDescsResource = deviceCom->CreateResource(
-            &properties,
-            &resource_desc,
-            nullptr,
-            D3D12_HEAP_FLAG_NONE,
-            D3D12_RESOURCE_STATE_GENERIC_READ
-            );
+    if (InstanceDescsResource == nullptr) {
+        auto properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+        CD3DX12_RESOURCE_DESC resource_desc = CD3DX12_RESOURCE_DESC::Buffer(
+                sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * InstanceDescs.size(),
+                D3D12_RESOURCE_FLAG_NONE,
+                0
+        );
+        InstanceDescsResource = deviceCom->CreateResource(
+                &properties,
+                &resource_desc,
+                nullptr,
+                D3D12_HEAP_FLAG_NONE,
+                D3D12_RESOURCE_STATE_GENERIC_READ
+        );
+    }
 
     if (InstanceDescsResource == nullptr) {
         GRAPHICS_LOG_ERROR("Failed to create resource");
@@ -54,7 +56,8 @@ bool TLAS::Generate(DeviceCom *deviceCom, ID3D12GraphicsCommandList5 *cmdList) {
             CD3DX12_RESOURCE_DESC::Buffer(prebuild_info.ScratchDataSizeInBytes,
                                           D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
-    properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    auto properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    ScratchBuffer = nullptr;
     ScratchBuffer = deviceCom->CreateResource(
             &properties,
             &scratch_buf_desc,
@@ -66,6 +69,7 @@ bool TLAS::Generate(DeviceCom *deviceCom, ID3D12GraphicsCommandList5 *cmdList) {
         return false;
     }
 
+    ResultDataBuffer = nullptr;
     ResultDataBuffer = deviceCom->CreateResource(
             &properties,
             &scratch_buf_desc,
@@ -94,5 +98,9 @@ bool TLAS::Generate(DeviceCom *deviceCom, ID3D12GraphicsCommandList5 *cmdList) {
 
 void TLAS::AddInstance(D3D12_RAYTRACING_INSTANCE_DESC &instDesc) {
     InstanceDescs.push_back(instDesc);
+}
+
+void TLAS::Clear() {
+    InstanceDescs.clear();
 }
 _END_ENGINE
