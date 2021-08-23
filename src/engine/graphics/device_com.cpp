@@ -305,6 +305,20 @@ Microsoft::WRL::ComPtr<ID3D12Resource> DeviceCom::CreateResource(
     return resource;
 }
 
+Microsoft::WRL::ComPtr<ID3D12StateObject> DeviceCom::CreateStateObject(D3D12_STATE_OBJECT_DESC *state_desc) {
+    EngineAssert(_dx_com.get());
+    ID3D12Device5 *device = _dx_com->Device();
+    if (device == nullptr) {
+        return nullptr;
+    }
+
+    Microsoft::WRL::ComPtr<ID3D12StateObject> state_object;
+    ReturnNullHRFailed(
+            device->CreateStateObject(state_desc, IID_PPV_ARGS(state_object.GetAddressOf())
+    ));
+    return state_object;
+}
+
 Microsoft::WRL::ComPtr<ID3D12CommandQueue> DeviceCom::GetCommandQueue() {
     return _command_queue;
 }
@@ -389,4 +403,5 @@ bool DeviceCom::CreateSamplerResource(D3D12_SAMPLER_DESC *desc, D3D12_CPU_DESCRI
     device->CreateSampler(desc, handle);
     return true;
 }
+
 _END_ENGINE

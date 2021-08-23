@@ -72,6 +72,9 @@ public:
             const D3D12_HEAP_FLAGS heapFlags,
             const D3D12_RESOURCE_STATES resourceState
     );
+    Microsoft::WRL::ComPtr<ID3D12StateObject> CreateStateObject(
+            D3D12_STATE_OBJECT_DESC *state_desc
+            );
     bool CreateSamplerResource(D3D12_SAMPLER_DESC *desc, D3D12_CPU_DESCRIPTOR_HANDLE handle);
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> GetCommandQueue();
     Microsoft::WRL::ComPtr<ID3D12Resource> GetCurrentBackBuffer();
