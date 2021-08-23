@@ -69,9 +69,5 @@ std::vector<std::string> MaterialMap::GetMaterialList() {
     return names;
 }
 
-void MaterialMap::Drawed() {
-
-}
-
 _END_ENGINE
 

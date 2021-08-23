@@ -9,9 +9,9 @@
 #include "src/engine/graphics/mesh_loader.h"
 #include "src/engine/graphics/macros.h"
 #include "src/engine/graphics/device_com.h"
+#include "src/engine/graphics/blas.h"
 
 _START_ENGINE
-struct BLAS;
 struct MeshResources {
     struct MeshResource {
         UINT VertexBufferByteSize;
@@ -24,10 +24,10 @@ struct MeshResources {
         Microsoft::WRL::ComPtr<ID3D12Resource> VertexBuffer;
         Microsoft::WRL::ComPtr<ID3D12Resource> IndexBuffer;
         std::string Name;
+        std::unique_ptr<BLAS> Blas;
     };
 
-    std::vector<MeshResource> Meshes;
-    std::unique_ptr<BLAS> Blas;
+    std::vector<std::unique_ptr<MeshResource>> Meshes;
 };
 
 class MeshMap {

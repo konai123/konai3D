@@ -93,6 +93,7 @@ typedef std::wstring tString;
 #define VK_Z 0x5A
 
 #define float4x4 DirectX::XMFLOAT4X4
+#define float3x4 DirectX::XMFLOAT3X4
 
 #define float2 DirectX::XMFLOAT2
 #define float3 DirectX::XMFLOAT3

@@ -18,11 +18,13 @@ public:
     bool SetData(void *initData, UINT numResource, UINT bytesSize);
     bool SetData(UINT numResource, UINT bytesSize);
     bool UpdateData(void *data, UINT resourceIdx, UINT currentFrameIdx);
+    UINT GetResourceBytesSize();
 
 private:
     std::shared_ptr<DeviceCom> _device;
     std::vector<std::unique_ptr<UploadBuffer>> _cb_buffers;
     UINT _num_pre_frames;
+    UINT _bytes_size;
 };
 
 _END_ENGINE

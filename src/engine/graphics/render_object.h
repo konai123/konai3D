@@ -20,15 +20,17 @@ public:
     static void DiscardRenderObject(RenderObject* obj);
 
 public:
-    float4x4 WorldMatrix;
+    float3x4 WorldMatrix;
 
     std::string MaterialName;
     UINT ObjectID;
     std::string MeshID;
+    UINT SubmeshID;
 
 public:
+    void SetTransform (DirectX::XMMATRIX worldMat);
     void UpdateMaterial (std::string materialName);
-    void UpdateMesh (std::string meshName);
+    void UpdateMesh (std::string meshName, UINT submeshID);
 
 private:
     inline static Pool<RenderObject> _pool = Pool<RenderObject>(100, true);

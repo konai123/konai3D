@@ -80,50 +80,50 @@ bool MeshMap::AddMeshes(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploade
     UINT ib_offset = 0;
     UINT vb_offset = 0;
 
-    auto blas = std::make_unique<BLAS>();
     for (UINT i = 0; i < meshes.Mesh.size(); i++) {
         auto& mesh = meshes.Mesh[i];
-        MeshResources::MeshResource info;
+        auto info = std::make_unique<MeshResources::MeshResource>();
 
-        info.Name = mesh.Name;
-        info.IndexBuffer = indexBuffer;
-        info.VertexBuffer = vertexBuffer;
-        info.IndexBufferByteSize = mesh.IndexBytesSize;
-        info.VertexBufferByteSize = mesh.VertexBytesSize;
-        info.IndexCount = mesh.Indices.size();
-        info.VertexCount = mesh.Vertices.size();
-        info.StartIndexLocation = ib_offset;
-        info.BaseVertexLocation = vb_offset;
+        info->Name = mesh.Name;
+        info->IndexBuffer = indexBuffer;
+        info->VertexBuffer = vertexBuffer;
+        info->IndexBufferByteSize = mesh.IndexBytesSize;
+        info->VertexBufferByteSize = mesh.VertexBytesSize;
+        info->IndexCount = mesh.Indices.size();
+        info->VertexCount = mesh.Vertices.size();
+        info->StartIndexLocation = ib_offset;
+        info->BaseVertexLocation = vb_offset;
 
         {
             //BLAS Build
+            auto blas = std::make_unique<BLAS>();
             D3D12_RAYTRACING_GEOMETRY_DESC geo_desc;
             geo_desc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
             geo_desc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
             geo_desc.Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
-            geo_desc.Triangles.VertexBuffer.StartAddress = info.VertexBuffer.Get()->GetGPUVirtualAddress() + vb_offset * sizeof(Vertex);
+            geo_desc.Triangles.VertexBuffer.StartAddress = info->VertexBuffer.Get()->GetGPUVirtualAddress() + vb_offset * sizeof(Vertex);
             geo_desc.Triangles.VertexFormat = Vertex::VertexFormat;
-            geo_desc.Triangles.VertexCount = info.VertexCount;
+            geo_desc.Triangles.VertexCount = info->VertexCount;
 
-            geo_desc.Triangles.IndexBuffer = info.IndexBuffer->GetGPUVirtualAddress() + ib_offset * sizeof(UINT);
+            geo_desc.Triangles.IndexBuffer = info->IndexBuffer->GetGPUVirtualAddress() + ib_offset * sizeof(UINT);
             geo_desc.Triangles.IndexFormat = Vertex::IndexFormat;
-            geo_desc.Triangles.IndexCount = info.IndexCount;
+            geo_desc.Triangles.IndexCount = info->IndexCount;
             geo_desc.Triangles.Transform3x4 = NULL;
             blas->AddGeometry(geo_desc);
+
+            if (!blas->Generate(_device.get(), cmd_list)) {
+                GRAPHICS_LOG_ERROR("Cannot create bottom level acceleration structure");
+                return false;
+            }
+            info->Blas = std::move(blas);
         }
 
         ib_offset += mesh.Indices.size();
         vb_offset += mesh.Vertices.size();
 
-        mesh_resources->Meshes.push_back(info);
+        mesh_resources->Meshes.push_back(std::move(info));
     }
 
-    if (!blas->Generate(_device.get(), cmd_list)) {
-        GRAPHICS_LOG_ERROR("Cannot create bottom level acceleration structure");
-        return false;
-    }
-
-    mesh_resources->Blas = std::move(blas);
     _map[name] = std::move(mesh_resources);
     return true;
 }

@@ -14,7 +14,9 @@
 #include "src/engine/graphics/macros.h"
 #include "src/engine/graphics/mesh_map.h"
 #include "src/engine/graphics/texture_map.h"
-#include "src/engine/graphics/rasterize_pass.h"
+#include "src/engine/graphics/material_map.h"
+
+#include "src/engine/graphics/raytracing_pass.h"
 
 _START_ENGINE
 struct RenderingOptions {
@@ -75,7 +77,7 @@ private:
 
 private:
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> _command_queue;
-    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> _command_list;
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList6> _command_list;
     Microsoft::WRL::ComPtr<ID3D12Resource> _dsv_buffer_full_frame;
 
     HeapDescriptorHandle _gui_view;
@@ -98,7 +100,7 @@ private:
 
 private:
     /*Render Passes*/
-    std::unique_ptr<Rasterizer> _render_pass;
+    std::unique_ptr<Raytracer> _render_pass;
 };
 
 _END_ENGINE

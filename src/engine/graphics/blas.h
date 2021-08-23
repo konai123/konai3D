@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include "src/engine/graphics/mesh_map.h"
+#include "src/engine/graphics/device_com.h"
+#include "src/engine/graphics/macros.h"
 
 _START_ENGINE
 struct BLAS {

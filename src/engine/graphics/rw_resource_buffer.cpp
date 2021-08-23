@@ -22,6 +22,7 @@ bool RWResourceBuffer::SetData(void *initData, UINT numResource, UINT databytesS
         }
         _cb_buffers.push_back(std::move(upbuffer));
     }
+    _bytes_size = numResource * databytesSize;
     return true;
 }
 
@@ -30,6 +31,7 @@ bool RWResourceBuffer::SetData(UINT numResource, UINT bytesSize) {
         auto upbuffer = std::make_unique<UploadBuffer>(_device.get(), numResource, bytesSize, false);
         _cb_buffers.push_back(std::move(upbuffer));
     }
+    _bytes_size = numResource * bytesSize;
     return true;
 }
 
@@ -40,6 +42,10 @@ bool RWResourceBuffer::UpdateData(void *data, UINT resourceIdx, UINT currentFram
     }
     _cb_buffers[currentFrameIdx]->Copy(resourceIdx, data);
     return true;
+}
+
+UINT RWResourceBuffer::GetResourceBytesSize() {
+    return _bytes_size;
 }
 
 

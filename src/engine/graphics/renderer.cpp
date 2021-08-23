@@ -3,7 +3,6 @@
 //
 
 #include "src/engine/graphics/renderer.h"
-#include "src/engine/graphics/render_screen.h"
 #include "src/engine/graphics/shader.h"
 
 _START_ENGINE
@@ -40,6 +39,11 @@ Renderer::Initiate(HWND hWnd, UINT width, UINT height, std::filesystem::path sha
     {
         /*Compile Shaders*/
         if (!Shader::RasterizePass.Build(shaderDirectoryPath)) {
+            GRAPHICS_LOG_ERROR("Filed to build shaders");
+            return false;
+        }
+
+        if (!Shader::RaytracePass.Build(shaderDirectoryPath)) {
             GRAPHICS_LOG_ERROR("Filed to build shaders");
             return false;
         }
@@ -92,7 +96,7 @@ Renderer::Initiate(HWND hWnd, UINT width, UINT height, std::filesystem::path sha
 
     {
         /*Initiate Render Pass*/
-        _render_pass = std::make_unique<Rasterizer>(_device);
+        _render_pass = std::make_unique<Raytracer>(_device);
         if (!_render_pass->Initiate()) {
             GRAPHICS_LOG_ERROR("Failed to initialize render pass");
             return false;

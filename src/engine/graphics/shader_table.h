@@ -6,7 +6,6 @@
 
 #include "src/engine/graphics/device_com.h"
 #include "src/engine/graphics/rw_resource_buffer.h"
-#include "src/engine/graphics/renderer.h"
 
 _START_ENGINE
 struct ShaderRecord {
@@ -30,8 +29,8 @@ struct ShaderTable {
         return MaxRecordSize * Records.size();
     }
 
-    std::unique_ptr<RWResourceBuffer> Generate(std::shared_ptr<DeviceCom> device) {
-        auto resource = std::make_unique<RWResourceBuffer>(device, Renderer::NumPreFrames);
+    std::unique_ptr<RWResourceBuffer> Generate(std::shared_ptr<DeviceCom> device, UINT numPreFrames) {
+        auto resource = std::make_unique<RWResourceBuffer>(device, numPreFrames);
         resource->SetData(Records.size(), MaxRecordSize);
 
         UINT idx = 0;
@@ -44,7 +43,7 @@ struct ShaderTable {
                 raw.insert(raw.begin() + offset, pointer, pointer+sz);
                 offset += sz;
             }
-            for (UINT j = 0; j < Renderer::NumPreFrames; j++)
+            for (UINT j = 0; j < numPreFrames; j++)
             {
                 resource->UpdateData(raw.data(), idx, j);
             }
@@ -52,6 +51,11 @@ struct ShaderTable {
         }
 
         return std::move(resource);
+    }
+
+    void Clear() {
+        MaxRecordSize = 0;
+        Records.clear();
     }
 
     UINT MaxRecordSize = 0;

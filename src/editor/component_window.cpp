@@ -31,6 +31,7 @@ bool ComponentWindow::AddComponent(std::string name) {
     auto newRenderObj = _ENGINE::RenderObject::AllocRenderObject();
     newRenderObj->MaterialName = K3DApp::DefaultMaterialName;
     newRenderObj->MeshID = K3DApp::DefaultMeshName;
+    newRenderObj->SubmeshID = 0;
 
     if (!_viewport_window->GetRenderScreen()->AddRenderObject(name, newRenderObj)) {
         return false;
@@ -127,7 +128,7 @@ void ComponentWindow::OnUpdate(float delta) {
             for (auto &name : names) {
                 ImGui::PushID(name.data());
                 if (ImGui::Button(name.data())) {
-                    cmp->UpdateMesh(name);
+                    cmp->UpdateMesh(name, 0);
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::PopID();

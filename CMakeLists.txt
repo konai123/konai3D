@@ -50,7 +50,6 @@ add_executable(
         src/engine/graphics/render_screen.cpp
         src/engine/graphics/sampler.cpp
         src/engine/graphics/upload_buffer.cpp
-        src/engine/graphics/rasterize_pass.cpp
         src/engine/graphics/texture_map.cpp
         src/engine/graphics/rw_resource_buffer.cpp
         src/engine/graphics/material_map.cpp
