@@ -50,7 +50,7 @@ add_executable(
         src/engine/graphics/render_screen.cpp
         src/engine/graphics/sampler.cpp
         src/engine/graphics/upload_buffer.cpp
-        src/engine/graphics/render_pass.cpp
+        src/engine/graphics/rasterize_pass.cpp
         src/engine/graphics/texture_map.cpp
         src/engine/graphics/rw_resource_buffer.cpp
         src/engine/graphics/material_map.cpp
@@ -60,6 +60,7 @@ add_executable(
         src/engine/graphics/texture_loader.cpp
         src/engine/graphics/blas.cpp
         src/engine/graphics/tlas.cpp
+        src/engine/graphics/raytracing_pass.cpp
 )
 
 #set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -84,11 +85,6 @@ target_precompile_headers(
         src/engine/pch.h
 )
 
-target_link_directories(${CMAKE_PROJECT_NAME}
-        PRIVATE
-        external/assimp/lib
-)
-
 set(AGILITYD3D_PATH external/d3d12/lib/x64)
 
 #linking
@@ -96,12 +92,10 @@ target_link_libraries(
         ${CMAKE_PROJECT_NAME}
         PRIVATE
         d3d12
-        d3dcompiler
         dxgi
         dxguid
         imgui
         ShCore
-        assimp-vc142-mt.lib
         ImGuizmo
 )
 
@@ -112,6 +106,8 @@ target_link_libraries(
         ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTex/lib/Debug/DirectXTex.lib
         debug
         ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTK12/lib/Debug/DirectXTK12.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/assimp/lib/assimp-vc142-mt.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dxc/lib/dxcompiler.lib
         optimized
         ${CMAKE_CURRENT_SOURCE_DIR}/external/DirectXTex/lib/Release/DirectXTex.lib
         optimized
@@ -131,6 +127,14 @@ add_custom_command (
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/${AGILITYD3D_PATH}"
         $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/D3D12
+)
+
+add_custom_command (
+        TARGET ${CMAKE_PROJECT_NAME} PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        "${CMAKE_CURRENT_SOURCE_DIR}/external/dxc/lib/dxcompiler.dll"
+        "${CMAKE_CURRENT_SOURCE_DIR}/external/dxc/lib/dxil.dll"
+        $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>
 )
 
 add_custom_command (

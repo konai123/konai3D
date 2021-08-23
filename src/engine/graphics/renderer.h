@@ -14,7 +14,7 @@
 #include "src/engine/graphics/macros.h"
 #include "src/engine/graphics/mesh_map.h"
 #include "src/engine/graphics/texture_map.h"
-#include "src/engine/graphics/render_pass.h"
+#include "src/engine/graphics/rasterize_pass.h"
 
 _START_ENGINE
 struct RenderingOptions {
@@ -98,7 +98,7 @@ private:
 
 private:
     /*Render Passes*/
-    std::unique_ptr<RenderPass> _render_pass;
+    std::unique_ptr<Rasterizer> _render_pass;
 };
 
 _END_ENGINE

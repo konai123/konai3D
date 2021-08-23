@@ -39,7 +39,7 @@ Renderer::Initiate(HWND hWnd, UINT width, UINT height, std::filesystem::path sha
 
     {
         /*Compile Shaders*/
-        if (!Shader::RenderPass.Build(shaderDirectoryPath)) {
+        if (!Shader::RasterizePass.Build(shaderDirectoryPath)) {
             GRAPHICS_LOG_ERROR("Filed to build shaders");
             return false;
         }
@@ -92,7 +92,7 @@ Renderer::Initiate(HWND hWnd, UINT width, UINT height, std::filesystem::path sha
 
     {
         /*Initiate Render Pass*/
-        _render_pass = std::make_unique<RenderPass>(_device);
+        _render_pass = std::make_unique<Rasterizer>(_device);
         if (!_render_pass->Initiate()) {
             GRAPHICS_LOG_ERROR("Failed to initialize render pass");
             return false;

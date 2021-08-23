@@ -21,3 +21,7 @@
 
 /*d3d12 external headers*/
 #include "external/d3d12/include/d3dx12.h"
+
+/*dxc*/
+#include "external/dxc/include/dxcapi.h"
+#include "external/dxc/include/d3d12shader.h"
