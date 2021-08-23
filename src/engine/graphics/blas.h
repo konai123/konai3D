@@ -13,7 +13,7 @@ struct BLAS {
     void AddGeometry(D3D12_RAYTRACING_GEOMETRY_DESC& geoDesc);
 
     std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> GeometryDescs;
-    Microsoft::WRL::ComPtr<ID3D12Resource> scratch_buffer;
-    Microsoft::WRL::ComPtr<ID3D12Resource> result_data_buffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource> ScratchBuffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource> ResultDataBuffer;
 };
 _END_ENGINE
