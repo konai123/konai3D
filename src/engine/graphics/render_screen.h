@@ -47,6 +47,9 @@ public:
     float4x4 ViewMatrix;
     float4x4 InverseViewMatrix;
     float4x4 ProjectionMatrix;
+    float4 ViewOriginAndTanHalfFovY;
+    UINT Width;
+    UINT Height;
 
 private:
     bool CreateRenderTargets(bool isRecreation, UINT width, UINT height);
@@ -66,8 +69,7 @@ private:
     HeapDescriptorHandle _depth_stencil_view;
 
     DirectX::XMVECTORF32 _clear_color;
-    UINT _width;
-    UINT _height;
+
     D3D12_VIEWPORT _viewport;
     D3D12_RECT _scissor_rect;
 };

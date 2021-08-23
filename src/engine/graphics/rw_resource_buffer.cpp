@@ -25,6 +25,14 @@ bool RWResourceBuffer::SetData(void *initData, UINT numResource, UINT databytesS
     return true;
 }
 
+bool RWResourceBuffer::SetData(UINT numResource, UINT bytesSize) {
+    for (UINT i = 0; i < _num_pre_frames; i++) {
+        auto upbuffer = std::make_unique<UploadBuffer>(_device.get(), numResource, bytesSize, false);
+        _cb_buffers.push_back(std::move(upbuffer));
+    }
+    return true;
+}
+
 bool RWResourceBuffer::UpdateData(void *data, UINT resourceIdx, UINT currentFrameIdx) {
     if (_cb_buffers[currentFrameIdx] == nullptr) {
         GRAPHICS_LOG_ERROR("Invalid resource buffers.");

@@ -32,14 +32,14 @@ public:
     virtual DirectX::XMVECTOR GetCameraTarget();
     virtual float GetCameraDistance();
 
-private:
-    DirectX::XMFLOAT3 _position;
-    DirectX::XMFLOAT3 _direction;
-    DirectX::XMFLOAT3 _target;
-    DirectX::XMFLOAT3 _camera_up;
-    float _fov;
-    float _ratio;
-    float _near;
-    float _far;
+public :
+    DirectX::XMFLOAT3 Position;
+    DirectX::XMFLOAT3 Direction;
+    DirectX::XMFLOAT3 Target;
+    DirectX::XMFLOAT3 CameraUp;
+    float Fov;
+    float Ratio;
+    float Near;
+    float Far;
 };
 _END_KONAI3D

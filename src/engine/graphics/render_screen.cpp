@@ -108,8 +108,8 @@ bool RenderScreen::CreateRenderTargets(bool isRecreation, UINT width, UINT heigh
     _viewport.MinDepth = 0.0f;
     _viewport.MaxDepth = 1.0f;
     _scissor_rect = {0, 0, static_cast<int>(width), static_cast<int>(height)};
-    _width = width;
-    _height = height;
+    Width = width;
+    Height = height;
     return true;
 }
 
@@ -125,7 +125,7 @@ bool RenderScreen::CreateRenderTargetResourceAndView(bool isRecreation, UINT wid
     render_target_desc.SampleDesc.Count = 1;
     render_target_desc.SampleDesc.Quality = 0;
     render_target_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-    render_target_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+    render_target_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 
     CD3DX12_CLEAR_VALUE clear_value;
     clear_value.Format = Renderer::BackbufferFormat;

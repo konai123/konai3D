@@ -8,21 +8,21 @@
 _START_KONAI3D
 Camera::Camera(float fov, float ratio, float pnear, float pfar)
 :
-_position(0.0f, 0.0f, 0.0f),
-_direction(0.0f, 0.0f, 1.0f),
-_target(0.0f, 0.0f, 0.0f),
-_fov(fov),
-_ratio(ratio),
-_near(pnear),
-_far(pfar),
-_camera_up(0.0f, 1.0f, 0.0f) {}
+        Position(0.0f, 0.0f, 0.0f),
+        Direction(0.0f, 0.0f, 1.0f),
+        Target(0.0f, 0.0f, 0.0f),
+        Fov(fov),
+        Ratio(ratio),
+        Near(pnear),
+        Far(pfar),
+        CameraUp(0.0f, 1.0f, 0.0f) {}
 
 void Camera::SetPosition(DirectX::XMVECTOR point) {
-    DirectX::XMStoreFloat3(&_position, point);
+    DirectX::XMStoreFloat3(&Position, point);
 }
 
 void Camera::Transposition(DirectX::XMVECTOR trans) {
-    DirectX::XMStoreFloat3(&_position, DirectX::XMVectorAdd(GetCameraPosition(), trans));
+    DirectX::XMStoreFloat3(&Position, DirectX::XMVectorAdd(GetCameraPosition(), trans));
 }
 
 void Camera::MoveOnViewSpace(DirectX::XMVECTOR trans) {
@@ -39,25 +39,25 @@ void Camera::MoveOnViewSpace(DirectX::XMVECTOR trans) {
 
 void Camera::Rotation(DirectX::XMVECTOR eulerAngle) {
     auto rot_mat = DirectX::XMMatrixRotationRollPitchYawFromVector(eulerAngle);
-    DirectX::XMVECTOR up = DirectX::XMVectorSet(_camera_up.x, _camera_up.y, _camera_up.z, 0.0f);
+    DirectX::XMVECTOR up = DirectX::XMVectorSet(CameraUp.x, CameraUp.y, CameraUp.z, 0.0f);
     up = DirectX::XMVector3Transform(up, rot_mat);
     DirectX::XMVECTOR dir = DirectX::XMVector3Transform(GetCameraDirection(), rot_mat);
 
-    DirectX::XMStoreFloat3(&_camera_up, up);
-    DirectX::XMStoreFloat3(&_direction, dir);
+    DirectX::XMStoreFloat3(&CameraUp, up);
+    DirectX::XMStoreFloat3(&Direction, dir);
 }
 
 void Camera::LookAt(DirectX::XMVECTOR point, DirectX::XMVECTOR up) {
     DirectX::XMVECTOR dir = DirectX::XMVectorSubtract(point, GetCameraPosition());
     dir = DirectX::XMVector3Normalize(dir);
 
-    DirectX::XMStoreFloat3(&_target, point);
-    DirectX::XMStoreFloat3(&_camera_up, up);
-    DirectX::XMStoreFloat3(&_direction, dir);
+    DirectX::XMStoreFloat3(&Target, point);
+    DirectX::XMStoreFloat3(&CameraUp, up);
+    DirectX::XMStoreFloat3(&Direction, dir);
 }
 
 DirectX::XMMATRIX Camera::GetViewMatrix() {
-    auto up = DirectX::XMVectorSet(_camera_up.x, _camera_up.y, _camera_up.z, 0.0f);
+    auto up = DirectX::XMVectorSet(CameraUp.x, CameraUp.y, CameraUp.z, 0.0f);
     DirectX::XMVECTOR front = GetCameraDirection();
     return DirectX::XMMatrixLookToLH(GetCameraPosition(), front, up);
 }
@@ -69,7 +69,7 @@ DirectX::XMMATRIX Camera::GetInverseViewMatrix() {
 }
 
 DirectX::XMMATRIX Camera::GetProjectionMatrix() {
-    return DirectX::XMMatrixPerspectiveFovLH(_fov * F_PI, _ratio, _near, _far);
+    return DirectX::XMMatrixPerspectiveFovLH(Fov * F_PI, Ratio, Near, Far);
 }
 
 
@@ -79,19 +79,19 @@ DirectX::XMMATRIX Camera::GetViewProjectionMatrix() {
 }
 
 DirectX::XMVECTOR Camera::GetCameraPosition() {
-    return DirectX::XMVectorSet(_position.x, _position.y, _position.z, 0.0f);
+    return DirectX::XMVectorSet(Position.x, Position.y, Position.z, 0.0f);
 }
 
 DirectX::XMVECTOR Camera::GetCameraDirection() {
-    return DirectX::XMVectorSet(_direction.x, _direction.y, _direction.z, 0.0f);
+    return DirectX::XMVectorSet(Direction.x, Direction.y, Direction.z, 0.0f);
 }
 
 DirectX::XMVECTOR Camera::GetCameraUpVector() {
-    return DirectX::XMVectorSet(_camera_up.x, _camera_up.y, _camera_up.z, 0.0f);
+    return DirectX::XMVectorSet(CameraUp.x, CameraUp.y, CameraUp.z, 0.0f);
 }
 
 DirectX::XMVECTOR Camera::GetCameraTarget() {
-    return DirectX::XMLoadFloat3(&_target);
+    return DirectX::XMLoadFloat3(&Target);
 }
 
 

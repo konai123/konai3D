@@ -40,6 +40,8 @@ _screen(nullptr) {
     _screen = renderer->InstanceRenderScreen(_width, _height);
     AppAssert(_screen != nullptr);
 
+    auto camera_position = _camera->Position;
+    _screen->ViewOriginAndTanHalfFovY = float4(camera_position.x, camera_position.y, camera_position.z, tanf(_camera->Fov * 0.5f));
     DirectX::XMStoreFloat4x4(&_screen->ViewMatrix, _camera->GetViewMatrix());
     DirectX::XMStoreFloat4x4(&_screen->ProjectionMatrix, _camera->GetProjectionMatrix());
     DirectX::XMStoreFloat4x4(&_screen->InverseViewMatrix, _camera->GetInverseViewMatrix());
@@ -209,6 +211,8 @@ void ViewportWindow::ControlViewport() {
 }
 
 void ViewportWindow::UpdateScreen() {
+    auto camera_position = _camera->Position;
+    _screen->ViewOriginAndTanHalfFovY = float4(camera_position.x, camera_position.y, camera_position.z, tanf(_camera->Fov * 0.5f));
     DirectX::XMStoreFloat4x4(&_screen->ViewMatrix, _camera->GetViewMatrix());
     DirectX::XMStoreFloat4x4(&_screen->ProjectionMatrix, _camera->GetProjectionMatrix());
     DirectX::XMStoreFloat4x4(&_screen->InverseViewMatrix, _camera->GetInverseViewMatrix());

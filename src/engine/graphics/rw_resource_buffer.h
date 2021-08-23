@@ -16,6 +16,7 @@ public:
 public:
     ID3D12Resource *GetResource(UINT currentFrameIdx);
     bool SetData(void *initData, UINT numResource, UINT bytesSize);
+    bool SetData(UINT numResource, UINT bytesSize);
     bool UpdateData(void *data, UINT resourceIdx, UINT currentFrameIdx);
 
 private:
