@@ -49,12 +49,14 @@ void MaterialWindow::OnUpdate(float delta) {
             if (ImGui::Button("Load from file")) {
                 _file_dialog.Open();
             }
+
             for (auto& tex_name : texture_names) {
                 auto texture = _render_resource_map->TextureMap->GetResource(tex_name);
                 auto texture_id = reinterpret_cast<void*>(texture->Handle.GpuHandle.ptr);
                 ImGui::Text(tex_name.data());
                 if (ImGui::ImageButton(texture_id, texture_size)) {
                     material_desc.DiffuseTexturePath = tex_name;
+                    material_desc.Dirty = true;
                     _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
                     ImGui::CloseCurrentPopup();
                 }

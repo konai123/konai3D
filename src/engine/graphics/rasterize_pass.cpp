@@ -180,8 +180,10 @@ void Rasterizer::Render(
                         _cb_buffer_per_objects[obj_count]->UpdateData(&per_object, currentFrameIndex);
                     }
                 }
+
                 command_list->SetGraphicsRootConstantBufferView(0, _cb_buffer_per_objects[obj_count]->
                         GetResource(currentFrameIndex)->GetGPUVirtualAddress());
+
                 if (!meshMap->Contains(obj->MeshID)) {
                     GRAPHICS_LOG_ERROR("Cannot find mesh id : {}", obj->MeshID);
                     continue;
@@ -315,14 +317,14 @@ bool Rasterizer::BuildResourceBuffer() {
     }
 
     _cb_buffer_per_frames = std::move(std::make_unique<ConstantBuffer>(_device, Renderer::NumPreFrames));
-    _cb_buffer_per_frames->SetData(&null_frame, sizeof(CBPerObject));
+    _cb_buffer_per_frames->SetData(&null_frame, sizeof(CBPerFrame));
 
     _rw_buffer_material = std::move(std::make_unique<RWResourceBuffer>(_device, Renderer::NumPreFrames));
 
     _rw_buffer_material->SetData(&material, MaterialMap::MaxMaterial,
                                  sizeof(ShaderType::Material));
 
-    return false;
+    return true;
 }
 
 _END_ENGINE

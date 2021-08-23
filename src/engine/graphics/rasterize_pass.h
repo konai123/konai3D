@@ -15,18 +15,19 @@
 
 _START_ENGINE
 
-struct CBPerFrame {
-    float4x4 view_mat;
-    float4x4 inverse_view_mat;
-    float4x4 projection_mat;
-};
-
-struct CBPerObject {
-    float4x4 world_mat;
-    int material_id;
-};
-
 class Rasterizer {
+public:
+    struct CBPerFrame {
+        float4x4 view_mat;
+        float4x4 inverse_view_mat;
+        float4x4 projection_mat;
+    };
+
+    struct CBPerObject {
+        float4x4 world_mat;
+        int material_id;
+    };
+
 public:
     Rasterizer(std::shared_ptr<DeviceCom> deviceCom);
     virtual ~Rasterizer() = default;
