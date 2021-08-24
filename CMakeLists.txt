@@ -60,6 +60,7 @@ add_executable(
         src/engine/graphics/blas.cpp
         src/engine/graphics/tlas.cpp
         src/engine/graphics/raytracing_pass.cpp
+        src/engine/graphics/resource_garbage_queue.cpp
 )
 
 #set_target_properties(${PROJECT_NAME} PROPERTIES
