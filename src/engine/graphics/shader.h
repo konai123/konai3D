@@ -62,36 +62,36 @@ public:
 struct Shader
 {
 public:
-    struct Rasterize {
-    public:
-        Microsoft::WRL::ComPtr<IDxcBlob> VS;
-        Microsoft::WRL::ComPtr<IDxcBlob> PS;
-
-        bool Build(std::filesystem::path path) {
-            if (!Shader::Build(
-                    {
-                            path / "rasterize_pass.hlsl",
-                            path,
-                            L"VS",
-                            ShaderVersionedType::VS_SHADER_PROFILE_6_3
-                    },
-                    VS.GetAddressOf())) {
-                return false;
-            }
-
-            if (!Shader::Build(
-                    {
-                            path / "rasterize_pass.hlsl",
-                            path,
-                            L"PS",
-                            ShaderVersionedType::PS_SHADER_PROFILE_6_3
-                    },
-                    PS.GetAddressOf())) {
-                return false;
-            }
-            return true;
-        }
-    };
+//    struct Rasterize {
+//    public:
+//        Microsoft::WRL::ComPtr<IDxcBlob> VS;
+//        Microsoft::WRL::ComPtr<IDxcBlob> PS;
+//
+//        bool Build(std::filesystem::path path) {
+//            if (!Shader::Build(
+//                    {
+//                            path / "rasterize_pass.hlsl",
+//                            path,
+//                            L"VS",
+//                            ShaderVersionedType::VS_SHADER_PROFILE_6_3
+//                    },
+//                    VS.GetAddressOf())) {
+//                return false;
+//            }
+//
+//            if (!Shader::Build(
+//                    {
+//                            path / "rasterize_pass.hlsl",
+//                            path,
+//                            L"PS",
+//                            ShaderVersionedType::PS_SHADER_PROFILE_6_3
+//                    },
+//                    PS.GetAddressOf())) {
+//                return false;
+//            }
+//            return true;
+//        }
+//    };
 
     struct Raytrace {
     public:
@@ -136,7 +136,6 @@ public:
     };
 
 public:
-    inline static Rasterize RasterizePass;
     inline static Raytrace RaytracePass;
 
 public:
