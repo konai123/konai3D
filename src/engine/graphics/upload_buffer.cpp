@@ -8,8 +8,8 @@
 _START_ENGINE
 UploadBuffer::UploadBuffer(DeviceCom *device, int elementCount, UINT elementSize, bool isConstant)
 :
-        MappedData(nullptr),
-        ByteSize(0) {
+MappedData(nullptr),
+ByteSize(0) {
     ByteSize = isConstant ? GetConstantBufferBytes(elementCount, elementSize) : elementSize * elementCount;
     ElementByteSize = isConstant ? GetConstantBufferBytes(1, elementSize) : elementSize;
 
@@ -26,7 +26,6 @@ UploadBuffer::UploadBuffer(DeviceCom *device, int elementCount, UINT elementSize
 
 UploadBuffer::~UploadBuffer() {
     _upload_buffer->Unmap(0, nullptr);
-    ResourceGarbageQueue::Instance().SubmitResource(_upload_buffer);
     MappedData = nullptr;
 }
 
@@ -36,6 +35,11 @@ ID3D12Resource *UploadBuffer::Resource() {
 
 void UploadBuffer::Copy(int elementIndex, void *data) {
     memcpy(MappedData + (elementIndex * ElementByteSize), data, ElementByteSize);
+}
+
+void UploadBuffer::SafeRelease() {
+    ResourceGarbageQueue::Instance().SubmitResource(_upload_buffer);
+    _upload_buffer = nullptr;
 }
 
 _END_ENGINE

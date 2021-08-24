@@ -19,6 +19,7 @@ public:
     bool SetData(UINT numResource, UINT bytesSize);
     bool UpdateData(void *data, UINT resourceIdx, UINT currentFrameIdx);
     UINT GetResourceBytesSize();
+    void SafeRelease();
 
 private:
     std::shared_ptr<DeviceCom> _device;

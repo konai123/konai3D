@@ -65,6 +65,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource> _render_target;
 
     HeapDescriptorHandle _render_target_view;
+    HeapDescriptorHandle _unordered_view;
     HeapDescriptorHandle _shader_view;
     HeapDescriptorHandle _depth_stencil_view;
 

@@ -71,6 +71,8 @@ _device(deviceCom)
 {}
 
 bool Raytracer::Initiate() {
+    _tlas.Initialize(MAX_RENDER_OBJECT, _device.get());
+
     if(!BuildGlobalRootSignature()) {
         GRAPHICS_LOG_ERROR("Failed To Create Global Rootsignature");
         return false;
@@ -106,16 +108,22 @@ void Raytracer::Render(
         ResourceDescriptorHeap *heaps
 ) {
     {
+        if (screen->GetRenderObjectList().empty()) {
+            return;
+        }
+
         command_list->SetComputeRootSignature(_global_root_signature.Get());
         command_list->SetPipelineState1(_rtpso.Get());
 
         /*Bind TextureTables*/
-        command_list->SetComputeRootShaderResourceView(3,
+        command_list->SetComputeRootShaderResourceView(2,
                                                         _rw_buffer_material->GetResource(
                                                                 currentFrameIndex)->GetGPUVirtualAddress());
-        command_list->SetComputeRootDescriptorTable(4,
+        command_list->SetComputeRootDescriptorTable(3,
                                                      heaps->GetShaderResourceHeap()->GetGPUDescriptorHandleForHeapStart());
 
+        command_list->SetComputeRootDescriptorTable(4,
+                                                    heaps->GetShaderResourceHeap()->GetGPUDescriptorHandleForHeapStart());
 
         RenderScreen *render_screen = screen;
         auto render_target = render_screen->GetRenderTargetResource();
@@ -128,7 +136,6 @@ void Raytracer::Render(
                 D3D12_RESOURCE_STATE_UNORDERED_ACCESS
         );
         command_list->ResourceBarrier(1, &barrier_enter);
-        command_list->SetComputeRootUnorderedAccessView(2, render_screen->GetRenderTargetResource()->GetGPUVirtualAddress());
 
         {
             auto Camera = render_screen->ViewMatrix;
@@ -138,7 +145,9 @@ void Raytracer::Render(
                 .Resolution = float2(
                         static_cast<float>(render_screen->Width),
                         static_cast<float>(render_screen->Height)
-                        )
+                        ),
+                .Pad = float2(0.0f, 0.0f),
+                .RenderTargetIdx = static_cast<UINT>(render_screen->GetShaderResourceHeapDesc()->_heap_index)
             };
             _cb_buffer_per_frames->UpdateData(&per_frame, currentFrameIndex);
         }
@@ -209,7 +218,7 @@ void Raytracer::Render(
 
             _tlas.Generate(_device.get(), command_list);
             command_list->SetComputeRootShaderResourceView(1, _tlas.ResultDataBuffer->GetGPUVirtualAddress());
-            UpdateHitgroupTable(materialMap, objs, currentFrameIndex);
+            UpdateHitgroupTable(meshMap, materialMap, objs, currentFrameIndex);
         }
 
         {
@@ -257,14 +266,8 @@ bool Raytracer::BuildGlobalRootSignature() {
 
     CD3DX12_ROOT_PARAMETER1 raytracing_acceleration_structure;
     {
-        raytracing_acceleration_structure.InitAsShaderResourceView(2, 0);
+        raytracing_acceleration_structure.InitAsShaderResourceView(1, 1);
     }
-
-    CD3DX12_ROOT_PARAMETER1 rt_output;
-    {
-        rt_output.InitAsUnorderedAccessView(1, 0);
-    }
-
 
     std::vector<CD3DX12_DESCRIPTOR_RANGE1> range;
     CD3DX12_ROOT_PARAMETER1 srv_param;
@@ -284,12 +287,25 @@ bool Raytracer::BuildGlobalRootSignature() {
         srv_param.InitAsDescriptorTable(static_cast<UINT>(range.size()), range.data());
     }
 
+    std::vector<CD3DX12_DESCRIPTOR_RANGE1> range_uav;
+    CD3DX12_ROOT_PARAMETER1 uav_param;
+    {
+        D3D12_DESCRIPTOR_RANGE_FLAGS flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE |
+                                             D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
+
+        CD3DX12_DESCRIPTOR_RANGE1 g_rw_texture;
+        g_rw_texture.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, UINT_MAX, 0, 100, flags, 0);
+
+        range_uav.push_back(g_rw_texture);
+        uav_param.InitAsDescriptorTable(static_cast<UINT>(range_uav.size()), range_uav.data());
+    }
+
     std::vector<CD3DX12_ROOT_PARAMETER1> params = {
             cb_per_frame_param,
             raytracing_acceleration_structure,
-            rt_output,
             material_param,
-            srv_param
+            srv_param,
+            uav_param
     };
 
     auto static_samplers = StaticSamplers();
@@ -308,12 +324,25 @@ bool Raytracer::BuildHitgroupRootSignature() {
     {
         cb_per_object_param.InitAsConstants(1, 0, 0);
     }
+
+    CD3DX12_ROOT_PARAMETER1 vertex_buffer;
+    {
+        vertex_buffer.InitAsShaderResourceView(2, 0);
+    }
+
+    CD3DX12_ROOT_PARAMETER1 index_buffer;
+    {
+        index_buffer.InitAsShaderResourceView(2, 1);
+    }
+
     std::vector<CD3DX12_ROOT_PARAMETER1> params = {
             cb_per_object_param,
+            vertex_buffer,
+            index_buffer
     };
 
     _hit_group_root_signature = _device->CreateRootSignature(params.data(), nullptr, 0,
-                                                          static_cast<UINT>(params.size()));
+                                                          static_cast<UINT>(params.size()), D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
 
     if (_hit_group_root_signature == nullptr) {
         GRAPHICS_LOG_ERROR("Failed to create root signature.");
@@ -322,29 +351,47 @@ bool Raytracer::BuildHitgroupRootSignature() {
     return true;
 }
 
-bool Raytracer::UpdateHitgroupTable(MaterialMap* matMap, std::vector<RenderObject*> objs, UINT currentFrame) {
+bool Raytracer::UpdateHitgroupTable(MeshMap* meshMap, MaterialMap* matMap, std::vector<RenderObject*> objs, UINT currentFrame) {
     _hitgroup_table.Clear();
 
     for (int i = 0; i < objs.size(); i++) {
         ShaderRecord hit_group;
-        hit_group.AddField<void, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES>(
-                _rtpso_info->GetShaderIdentifier(L"HitGroup")
-        );
+        auto shader_id = _rtpso_info->GetShaderIdentifier(L"HitGroup");
+        hit_group.AddShaderID(shader_id);
 
         auto mat_name = objs[i]->MaterialName;
         int matID = matMap->GetMaterialID(mat_name);
         if (matID == -1) {
             continue;
         }
+        hit_group.AddField<UINT, sizeof(UINT)>(matID);
 
-        hit_group.AddField<void, sizeof(UINT)>(&matID);
+        auto meshID = objs[i]->MeshID;
+        if (!meshMap->Contains(meshID)) {
+            continue;
+        }
+        auto submesh = meshMap->GetResources(meshID)->Meshes[objs[i]->SubmeshID].get();
+        hit_group.AddField<D3D12_GPU_VIRTUAL_ADDRESS, sizeof(D3D12_GPU_VIRTUAL_ADDRESS)>(
+                submesh->VertexBuffer->GetGPUVirtualAddress() + submesh->BaseVertexLocation * sizeof(Vertex)
+        );
+        hit_group.AddField<D3D12_GPU_VIRTUAL_ADDRESS, sizeof(D3D12_GPU_VIRTUAL_ADDRESS)>(
+                submesh->IndexBuffer->GetGPUVirtualAddress() + submesh->StartIndexLocation * sizeof(UINT)
+        );
         _hitgroup_table.AddRecord(hit_group);
+    }
+
+    if (_hitgroup_table.Records.empty()) {
+        return false;
     }
 
     if (_hit_group_shader_table_resource == nullptr
     || _hitgroup_table.GetBytesSize() > _hit_group_shader_table_resource->GetResourceBytesSize()) {
+        if (_hit_group_shader_table_resource != nullptr) {
+            _hit_group_shader_table_resource->SafeRelease();
+        }
+
         _hit_group_shader_table_resource = std::make_unique<RWResourceBuffer>(_device, Renderer::NumPreFrames);
-        _hit_group_shader_table_resource->SetData(_hitgroup_table.Records.size(), _hitgroup_table.MaxRecordSize);
+        _hit_group_shader_table_resource->SetData(_hitgroup_table.Records.size(), _hitgroup_table.GetBytesSize());
     }
 
     if (!_hitgroup_table.Generate(_hit_group_shader_table_resource.get(), currentFrame)) {
@@ -360,27 +407,25 @@ bool Raytracer::BuildRSShaderTable() {
     _ray_gen_table.Clear();
     _miss_table.Clear();
 
-    ray_gen.AddField<void, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES>(
-            _rtpso_info->GetShaderIdentifier(L"RayGen_12")
-    );
-    miss.AddField<void, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES>(
-            _rtpso_info->GetShaderIdentifier(L"Miss_5")
-    );
+    ray_gen.AddShaderID(_rtpso_info->GetShaderIdentifier(L"RayGen_12"));
+    miss.AddShaderID(_rtpso_info->GetShaderIdentifier(L"Miss_5"));
 
     _ray_gen_table.AddRecord(ray_gen);
     _miss_table.AddRecord(miss);
 
     _ray_gen_shader_table_resource = std::make_unique<RWResourceBuffer>(_device, Renderer::NumPreFrames);
-    _ray_gen_shader_table_resource->SetData(_ray_gen_table.Records.size(), _ray_gen_table.MaxRecordSize);
+    _ray_gen_shader_table_resource->SetData(_ray_gen_table.Records.size(), _ray_gen_table.GetBytesSize());
 
     _miss_shader_table_resource = std::make_unique<RWResourceBuffer>(_device, Renderer::NumPreFrames);
-    _miss_shader_table_resource->SetData(_miss_table.Records.size(), _miss_table.MaxRecordSize);
+    _miss_shader_table_resource->SetData(_miss_table.Records.size(), _miss_table.GetBytesSize());
 
-    if (!_ray_gen_table.Generate(_ray_gen_shader_table_resource.get(), Renderer::NumPreFrames)) {
-        return false;
-    }
-    if (!_miss_table.Generate(_miss_shader_table_resource.get(), Renderer::NumPreFrames)) {
-        return false;
+    for (UINT i = 0; i < Renderer::NumPreFrames; i++) {
+        if (!_ray_gen_table.Generate(_ray_gen_shader_table_resource.get(), i)) {
+            return false;
+        }
+        if (!_miss_table.Generate(_miss_shader_table_resource.get(), i)) {
+            return false;
+        }
     }
 
     return true;
@@ -390,147 +435,127 @@ bool Raytracer::BuildRSPipelineState() {
     UINT idx = 0;
     std::vector<D3D12_STATE_SUBOBJECT> sub_objects(10);
 
-    {
-        D3D12_EXPORT_DESC export_desc = {};
-        export_desc.Name = L"RayGen_12";
-        export_desc.ExportToRename = L"RayGen";
-        export_desc.Flags = D3D12_EXPORT_FLAG_NONE;
+    D3D12_EXPORT_DESC export_desc_ray_gen = {};
+    export_desc_ray_gen.Name = L"RayGen_12";
+    export_desc_ray_gen.ExportToRename = L"RayGen";
+    export_desc_ray_gen.Flags = D3D12_EXPORT_FLAG_NONE;
 
-        D3D12_DXIL_LIBRARY_DESC lib_desc;
-        lib_desc.DXILLibrary.BytecodeLength = Shader::RaytracePass.Raygen->GetBufferSize();
-        lib_desc.DXILLibrary.pShaderBytecode = Shader::RaytracePass.Raygen->GetBufferPointer();
-        lib_desc.NumExports = 1;
-        lib_desc.pExports = &export_desc;
+    D3D12_DXIL_LIBRARY_DESC lib_desc_ray_gen;
+    lib_desc_ray_gen.DXILLibrary.BytecodeLength = Shader::RaytracePass.Raygen->GetBufferSize();
+    lib_desc_ray_gen.DXILLibrary.pShaderBytecode = Shader::RaytracePass.Raygen->GetBufferPointer();
+    lib_desc_ray_gen.NumExports = 1;
+    lib_desc_ray_gen.pExports = &export_desc_ray_gen;
 
-        D3D12_STATE_SUBOBJECT desc = {};
-        desc.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
-        desc.pDesc = &lib_desc;
+    D3D12_STATE_SUBOBJECT desc = {};
+    desc.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+    desc.pDesc = &lib_desc_ray_gen;
 
-        sub_objects[idx++] = desc;
-    }
+    sub_objects[idx++] = desc;
 
-    {
-        D3D12_EXPORT_DESC export_desc = {};
-        export_desc.Name = L"Miss_5";
-        export_desc.ExportToRename = L"Miss";
-        export_desc.Flags = D3D12_EXPORT_FLAG_NONE;
+    D3D12_EXPORT_DESC export_desc_miss = {};
+    export_desc_miss.Name = L"Miss_5";
+    export_desc_miss.ExportToRename = L"Miss";
+    export_desc_miss.Flags = D3D12_EXPORT_FLAG_NONE;
 
-        D3D12_DXIL_LIBRARY_DESC lib_desc;
-        lib_desc.DXILLibrary.BytecodeLength = Shader::RaytracePass.Miss->GetBufferSize();
-        lib_desc.DXILLibrary.pShaderBytecode = Shader::RaytracePass.Miss->GetBufferPointer();
-        lib_desc.NumExports = 1;
-        lib_desc.pExports = &export_desc;
+    D3D12_DXIL_LIBRARY_DESC lib_desc_miss;
+    lib_desc_miss.DXILLibrary.BytecodeLength = Shader::RaytracePass.Miss->GetBufferSize();
+    lib_desc_miss.DXILLibrary.pShaderBytecode = Shader::RaytracePass.Miss->GetBufferPointer();
+    lib_desc_miss.NumExports = 1;
+    lib_desc_miss.pExports = &export_desc_miss;
 
-        D3D12_STATE_SUBOBJECT desc = {};
-        desc.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
-        desc.pDesc = &lib_desc;
+    desc = {};
+    desc.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+    desc.pDesc = &lib_desc_miss;
 
-        sub_objects[idx++] = desc;
-    }
+    sub_objects[idx++] = desc;
 
-    {
-        D3D12_EXPORT_DESC export_desc = {};
-        export_desc.Name = L"ClosestHit_76";
-        export_desc.ExportToRename = L"ClosestHit";
-        export_desc.Flags = D3D12_EXPORT_FLAG_NONE;
+    D3D12_EXPORT_DESC export_desc_closest_hit = {};
+    export_desc_closest_hit.Name = L"ClosestHit_76";
+    export_desc_closest_hit.ExportToRename = L"ClosestHit";
+    export_desc_closest_hit.Flags = D3D12_EXPORT_FLAG_NONE;
 
-        D3D12_DXIL_LIBRARY_DESC lib_desc;
-        lib_desc.DXILLibrary.BytecodeLength = Shader::RaytracePass.Closest->GetBufferSize();
-        lib_desc.DXILLibrary.pShaderBytecode = Shader::RaytracePass.Closest->GetBufferPointer();
-        lib_desc.NumExports = 1;
-        lib_desc.pExports = &export_desc;
+    D3D12_DXIL_LIBRARY_DESC lib_desc_closest_hit;
+    lib_desc_closest_hit.DXILLibrary.BytecodeLength = Shader::RaytracePass.Closest->GetBufferSize();
+    lib_desc_closest_hit.DXILLibrary.pShaderBytecode = Shader::RaytracePass.Closest->GetBufferPointer();
+    lib_desc_closest_hit.NumExports = 1;
+    lib_desc_closest_hit.pExports = &export_desc_closest_hit;
 
-        D3D12_STATE_SUBOBJECT desc = {};
-        desc.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
-        desc.pDesc = &lib_desc;
+    desc = {};
+    desc.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+    desc.pDesc = &lib_desc_closest_hit;
 
-        sub_objects[idx++] = desc;
-    }
+    sub_objects[idx++] = desc;
 
-    {
-        D3D12_HIT_GROUP_DESC hitGroupDesc = {};
-        hitGroupDesc.ClosestHitShaderImport = L"ClosestHit_76";
-        hitGroupDesc.HitGroupExport = L"HitGroup";
+    D3D12_HIT_GROUP_DESC hitGroupDesc = {};
+    hitGroupDesc.ClosestHitShaderImport = L"ClosestHit_76";
+    hitGroupDesc.HitGroupExport = L"HitGroup";
 
-        D3D12_STATE_SUBOBJECT hitGroup = {};
-        hitGroup.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
-        hitGroup.pDesc = &hitGroupDesc;
+    D3D12_STATE_SUBOBJECT hitGroup = {};
+    hitGroup.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
+    hitGroup.pDesc = &hitGroupDesc;
 
-        sub_objects[idx++] = hitGroup;
-    }
+    sub_objects[idx++] = hitGroup;
 
-    {
-        D3D12_RAYTRACING_SHADER_CONFIG shaderDesc = {};
-        shaderDesc.MaxPayloadSizeInBytes = sizeof(float4);	// RGB and HitT
-        shaderDesc.MaxAttributeSizeInBytes = D3D12_RAYTRACING_MAX_ATTRIBUTE_SIZE_IN_BYTES;
+    D3D12_RAYTRACING_SHADER_CONFIG shaderDesc = {};
+    shaderDesc.MaxPayloadSizeInBytes = sizeof(float4);	// RGB and HitT
+    shaderDesc.MaxAttributeSizeInBytes = D3D12_RAYTRACING_MAX_ATTRIBUTE_SIZE_IN_BYTES;
 
-        D3D12_STATE_SUBOBJECT shaderConfigObject = {};
-        shaderConfigObject.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
-        shaderConfigObject.pDesc = &shaderDesc;
+    D3D12_STATE_SUBOBJECT shaderConfigObject = {};
+    shaderConfigObject.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
+    shaderConfigObject.pDesc = &shaderDesc;
 
-        sub_objects[idx++] = shaderConfigObject;
-    }
+    sub_objects[idx++] = shaderConfigObject;
 
-    {
-        const WCHAR* shaderExports[] = { L"RayGen_12", L"Miss_5", L"HitGroup" };
+    const WCHAR* shaderExports[] = { L"RayGen_12", L"Miss_5", L"HitGroup" };
 
-        // Add a state subobject for the association between shaders and the payload
-        D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION shaderPayloadAssociation = {};
-        shaderPayloadAssociation.NumExports = _countof(shaderExports);
-        shaderPayloadAssociation.pExports = shaderExports;
-        shaderPayloadAssociation.pSubobjectToAssociate = &sub_objects[(idx - 1)];
+    // Add a state subobject for the association between shaders and the payload
+    D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION shaderPayloadAssociation = {};
+    shaderPayloadAssociation.NumExports = _countof(shaderExports);
+    shaderPayloadAssociation.pExports = shaderExports;
+    shaderPayloadAssociation.pSubobjectToAssociate = &sub_objects[(idx - 1)];
 
-        D3D12_STATE_SUBOBJECT shaderPayloadAssociationObject = {};
-        shaderPayloadAssociationObject.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
-        shaderPayloadAssociationObject.pDesc = &shaderPayloadAssociation;
+    D3D12_STATE_SUBOBJECT shaderPayloadAssociationObject = {};
+    shaderPayloadAssociationObject.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
+    shaderPayloadAssociationObject.pDesc = &shaderPayloadAssociation;
 
-        sub_objects[idx++] = shaderPayloadAssociationObject;
-    }
+    sub_objects[idx++] = shaderPayloadAssociationObject;
 
-    {
-        // Add a state subobject for the shared root signature
-        D3D12_STATE_SUBOBJECT hotgroupRootSigObject = {};
-        hotgroupRootSigObject.Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
-        hotgroupRootSigObject.pDesc = _hit_group_root_signature.Get();
+    // Add a state subobject for the shared root signature
+    D3D12_STATE_SUBOBJECT hitgroupRootSigObject = {};
+    hitgroupRootSigObject.Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
+    hitgroupRootSigObject.pDesc = _hit_group_root_signature.GetAddressOf();
 
-        sub_objects[idx++] = hotgroupRootSigObject;
-    }
+    sub_objects[idx++] = hitgroupRootSigObject;
 
-    {
-        // Create a list of the shader export names that use the root signature
-        const WCHAR* rootSigExports[] = { L"HitGroup"};
+    // Create a list of the shader export names that use the root signature
+    const WCHAR* rootSigExports[] = { L"HitGroup"};
 
-        // Add a state subobject for the association between the RayGen shader and the local root signature
-        D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION hitgroupShaderRootSigAssociation = {};
-        hitgroupShaderRootSigAssociation.NumExports = _countof(rootSigExports);
-        hitgroupShaderRootSigAssociation.pExports = rootSigExports;
-        hitgroupShaderRootSigAssociation.pSubobjectToAssociate = &sub_objects[(idx - 1)];
+    // Add a state subobject for the association between the RayGen shader and the local root signature
+    D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION hitgroupShaderRootSigAssociation = {};
+    hitgroupShaderRootSigAssociation.NumExports = _countof(rootSigExports);
+    hitgroupShaderRootSigAssociation.pExports = rootSigExports;
+    hitgroupShaderRootSigAssociation.pSubobjectToAssociate = &sub_objects[(idx - 1)];
 
-        D3D12_STATE_SUBOBJECT hitgroupShaderRootSigAssociationObject = {};
-        hitgroupShaderRootSigAssociationObject.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
-        hitgroupShaderRootSigAssociationObject.pDesc = &hitgroupShaderRootSigAssociation;
+    D3D12_STATE_SUBOBJECT hitgroupShaderRootSigAssociationObject = {};
+    hitgroupShaderRootSigAssociationObject.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
+    hitgroupShaderRootSigAssociationObject.pDesc = &hitgroupShaderRootSigAssociation;
 
-        sub_objects[idx++] = hitgroupShaderRootSigAssociationObject;
-    }
+    sub_objects[idx++] = hitgroupShaderRootSigAssociationObject;
 
-    {
-        D3D12_STATE_SUBOBJECT globalRootSig;
-        globalRootSig.Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
-        globalRootSig.pDesc = _global_root_signature.Get();
+    D3D12_STATE_SUBOBJECT globalRootSig;
+    globalRootSig.Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
+    globalRootSig.pDesc = _global_root_signature.GetAddressOf();
 
-        sub_objects[idx++] = globalRootSig;
-    }
+    sub_objects[idx++] = globalRootSig;
 
-    {
-        D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = {};
-        pipelineConfig.MaxTraceRecursionDepth = 1;
+    D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = {};
+    pipelineConfig.MaxTraceRecursionDepth = 1;
 
-        D3D12_STATE_SUBOBJECT pipelineConfigObject = {};
-        pipelineConfigObject.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
-        pipelineConfigObject.pDesc = &pipelineConfig;
+    D3D12_STATE_SUBOBJECT pipelineConfigObject = {};
+    pipelineConfigObject.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
+    pipelineConfigObject.pDesc = &pipelineConfig;
 
-        sub_objects[idx++] = pipelineConfigObject;
-    }
+    sub_objects[idx++] = pipelineConfigObject;
 
     D3D12_STATE_OBJECT_DESC pipelineDesc = {};
     pipelineDesc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;

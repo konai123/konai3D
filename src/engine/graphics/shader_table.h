@@ -10,14 +10,25 @@
 
 _START_ENGINE
 struct ShaderRecord {
+    void AddShaderID(void* IDBuffer) {
+        std::vector<UINT8> copied;
+        for (int i = 0; i < D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES; i++) {
+            copied.push_back(reinterpret_cast<UINT8*>(IDBuffer)[i]);
+        }
+        Data.push_back(copied);
+        RecordeSize += D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+    }
+
     template<typename T, UINT Tsize>
-    void AddField(T* pData) {
-        data.push_back(std::make_pair(pData, Tsize));
+    void AddField(T pData) {
+        std::vector<UINT8> dest(Tsize);
+        memcpy(dest.data(), &pData, Tsize);
         RecordeSize += Tsize;
+        Data.push_back(dest);
     }
 
     UINT RecordeSize = 0;
-    std::vector<std::pair<void*, UINT>> data;
+    std::vector<std::vector<UINT8>> Data;
 };
 
 struct ShaderTable {
@@ -33,13 +44,11 @@ struct ShaderTable {
     bool Generate(RWResourceBuffer* buffer, UINT currentFrame) {
         UINT idx = 0;
         for (auto& record : Records) {
-            std::vector<UINT8> raw(MaxRecordSize);
+            std::vector<UINT8> raw;
             UINT offset = 0;
-            for (auto p : record.data) {
-                UINT sz = p.second;
-                UINT8* pointer = reinterpret_cast<UINT8*>(p.first);
-                raw.insert(raw.begin() + offset, pointer, pointer+sz);
-                offset += sz;
+            for (auto p : record.Data) {
+                raw.insert(raw.begin()+offset, p.begin(), p.end());
+                offset += p.size();
             }
 
             buffer->UpdateData(raw.data(), idx, currentFrame);

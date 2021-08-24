@@ -49,4 +49,11 @@ UINT RWResourceBuffer::GetResourceBytesSize() {
 }
 
 
+void RWResourceBuffer::SafeRelease() {
+    for (UINT i = 0; i < _num_pre_frames; i++) {
+        _cb_buffers[i]->SafeRelease();
+        _cb_buffers[i] = nullptr;
+    }
+}
+
 _END_ENGINE

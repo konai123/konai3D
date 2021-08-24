@@ -25,6 +25,8 @@ public:
         float4x4 View_mat;
         float4 ViewOriginAndTanHalfFovY;
         float2 Resolution;
+        float2 Pad;
+        UINT RenderTargetIdx;
     };
 
     explicit Raytracer(std::shared_ptr<DeviceCom> deviceCom);
@@ -53,7 +55,7 @@ private:
     bool BuildRSPipelineState();
     bool BuildResourceBuffer();
 
-    bool UpdateHitgroupTable(MaterialMap* matMap, std::vector<RenderObject*> objs, UINT currentFrame);
+    bool UpdateHitgroupTable(MeshMap* meshMap, MaterialMap* matMap, std::vector<RenderObject*> objs, UINT currentFrame);
 
 private:
     Microsoft::WRL::ComPtr<ID3D12StateObject> _rtpso;

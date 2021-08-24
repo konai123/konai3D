@@ -14,4 +14,14 @@ void ResourceGarbageQueue::SubmitResource(Microsoft::WRL::ComPtr<ID3D12Resource>
     WaitQ.push(resource);
 }
 
+void ResourceGarbageQueue::Flush() {
+    while(!WaitQ.empty()) {
+        WaitQ.pop();
+    }
+}
+
+ResourceGarbageQueue::~ResourceGarbageQueue() {
+    Flush();
+}
+
 _END_ENGINE

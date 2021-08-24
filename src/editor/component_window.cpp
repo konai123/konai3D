@@ -100,11 +100,12 @@ void ComponentWindow::OnUpdate(float delta) {
         ImGui::InputFloat3("Tr", matrixTranslation);
         ImGui::InputFloat3("Rt", matrixRotation);
         ImGui::InputFloat3("Sc", matrixScale);
+        float4x4 temp;
         ImGuizmo::RecomposeMatrixFromComponents(
                 matrixTranslation,
                 matrixRotation,
                 matrixScale,
-                reinterpret_cast<float*>(&cmp->WorldMatrix)
+                reinterpret_cast<float*>(&temp)
         );
 
         ImGui::Text("Material: ");

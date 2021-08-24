@@ -17,6 +17,7 @@ public:
 public:
     ID3D12Resource *Resource();
     void Copy(int elementIndex, void *data);
+    void SafeRelease();
 
 public:
     unsigned char *MappedData;

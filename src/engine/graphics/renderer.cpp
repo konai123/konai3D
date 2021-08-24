@@ -38,10 +38,10 @@ Renderer::Initiate(HWND hWnd, UINT width, UINT height, std::filesystem::path sha
 
     {
         /*Compile Shaders*/
-        if (!Shader::RasterizePass.Build(shaderDirectoryPath)) {
-            GRAPHICS_LOG_ERROR("Filed to build shaders");
-            return false;
-        }
+//        if (!Shader::RasterizePass.Build(shaderDirectoryPath)) {
+//            GRAPHICS_LOG_ERROR("Filed to build shaders");
+//            return false;
+//        }
 
         if (!Shader::RaytracePass.Build(shaderDirectoryPath)) {
             GRAPHICS_LOG_ERROR("Filed to build shaders");
@@ -209,7 +209,6 @@ void Renderer::OnDestroy() {
     WaitAllFrameExecute();
     _ui_renderer->OnDestroy();
     _device->Close();
-
     _upload_worker_stop.store(true); //Exit Upload thread
     ::WaitForSingleObject(_uplaod_worker_handle, INFINITE);
 }

@@ -10,7 +10,7 @@ class Renderer;
 class ResourceGarbageQueue {
     friend class Renderer;
 public:
-    virtual ~ResourceGarbageQueue() = default;
+    virtual ~ResourceGarbageQueue();
     ResourceGarbageQueue &operator=(const ResourceGarbageQueue &) = delete;
     ResourceGarbageQueue &operator=(ResourceGarbageQueue &&) noexcept = delete;
     ResourceGarbageQueue(const ResourceGarbageQueue &) = delete;
@@ -21,6 +21,7 @@ public:
 
 public:
     void SubmitResource(Microsoft::WRL::ComPtr<ID3D12Resource> resource);
+    void Flush();
 
 protected:
     ResourceGarbageQueue() = default;
