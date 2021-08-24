@@ -1,8 +1,8 @@
 #ifndef RENDER_PASS_HLSL
 #define RENDER_PASS_HLSL
 
-#include "shader_type.hlsl"
-#include "descriptor_table.hlsl"
+#include "shader_type.hlsli"
+#include "descriptor_table.hlsli"
 #include "sampler.hlsl"
 
 struct VertexIn
@@ -34,7 +34,6 @@ cbuffer gCBPerFrame : register (b1, space0)
 
 StructuredBuffer<VertexIn> gVertices : register(t1, space0);
 StructuredBuffer<uint> gIndices: register(t1, space1);
-StructuredBuffer<Material> gMaterials : register(t1, space2);
 
 VertexOut VS(in uint ibID : SV_VertexID)
 {
