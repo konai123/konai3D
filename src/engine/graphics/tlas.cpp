@@ -4,30 +4,32 @@
 
 #include "src/engine/graphics/tlas.h"
 #include "src/engine/graphics/macros.h"
+#include "src/engine/graphics/resource_garbage_queue.h"
 
 _START_ENGINE
-bool TLAS::Generate(DeviceCom *deviceCom, ID3D12GraphicsCommandList5 *cmdList) {
-    if (InstanceDescsResource == nullptr) {
-        auto properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-        CD3DX12_RESOURCE_DESC resource_desc = CD3DX12_RESOURCE_DESC::Buffer(
-                sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * InstanceDescs.size(),
-                D3D12_RESOURCE_FLAG_NONE,
-                0
-        );
-        InstanceDescsResource = deviceCom->CreateResource(
-                &properties,
-                &resource_desc,
-                nullptr,
-                D3D12_HEAP_FLAG_NONE,
-                D3D12_RESOURCE_STATE_GENERIC_READ
-        );
-    }
-
+bool TLAS::Initialize(UINT maxInstance, DeviceCom *deviceCom) {
+    auto properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    CD3DX12_RESOURCE_DESC resource_desc = CD3DX12_RESOURCE_DESC::Buffer(
+            sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * maxInstance,
+            D3D12_RESOURCE_FLAG_NONE,
+            0
+    );
+    InstanceDescsResource = deviceCom->CreateResource(
+            &properties,
+            &resource_desc,
+            nullptr,
+            D3D12_HEAP_FLAG_NONE,
+            D3D12_RESOURCE_STATE_GENERIC_READ
+    );
     if (InstanceDescsResource == nullptr) {
         GRAPHICS_LOG_ERROR("Failed to create resource");
         return false;
     }
 
+    return true;
+}
+
+bool TLAS::Generate(DeviceCom *deviceCom, ID3D12GraphicsCommandList5 *cmdList) {
     {
         UINT8 *p_data;
         InstanceDescsResource->Map(0, nullptr, reinterpret_cast<void **>(&p_data));
@@ -52,35 +54,51 @@ bool TLAS::Generate(DeviceCom *deviceCom, ID3D12GraphicsCommandList5 *cmdList) {
     prebuild_info.ResultDataMaxSizeInBytes =
             ALIGN(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, prebuild_info.ResultDataMaxSizeInBytes);
 
-    CD3DX12_RESOURCE_DESC scratch_buf_desc =
-            CD3DX12_RESOURCE_DESC::Buffer(prebuild_info.ScratchDataSizeInBytes,
-                                          D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-
     auto properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    ScratchBuffer = nullptr;
-    ScratchBuffer = deviceCom->CreateResource(
-            &properties,
-            &scratch_buf_desc,
-            nullptr,
-            D3D12_HEAP_FLAG_NONE,
-            D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    if (ScratchBuffer == nullptr || ScratchBuffer->GetDesc().Width < prebuild_info.ScratchDataSizeInBytes) {
+        CD3DX12_RESOURCE_DESC scratch_buf_desc =
+                CD3DX12_RESOURCE_DESC::Buffer(prebuild_info.ScratchDataSizeInBytes,
+                                              D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
-    if (ScratchBuffer == nullptr) {
-        return false;
+        if (ScratchBuffer != nullptr) {
+            ResourceGarbageQueue::Instance().SubmitResource(ScratchBuffer);
+            ScratchBuffer = nullptr;
+        }
+
+        ScratchBuffer = deviceCom->CreateResource(
+                &properties,
+                &scratch_buf_desc,
+                nullptr,
+                D3D12_HEAP_FLAG_NONE,
+                D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+        if (ScratchBuffer == nullptr) {
+            return false;
+        }
     }
 
-    ResultDataBuffer = nullptr;
-    ResultDataBuffer = deviceCom->CreateResource(
-            &properties,
-            &scratch_buf_desc,
-            nullptr,
-            D3D12_HEAP_FLAG_NONE,
-            D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
+    if (ResultDataBuffer == nullptr || ResultDataBuffer->GetDesc().Width < prebuild_info.ResultDataMaxSizeInBytes) {
+        CD3DX12_RESOURCE_DESC resoult_buf_desc =
+                CD3DX12_RESOURCE_DESC::Buffer(prebuild_info.ResultDataMaxSizeInBytes,
+                                              D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
-    if (ResultDataBuffer == nullptr) {
-        ScratchBuffer.Reset();
-        return false;
+        if (ResultDataBuffer != nullptr) {
+            ResourceGarbageQueue::Instance().SubmitResource(ResultDataBuffer);
+            ResultDataBuffer = nullptr;
+        }
+
+        ResultDataBuffer = deviceCom->CreateResource(
+                &properties,
+                &resoult_buf_desc,
+                nullptr,
+                D3D12_HEAP_FLAG_NONE,
+                D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
+
+        if (ResultDataBuffer == nullptr) {
+            return false;
+        }
     }
+
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC build_desc = {};
     build_desc.Inputs = as_input;

@@ -15,7 +15,7 @@
 #include "src/engine/graphics/mesh_map.h"
 #include "src/engine/graphics/texture_map.h"
 #include "src/engine/graphics/material_map.h"
-
+#include "src/engine/graphics/resource_garbage_queue.h"
 #include "src/engine/graphics/raytracing_pass.h"
 
 _START_ENGINE
@@ -41,7 +41,7 @@ public:
                   std::shared_ptr<UIRenderer> uiRenderer = nullptr);
     void OnRender(
             float delta,
-            std::vector<RenderScreen *> screens
+            RenderScreen *screen
     );
     void OnResizeGUI(UINT width, UINT height);
     void OnDestroy();

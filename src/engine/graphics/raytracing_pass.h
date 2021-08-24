@@ -34,7 +34,7 @@ public:
     bool Initiate();
 
     void Render(float delta,
-                std::vector<RenderScreen *> screens,
+                RenderScreen * screen,
                 ID3D12GraphicsCommandList6 *command_list,
                 UINT currentFrameIndex,
                 MeshMap *meshMap,
@@ -53,7 +53,7 @@ private:
     bool BuildRSPipelineState();
     bool BuildResourceBuffer();
 
-    bool UpdateHitgroupTable(MaterialMap* matMap, RenderObject* objs, UINT numRenderObject);
+    bool UpdateHitgroupTable(MaterialMap* matMap, std::vector<RenderObject*> objs, UINT currentFrame);
 
 private:
     Microsoft::WRL::ComPtr<ID3D12StateObject> _rtpso;

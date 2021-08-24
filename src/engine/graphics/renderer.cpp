@@ -118,7 +118,7 @@ Renderer::Initiate(HWND hWnd, UINT width, UINT height, std::filesystem::path sha
 
 void Renderer::OnRender(
         float delta,
-        std::vector<RenderScreen *> screens
+        RenderScreen *screen
 ) {
     auto frame_buffer = _frame_buffer_pool.RequestFrameBuffer(_device.get());
     frame_buffer->_allocator->Reset();
@@ -133,7 +133,7 @@ void Renderer::OnRender(
 
     {
         //RenderPass.Render();
-        _render_pass->Render(delta, screens, _command_list.Get(), _current_frame, RenderResourceMap->MeshMap.get(),
+        _render_pass->Render(delta, screen, _command_list.Get(), _current_frame, RenderResourceMap->MeshMap.get(),
                              RenderResourceMap->TextureMap.get(), RenderResourceMap->MaterialMap.get(), _resource_heap.get());
     }
 
@@ -178,6 +178,14 @@ void Renderer::OnRender(
     _device->Present(_rendering_options.v_sync);
     _frame_buffer_pool.DiscardFrameBuffer(frame_buffer);
     _current_frame = (_current_frame + 1) % (NumPreFrames);
+
+    ResourceGarbageQueue& garbageQueue = ResourceGarbageQueue::Instance();
+    if (!garbageQueue.WaitQ.empty()) {
+        WaitAllFrameExecute();
+        while (!garbageQueue.WaitQ.empty()) {
+            garbageQueue.WaitQ.pop();
+        }
+    }
 }
 
 void Renderer::OnResizeGUI(UINT width, UINT height) {

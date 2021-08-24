@@ -89,8 +89,8 @@ void K3DApp::OnDestroy() {
 
 void K3DApp::OnUpdate(float delta) {
     App::OnUpdate(delta);
-    std::vector<_ENGINE::RenderScreen *> render_targets = {_viewport_window->GetRenderScreen()};
-    _renderer->OnRender(delta, render_targets);
+    _ENGINE::RenderScreen* render_target = _viewport_window->GetRenderScreen();
+    _renderer->OnRender(delta, render_target);
 }
 
 void K3DApp::OnLateUpdate(float delta) {

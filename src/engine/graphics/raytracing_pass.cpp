@@ -97,7 +97,7 @@ bool Raytracer::Initiate() {
 
 void Raytracer::Render(
         float delta,
-        std::vector<RenderScreen *> screens,
+        RenderScreen * screen,
         ID3D12GraphicsCommandList6 *command_list,
         UINT currentFrameIndex,
         MeshMap *meshMap,
@@ -106,139 +106,141 @@ void Raytracer::Render(
         ResourceDescriptorHeap *heaps
 ) {
     {
-        command_list->SetGraphicsRootSignature(_global_root_signature.Get());
+        command_list->SetComputeRootSignature(_global_root_signature.Get());
         command_list->SetPipelineState1(_rtpso.Get());
 
         /*Bind TextureTables*/
-        command_list->SetGraphicsRootShaderResourceView(1,
+        command_list->SetComputeRootShaderResourceView(3,
                                                         _rw_buffer_material->GetResource(
                                                                 currentFrameIndex)->GetGPUVirtualAddress());
-        command_list->SetGraphicsRootDescriptorTable(2,
+        command_list->SetComputeRootDescriptorTable(4,
                                                      heaps->GetShaderResourceHeap()->GetGPUDescriptorHandleForHeapStart());
 
-        for (UINT i = 0; i < screens.size(); i++) {
-            RenderScreen *render_screen = screens[i];
 
-            auto render_target = render_screen->GetRenderTargetResource();
-            auto render_target_view = render_screen->GetRenderTargetHeapDesc();
-            auto dsv_view = render_screen->GetDepthStencilHeapDesc();
+        RenderScreen *render_screen = screen;
+        auto render_target = render_screen->GetRenderTargetResource();
+        auto render_target_view = render_screen->GetRenderTargetHeapDesc();
+        auto dsv_view = render_screen->GetDepthStencilHeapDesc();
 
-            D3D12_RESOURCE_BARRIER barrier_enter = CD3DX12_RESOURCE_BARRIER::Transition(
-                    render_target,
-                    D3D12_RESOURCE_STATE_COMMON,
-                    D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-            );
-            command_list->ResourceBarrier(1, &barrier_enter);
+        D3D12_RESOURCE_BARRIER barrier_enter = CD3DX12_RESOURCE_BARRIER::Transition(
+                render_target,
+                D3D12_RESOURCE_STATE_COMMON,
+                D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+        );
+        command_list->ResourceBarrier(1, &barrier_enter);
+        command_list->SetComputeRootUnorderedAccessView(2, render_screen->GetRenderTargetResource()->GetGPUVirtualAddress());
 
-            {
-                auto Camera = render_screen->ViewMatrix;
-                CBPerFrame per_frame{
-                    .View_mat = render_screen->ViewMatrix,
-                    .ViewOriginAndTanHalfFovY = render_screen->ViewOriginAndTanHalfFovY,
-                    .Resolution = float2(
-                            static_cast<float>(render_screen->Width),
-                            static_cast<float>(render_screen->Height)
-                            )
-                };
-                _cb_buffer_per_frames->UpdateData(&per_frame, currentFrameIndex);
-            }
-
-            command_list->SetGraphicsRootConstantBufferView(1, _cb_buffer_per_frames->
-                    GetResource(currentFrameIndex)->GetGPUVirtualAddress());
-
-            {
-                auto materials = materialMap->GetMaterialList();
-                for (auto& mat: materials) {
-                    auto material_desc = materialMap->GetMaterialDesc(mat);
-                    auto material_id = materialMap->GetMaterialID(mat);
-                    if (material_id == -1) {
-                        continue;
-                    }
-
-                    if (!material_desc->Dirty) {
-                        continue;
-                    }
-
-                    material_desc->Dirty = false;
-
-                    materialMap->UpdateMaterial(mat, material_desc.value());
-
-                    auto resource = textureMap->GetResource(material_desc.value().DiffuseTexturePath);
-                    if (!resource) {
-                        continue;
-                    }
-
-                    ShaderType::Material material {
-                            .DiffuseTextureIndex = resource->Handle._heap_index,
-                    };
-                    _rw_buffer_material->UpdateData(&material, material_id, currentFrameIndex);
-                }
-
-                _tlas.Clear();
-                auto names = render_screen->GetRenderObjectList();
-                int obj_count = 0;
-                for (auto& name : names) {
-                    auto obj = render_screen->GetRenderObject(name);
-
-                    if (obj_count >= MAX_RENDER_OBJECT) {
-                        GRAPHICS_LOG_WARNING("Maximum render object overed!");
-                        break;
-                    }
-
-                    if (!meshMap->Contains(obj->MeshID)) {
-                        continue;
-                    }
-
-                    auto mesh_resources = meshMap->GetResources(obj->MeshID);
-                    auto blas = mesh_resources->Meshes[obj->SubmeshID]->Blas.get();
-                    DirectX::XMMATRIX world_mat = DirectX::XMLoadFloat3x4(&obj->WorldMatrix);
-
-                    D3D12_RAYTRACING_INSTANCE_DESC inst_desc;
-                    inst_desc.InstanceID = obj->ObjectID;
-                    inst_desc.InstanceMask = 0xFF;
-                    inst_desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-                    inst_desc.AccelerationStructure = blas->ResultDataBuffer->GetGPUVirtualAddress();
-                    inst_desc.InstanceContributionToHitGroupIndex = obj->ObjectID;
-                    DirectX::XMStoreFloat3x4(reinterpret_cast<DirectX::XMFLOAT3X4*>(inst_desc.Transform), world_mat);
-
-                    _tlas.AddInstance(inst_desc);
-                    obj_count++;
-                }
-
-                _tlas.Generate(_device.get(), command_list);
-            }
-
-
-            {
-                //Dispatch Ray
-                D3D12_DISPATCH_RAYS_DESC desc = {};
-
-                desc.RayGenerationShaderRecord.StartAddress = _ray_gen_shader_table_resource->GetResource(currentFrameIndex)->GetGPUVirtualAddress();
-                desc.RayGenerationShaderRecord.SizeInBytes = _ray_gen_shader_table_resource->GetResourceBytesSize();
-
-                desc.MissShaderTable.StartAddress = _miss_shader_table_resource->GetResource(currentFrameIndex)->GetGPUVirtualAddress();
-                desc.MissShaderTable.SizeInBytes = _miss_shader_table_resource->GetResourceBytesSize();
-                desc.MissShaderTable.StrideInBytes = _miss_table.MaxRecordSize;
-
-                desc.HitGroupTable.StartAddress = _hit_group_shader_table_resource->GetResource(currentFrameIndex)->GetGPUVirtualAddress();
-                desc.HitGroupTable.SizeInBytes = _hit_group_shader_table_resource->GetResourceBytesSize();
-                desc.HitGroupTable.StrideInBytes = _hitgroup_table.MaxRecordSize;
-
-                desc.Width = render_screen->Width;
-                desc.Height = render_screen->Height;
-                desc.Depth = 1;
-
-                command_list->DispatchRays(&desc);
-            }
-
-
-            barrier_enter = CD3DX12_RESOURCE_BARRIER::Transition(
-                    render_target,
-                    D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-                    D3D12_RESOURCE_STATE_COMMON
-            );
-            command_list->ResourceBarrier(1, &barrier_enter);
+        {
+            auto Camera = render_screen->ViewMatrix;
+            CBPerFrame per_frame{
+                .View_mat = render_screen->ViewMatrix,
+                .ViewOriginAndTanHalfFovY = render_screen->ViewOriginAndTanHalfFovY,
+                .Resolution = float2(
+                        static_cast<float>(render_screen->Width),
+                        static_cast<float>(render_screen->Height)
+                        )
+            };
+            _cb_buffer_per_frames->UpdateData(&per_frame, currentFrameIndex);
         }
+
+        command_list->SetComputeRootConstantBufferView(0, _cb_buffer_per_frames->
+                GetResource(currentFrameIndex)->GetGPUVirtualAddress());
+
+        {
+            auto materials = materialMap->GetMaterialList();
+            for (auto& mat: materials) {
+                auto material_desc = materialMap->GetMaterialDesc(mat);
+                auto material_id = materialMap->GetMaterialID(mat);
+                if (material_id == -1) {
+                    continue;
+                }
+
+                if (!material_desc->Dirty) {
+                    continue;
+                }
+
+                material_desc->Dirty = false;
+
+                materialMap->UpdateMaterial(mat, material_desc.value());
+
+                auto resource = textureMap->GetResource(material_desc.value().DiffuseTexturePath);
+                if (!resource) {
+                    continue;
+                }
+
+                ShaderType::Material material {
+                        .DiffuseTextureIndex = resource->Handle._heap_index,
+                };
+                _rw_buffer_material->UpdateData(&material, material_id, currentFrameIndex);
+            }
+
+            _tlas.Clear();
+            auto names = render_screen->GetRenderObjectList();
+            int obj_count = 0;
+            std::vector<RenderObject*> objs;
+            for (auto& name : names) {
+                auto obj = render_screen->GetRenderObject(name);
+                objs.push_back(obj);
+
+                if (obj_count >= MAX_RENDER_OBJECT) {
+                    GRAPHICS_LOG_WARNING("Maximum render object overed!");
+                    break;
+                }
+
+                if (!meshMap->Contains(obj->MeshID)) {
+                    continue;
+                }
+
+                auto mesh_resources = meshMap->GetResources(obj->MeshID);
+                auto blas = mesh_resources->Meshes[obj->SubmeshID]->Blas.get();
+                DirectX::XMMATRIX world_mat = DirectX::XMLoadFloat3x4(&obj->WorldMatrix);
+
+                D3D12_RAYTRACING_INSTANCE_DESC inst_desc;
+                inst_desc.InstanceID = obj->ObjectID;
+                inst_desc.InstanceMask = 0xFF;
+                inst_desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+                inst_desc.AccelerationStructure = blas->ResultDataBuffer->GetGPUVirtualAddress();
+                inst_desc.InstanceContributionToHitGroupIndex = obj->ObjectID;
+                DirectX::XMStoreFloat3x4(reinterpret_cast<DirectX::XMFLOAT3X4*>(inst_desc.Transform), world_mat);
+
+                _tlas.AddInstance(inst_desc);
+                obj_count++;
+            }
+
+            _tlas.Generate(_device.get(), command_list);
+            command_list->SetComputeRootShaderResourceView(1, _tlas.ResultDataBuffer->GetGPUVirtualAddress());
+            UpdateHitgroupTable(materialMap, objs, currentFrameIndex);
+        }
+
+        {
+            //Dispatch Ray
+            D3D12_DISPATCH_RAYS_DESC desc = {};
+
+            desc.RayGenerationShaderRecord.StartAddress = _ray_gen_shader_table_resource->GetResource(currentFrameIndex)->GetGPUVirtualAddress();
+            desc.RayGenerationShaderRecord.SizeInBytes = _ray_gen_shader_table_resource->GetResourceBytesSize();
+
+            desc.MissShaderTable.StartAddress = _miss_shader_table_resource->GetResource(currentFrameIndex)->GetGPUVirtualAddress();
+            desc.MissShaderTable.SizeInBytes = _miss_shader_table_resource->GetResourceBytesSize();
+            desc.MissShaderTable.StrideInBytes = _miss_table.MaxRecordSize;
+
+            desc.HitGroupTable.StartAddress = _hit_group_shader_table_resource->GetResource(currentFrameIndex)->GetGPUVirtualAddress();
+            desc.HitGroupTable.SizeInBytes = _hit_group_shader_table_resource->GetResourceBytesSize();
+            desc.HitGroupTable.StrideInBytes = _hitgroup_table.MaxRecordSize;
+
+            desc.Width = render_screen->Width;
+            desc.Height = render_screen->Height;
+            desc.Depth = 1;
+
+            command_list->DispatchRays(&desc);
+        }
+
+
+        barrier_enter = CD3DX12_RESOURCE_BARRIER::Transition(
+                render_target,
+                D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+                D3D12_RESOURCE_STATE_COMMON
+        );
+        command_list->ResourceBarrier(1, &barrier_enter);
     }
 }
 
@@ -252,6 +254,17 @@ bool Raytracer::BuildGlobalRootSignature() {
     {
         material_param.InitAsShaderResourceView(1, 0);
     }
+
+    CD3DX12_ROOT_PARAMETER1 raytracing_acceleration_structure;
+    {
+        raytracing_acceleration_structure.InitAsShaderResourceView(2, 0);
+    }
+
+    CD3DX12_ROOT_PARAMETER1 rt_output;
+    {
+        rt_output.InitAsUnorderedAccessView(1, 0);
+    }
+
 
     std::vector<CD3DX12_DESCRIPTOR_RANGE1> range;
     CD3DX12_ROOT_PARAMETER1 srv_param;
@@ -273,6 +286,8 @@ bool Raytracer::BuildGlobalRootSignature() {
 
     std::vector<CD3DX12_ROOT_PARAMETER1> params = {
             cb_per_frame_param,
+            raytracing_acceleration_structure,
+            rt_output,
             material_param,
             srv_param
     };
@@ -291,7 +306,7 @@ bool Raytracer::BuildGlobalRootSignature() {
 bool Raytracer::BuildHitgroupRootSignature() {
     CD3DX12_ROOT_PARAMETER1 cb_per_object_param;
     {
-        cb_per_object_param.InitAsConstants(1, 0, 1);
+        cb_per_object_param.InitAsConstants(1, 0, 0);
     }
     std::vector<CD3DX12_ROOT_PARAMETER1> params = {
             cb_per_object_param,
@@ -307,15 +322,16 @@ bool Raytracer::BuildHitgroupRootSignature() {
     return true;
 }
 
-bool Raytracer::UpdateHitgroupTable(MaterialMap* matMap, RenderObject* objs, UINT numRenderObject) {
+bool Raytracer::UpdateHitgroupTable(MaterialMap* matMap, std::vector<RenderObject*> objs, UINT currentFrame) {
     _hitgroup_table.Clear();
-    for (int i = 0; i < numRenderObject; i++) {
+
+    for (int i = 0; i < objs.size(); i++) {
         ShaderRecord hit_group;
         hit_group.AddField<void, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES>(
                 _rtpso_info->GetShaderIdentifier(L"HitGroup")
         );
 
-        auto mat_name = objs[i].MaterialName;
+        auto mat_name = objs[i]->MaterialName;
         int matID = matMap->GetMaterialID(mat_name);
         if (matID == -1) {
             continue;
@@ -324,7 +340,16 @@ bool Raytracer::UpdateHitgroupTable(MaterialMap* matMap, RenderObject* objs, UIN
         hit_group.AddField<void, sizeof(UINT)>(&matID);
         _hitgroup_table.AddRecord(hit_group);
     }
-    _hit_group_shader_table_resource = _hitgroup_table.Generate(_device, Renderer::NumPreFrames);
+
+    if (_hit_group_shader_table_resource == nullptr
+    || _hitgroup_table.GetBytesSize() > _hit_group_shader_table_resource->GetResourceBytesSize()) {
+        _hit_group_shader_table_resource = std::make_unique<RWResourceBuffer>(_device, Renderer::NumPreFrames);
+        _hit_group_shader_table_resource->SetData(_hitgroup_table.Records.size(), _hitgroup_table.MaxRecordSize);
+    }
+
+    if (!_hitgroup_table.Generate(_hit_group_shader_table_resource.get(), currentFrame)) {
+        return false;
+    }
     return true;
 }
 
@@ -345,8 +370,19 @@ bool Raytracer::BuildRSShaderTable() {
     _ray_gen_table.AddRecord(ray_gen);
     _miss_table.AddRecord(miss);
 
-    _ray_gen_shader_table_resource = _ray_gen_table.Generate(_device, Renderer::NumPreFrames);
-    _miss_shader_table_resource = _miss_table.Generate(_device, Renderer::NumPreFrames);
+    _ray_gen_shader_table_resource = std::make_unique<RWResourceBuffer>(_device, Renderer::NumPreFrames);
+    _ray_gen_shader_table_resource->SetData(_ray_gen_table.Records.size(), _ray_gen_table.MaxRecordSize);
+
+    _miss_shader_table_resource = std::make_unique<RWResourceBuffer>(_device, Renderer::NumPreFrames);
+    _miss_shader_table_resource->SetData(_miss_table.Records.size(), _miss_table.MaxRecordSize);
+
+    if (!_ray_gen_table.Generate(_ray_gen_shader_table_resource.get(), Renderer::NumPreFrames)) {
+        return false;
+    }
+    if (!_miss_table.Generate(_miss_shader_table_resource.get(), Renderer::NumPreFrames)) {
+        return false;
+    }
+
     return true;
 }
 

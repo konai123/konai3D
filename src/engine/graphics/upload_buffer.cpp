@@ -3,6 +3,7 @@
 //
 
 #include "src/engine/graphics/upload_buffer.h"
+#include "src/engine/graphics/resource_garbage_queue.h"
 
 _START_ENGINE
 UploadBuffer::UploadBuffer(DeviceCom *device, int elementCount, UINT elementSize, bool isConstant)
@@ -25,6 +26,7 @@ UploadBuffer::UploadBuffer(DeviceCom *device, int elementCount, UINT elementSize
 
 UploadBuffer::~UploadBuffer() {
     _upload_buffer->Unmap(0, nullptr);
+    ResourceGarbageQueue::Instance().SubmitResource(_upload_buffer);
     MappedData = nullptr;
 }
 
