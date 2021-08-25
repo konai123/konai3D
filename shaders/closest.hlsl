@@ -25,7 +25,13 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	float3 barycentrics = float3((1.0f - attrib.uv.x - attrib.uv.y), attrib.uv.x, attrib.uv.y);
     Vertex vertex = GetVertexAttributes(vtx0, vtx1, vtx2, barycentrics);
 
-	payload.ShadedColorAndHitT = float4(1.0f, 0.0f, 0.0f, RayTCurrent());
+    Material mat = gMaterials[gMaterialIdx];
+    int diffuseTextureIndex = mat.DiffuseTextureIndex;
+    Texture2D diffuse = gTexture2DTable[diffuseTextureIndex];
+    float3 color = diffuse.SampleLevel(gsamPointClamp, vertex.TexCoord, 0.0f).rgb;
+
+	payload.ShadedColor = float4(color.rgb, 1.0f);
+	payload.HitT = RayTCurrent();
 }
 
 #endif

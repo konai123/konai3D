@@ -20,7 +20,7 @@ public:
     static void DiscardRenderObject(RenderObject* obj);
 
 public:
-    float3x4 WorldMatrix;
+    DirectX::XMMATRIX WorldMatrix;
 
     std::string MaterialName;
     UINT ObjectID;
@@ -28,7 +28,7 @@ public:
     UINT SubmeshID;
 
 public:
-    void SetTransform (DirectX::XMMATRIX worldMat);
+    void SetTransform (DirectX::FXMMATRIX worldMat);
     void UpdateMaterial (std::string materialName);
     void UpdateMesh (std::string meshName, UINT submeshID);
 

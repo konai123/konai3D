@@ -6,11 +6,7 @@
 
 _START_ENGINE
 RenderObject::RenderObject() {
-    WorldMatrix = {
-            1.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f, 0.0f
-    };
+    WorldMatrix = DirectX::XMMatrixIdentity();
 }
 
 RenderObject::~RenderObject() {
@@ -34,16 +30,8 @@ void RenderObject::DiscardRenderObject(RenderObject* obj) {
     _pool.free(obj->ObjectID);
 }
 
-void RenderObject::SetTransform(DirectX::XMMATRIX worldMat) {
-    DirectX::XMVECTOR vPosition, vRotation, vScale;
-    XMMatrixDecompose(&vScale, &vRotation, &vPosition, worldMat);
-
-    DirectX::XMMATRIX S = DirectX::XMMatrixScalingFromVector(vScale);
-    DirectX::XMMATRIX R = DirectX::XMMatrixRotationQuaternion(vRotation);
-    DirectX::XMMATRIX T = DirectX::XMMatrixTranslationFromVector(vPosition);
-
-    DirectX::XMMATRIX Mat =  S * R * T;
-    XMStoreFloat3x4(reinterpret_cast<float3x4*>(&WorldMatrix), Mat);
+void RenderObject::SetTransform(DirectX::FXMMATRIX worldMat) {
+    WorldMatrix = worldMat;
 }
 
 void RenderObject::UpdateMaterial (std::string materialName) {

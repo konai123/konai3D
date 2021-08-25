@@ -11,5 +11,11 @@ public:
     int DiffuseTextureIndex = 0;
 };
 
+struct HitInfo
+{
+    float4 ShadedColor;
+    float HitT;
+};
+
 }
 _END_ENGINE

@@ -22,7 +22,8 @@ void RayGen()
 
     // Trace the ray
     HitInfo payload;
-    payload.ShadedColorAndHitT = float4(0.f, 0.f, 0.f, 0.f);
+    payload.ShadedColor = float4(0.f, 0.f, 0.f, 0.f);
+    payload.HitT = 0.f;
 
     TraceRay(
             gRaytracingAccelerationStructure,
@@ -35,7 +36,7 @@ void RayGen()
             payload);
 
     RWTexture2D<float4> output = gRTOutputs[gRenderTargetIdx];
-    output[LaunchIndex.xy] = float4(payload.ShadedColorAndHitT.rgb, 1.f);
+    output[LaunchIndex.xy] = payload.ShadedColor;
 }
 
 #endif

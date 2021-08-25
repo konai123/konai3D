@@ -38,22 +38,20 @@ struct ShaderTable {
     }
 
     UINT GetBytesSize() {
-        return MaxRecordSize * Records.size();
+        return ALIGN(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT, MaxRecordSize * Records.size());
     }
 
-    bool Generate(RWResourceBuffer* buffer, UINT currentFrame) {
-        UINT idx = 0;
+    bool Generate(RWResourceBuffer* buffer, UINT updateIdx, UINT currentFrame) {
+        std::vector<UINT8> raw(GetBytesSize());
         for (auto& record : Records) {
-            std::vector<UINT8> raw;
             UINT offset = 0;
             for (auto p : record.Data) {
-                raw.insert(raw.begin()+offset, p.begin(), p.end());
+                std::copy(p.begin(), p.end(), raw.begin()+offset);
                 offset += p.size();
             }
-
-            buffer->UpdateData(raw.data(), idx, currentFrame);
-            idx++;
+            offset = ALIGN(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT, offset);
         }
+        buffer->UpdateData(raw.data(), updateIdx, currentFrame);
         return true;
     }
 

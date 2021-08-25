@@ -56,7 +56,6 @@ void MaterialWindow::OnUpdate(float delta) {
                 ImGui::Text(tex_name.data());
                 if (ImGui::ImageButton(texture_id, texture_size)) {
                     material_desc.DiffuseTexturePath = tex_name;
-                    material_desc.Dirty = true;
                     _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
                     ImGui::CloseCurrentPopup();
                 }

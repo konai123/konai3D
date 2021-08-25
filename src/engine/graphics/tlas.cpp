@@ -33,7 +33,7 @@ bool TLAS::Generate(DeviceCom *deviceCom, ID3D12GraphicsCommandList5 *cmdList) {
     {
         UINT8 *p_data;
         InstanceDescsResource->Map(0, nullptr, reinterpret_cast<void **>(&p_data));
-        ::memcpy(p_data, InstanceDescs.data(), InstanceDescs.size());
+        ::memcpy(p_data, InstanceDescs.data(), InstanceDescs.size() * sizeof(D3D12_RAYTRACING_INSTANCE_DESC));
         InstanceDescsResource->Unmap(0, nullptr);
     }
 

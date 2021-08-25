@@ -319,13 +319,13 @@ DWORD Renderer::UploadWorker(PVOID context) {
         pthis->RenderResourceMap->TextureMap->UpdateFromTextureLoader(&uploader);
 
         auto future = uploader.End(copy_queue.Get());
+        future.wait();
 
         compute_list->Close();
         compute_queue->ExecuteCommandLists(1, CommandListCast(compute_list.GetAddressOf()));
         fence_value++;
         compute_queue->Signal(compute_fence.Get(), fence_value);
         compute_fence->SetEventOnCompletion(fence_value, nullptr);
-        future.wait();
     }
     GRAPHICS_LOG_INFO("End Uploader Thread");
     return 0;

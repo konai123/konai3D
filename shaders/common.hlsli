@@ -4,6 +4,7 @@
 #include "descriptor_table.hlsli"
 #include "shader_type.hlsli"
 #include "sampler.hlsli"
+#include "vertex.hlsli"
 
 cbuffer PerFrame : register(b1, space0)
 {
@@ -16,12 +17,6 @@ cbuffer PerFrame : register(b1, space0)
 
 StructuredBuffer<Material> gMaterials : register(t1, space0);
 RaytracingAccelerationStructure gRaytracingAccelerationStructure : register(t1, space1);
-
-
-struct HitInfo
-{
-	float4 ShadedColorAndHitT;
-};
 
 struct Attributes 
 {

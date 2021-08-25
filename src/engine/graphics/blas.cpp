@@ -40,9 +40,12 @@ bool BLAS::Generate(DeviceCom *deviceCom, ID3D12GraphicsCommandList5* cmdList) {
         return false;
     }
 
+    CD3DX12_RESOURCE_DESC result_buf_desc =
+            CD3DX12_RESOURCE_DESC::Buffer(prebuild_info.ResultDataMaxSizeInBytes,
+                                          D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     ResultDataBuffer = deviceCom->CreateResource(
             &properties,
-            &scratch_buf_desc,
+            &result_buf_desc,
             nullptr,
             D3D12_HEAP_FLAG_NONE,
             D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
@@ -68,5 +71,9 @@ bool BLAS::Generate(DeviceCom *deviceCom, ID3D12GraphicsCommandList5* cmdList) {
 
 void BLAS::AddGeometry(D3D12_RAYTRACING_GEOMETRY_DESC &geoDesc) {
     GeometryDescs.push_back(geoDesc);
+}
+
+UINT BLAS::GetSize() {
+    return GeometryDescs.size();
 }
 _END_ENGINE

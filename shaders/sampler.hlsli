@@ -1,5 +1,5 @@
-#ifndef SAMPLER_HLSL
-#define SAMPLER_HLSL
+#ifndef SAMPLER_HLSLI
+#define SAMPLER_HLSLI
 
 SamplerState gsamPointWrap        : register(s0);
 SamplerState gsamPointClamp       : register(s1);

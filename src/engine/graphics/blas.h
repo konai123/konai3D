@@ -12,6 +12,7 @@ _START_ENGINE
 struct BLAS {
     bool Generate(DeviceCom* deviceCom, ID3D12GraphicsCommandList5* cmdList);
     void AddGeometry(D3D12_RAYTRACING_GEOMETRY_DESC& geoDesc);
+    UINT GetSize();
 
     std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> GeometryDescs;
     Microsoft::WRL::ComPtr<ID3D12Resource> ScratchBuffer;

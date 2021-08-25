@@ -7,7 +7,7 @@
 #include "src/engine/graphics/blas.h"
 #include "src/engine/graphics/shader.h"
 #include "src/engine/graphics/renderer.h"
-
+#include "src/engine/graphics/shader_types.h"
 
 _START_ENGINE
 namespace {
@@ -127,8 +127,6 @@ void Raytracer::Render(
 
         RenderScreen *render_screen = screen;
         auto render_target = render_screen->GetRenderTargetResource();
-        auto render_target_view = render_screen->GetRenderTargetHeapDesc();
-        auto dsv_view = render_screen->GetDepthStencilHeapDesc();
 
         D3D12_RESOURCE_BARRIER barrier_enter = CD3DX12_RESOURCE_BARRIER::Transition(
                 render_target,
@@ -138,7 +136,6 @@ void Raytracer::Render(
         command_list->ResourceBarrier(1, &barrier_enter);
 
         {
-            auto Camera = render_screen->ViewMatrix;
             CBPerFrame per_frame{
                 .View_mat = render_screen->ViewMatrix,
                 .ViewOriginAndTanHalfFovY = render_screen->ViewOriginAndTanHalfFovY,
@@ -163,12 +160,6 @@ void Raytracer::Render(
                 if (material_id == -1) {
                     continue;
                 }
-
-                if (!material_desc->Dirty) {
-                    continue;
-                }
-
-                material_desc->Dirty = false;
 
                 materialMap->UpdateMaterial(mat, material_desc.value());
 
@@ -202,15 +193,14 @@ void Raytracer::Render(
 
                 auto mesh_resources = meshMap->GetResources(obj->MeshID);
                 auto blas = mesh_resources->Meshes[obj->SubmeshID]->Blas.get();
-                DirectX::XMMATRIX world_mat = DirectX::XMLoadFloat3x4(&obj->WorldMatrix);
 
                 D3D12_RAYTRACING_INSTANCE_DESC inst_desc;
                 inst_desc.InstanceID = obj->ObjectID;
                 inst_desc.InstanceMask = 0xFF;
                 inst_desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
                 inst_desc.AccelerationStructure = blas->ResultDataBuffer->GetGPUVirtualAddress();
-                inst_desc.InstanceContributionToHitGroupIndex = obj->ObjectID;
-                DirectX::XMStoreFloat3x4(reinterpret_cast<DirectX::XMFLOAT3X4*>(inst_desc.Transform), world_mat);
+                inst_desc.InstanceContributionToHitGroupIndex = obj_count * blas->GetSize();
+                DirectX::XMStoreFloat3x4(reinterpret_cast<DirectX::XMFLOAT3X4*>(inst_desc.Transform), obj->WorldMatrix);
 
                 _tlas.AddInstance(inst_desc);
                 obj_count++;
@@ -391,10 +381,10 @@ bool Raytracer::UpdateHitgroupTable(MeshMap* meshMap, MaterialMap* matMap, std::
         }
 
         _hit_group_shader_table_resource = std::make_unique<RWResourceBuffer>(_device, Renderer::NumPreFrames);
-        _hit_group_shader_table_resource->SetData(_hitgroup_table.Records.size(), _hitgroup_table.GetBytesSize());
+        _hit_group_shader_table_resource->SetData(1, _hitgroup_table.GetBytesSize());
     }
 
-    if (!_hitgroup_table.Generate(_hit_group_shader_table_resource.get(), currentFrame)) {
+    if (!_hitgroup_table.Generate(_hit_group_shader_table_resource.get(), 0, currentFrame)) {
         return false;
     }
     return true;
@@ -414,16 +404,16 @@ bool Raytracer::BuildRSShaderTable() {
     _miss_table.AddRecord(miss);
 
     _ray_gen_shader_table_resource = std::make_unique<RWResourceBuffer>(_device, Renderer::NumPreFrames);
-    _ray_gen_shader_table_resource->SetData(_ray_gen_table.Records.size(), _ray_gen_table.GetBytesSize());
+    _ray_gen_shader_table_resource->SetData(1, _ray_gen_table.GetBytesSize());
 
     _miss_shader_table_resource = std::make_unique<RWResourceBuffer>(_device, Renderer::NumPreFrames);
-    _miss_shader_table_resource->SetData(_miss_table.Records.size(), _miss_table.GetBytesSize());
+    _miss_shader_table_resource->SetData(1, _miss_table.GetBytesSize());
 
     for (UINT i = 0; i < Renderer::NumPreFrames; i++) {
-        if (!_ray_gen_table.Generate(_ray_gen_shader_table_resource.get(), i)) {
+        if (!_ray_gen_table.Generate(_ray_gen_shader_table_resource.get(), 0, i)) {
             return false;
         }
-        if (!_miss_table.Generate(_miss_shader_table_resource.get(), i)) {
+        if (!_miss_table.Generate(_miss_shader_table_resource.get(), 0, i)) {
             return false;
         }
     }
@@ -497,7 +487,7 @@ bool Raytracer::BuildRSPipelineState() {
     sub_objects[idx++] = hitGroup;
 
     D3D12_RAYTRACING_SHADER_CONFIG shaderDesc = {};
-    shaderDesc.MaxPayloadSizeInBytes = sizeof(float4);	// RGB and HitT
+    shaderDesc.MaxPayloadSizeInBytes = sizeof(ShaderType::HitInfo);	// RGB and HitT
     shaderDesc.MaxAttributeSizeInBytes = D3D12_RAYTRACING_MAX_ATTRIBUTE_SIZE_IN_BYTES;
 
     D3D12_STATE_SUBOBJECT shaderConfigObject = {};

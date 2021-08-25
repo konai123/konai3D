@@ -90,9 +90,11 @@ void ComponentWindow::OnUpdate(float delta) {
 
         _viewport_window->SelectedObject = cmp;
 
+        float4x4 world;
+        DirectX::XMStoreFloat4x4(&world, cmp->WorldMatrix);
         float matrixTranslation[3], matrixRotation[3], matrixScale[3];
         ImGuizmo::DecomposeMatrixToComponents(
-                reinterpret_cast<float*>(&cmp->WorldMatrix),
+                reinterpret_cast<float*>(&world),
                 matrixTranslation,
                 matrixRotation,
                 matrixScale
@@ -100,13 +102,14 @@ void ComponentWindow::OnUpdate(float delta) {
         ImGui::InputFloat3("Tr", matrixTranslation);
         ImGui::InputFloat3("Rt", matrixRotation);
         ImGui::InputFloat3("Sc", matrixScale);
-        float4x4 temp;
         ImGuizmo::RecomposeMatrixFromComponents(
                 matrixTranslation,
                 matrixRotation,
                 matrixScale,
-                reinterpret_cast<float*>(&temp)
+                reinterpret_cast<float*>(&world)
         );
+
+        cmp->SetTransform(DirectX::XMLoadFloat4x4(&world));
 
         ImGui::Text("Material: ");
         ImGui::SameLine();

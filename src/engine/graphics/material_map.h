@@ -12,7 +12,6 @@ _START_ENGINE
 struct MaterialDesc {
 public:
     std::string DiffuseTexturePath;
-    bool Dirty = true;
 };
 
 class MaterialMap {

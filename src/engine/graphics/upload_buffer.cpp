@@ -39,7 +39,6 @@ void UploadBuffer::Copy(int elementIndex, void *data) {
 
 void UploadBuffer::SafeRelease() {
     ResourceGarbageQueue::Instance().SubmitResource(_upload_buffer);
-    _upload_buffer = nullptr;
 }
 
 _END_ENGINE

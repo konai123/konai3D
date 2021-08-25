@@ -1,5 +1,5 @@
-#ifndef DESCRIPTOR_TABLE_HLSL
-#define DESCRIPTOR_TABLE_HLSL
+#ifndef DESCRIPTOR_TABLE_HLSLI
+#define DESCRIPTOR_TABLE_HLSLI
 
 //Shader Resource
 Texture2D gTexture2DTable[] : register(t0, space100);
