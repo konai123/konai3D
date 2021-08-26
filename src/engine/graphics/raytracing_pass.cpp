@@ -356,6 +356,9 @@ bool Raytracer::UpdateHitgroupTable(MeshMap* meshMap, MaterialMap* matMap, std::
         }
         hit_group.AddField<UINT, sizeof(UINT)>(matID);
 
+        //Padding
+        hit_group.AddField<UINT, sizeof(UINT)>(0);
+
         auto meshID = objs[i]->MeshID;
         if (!meshMap->Contains(meshID)) {
             continue;
