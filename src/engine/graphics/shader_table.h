@@ -43,8 +43,8 @@ struct ShaderTable {
 
     bool Generate(FrameResourceBuffer* buffer, UINT currentFrame, ID3D12GraphicsCommandList* cmd_list) {
         std::vector<UINT8> raw(GetBytesSize());
+        UINT offset = 0;
         for (auto& record : Records) {
-            UINT offset = 0;
             for (auto p : record.Data) {
                 std::copy(p.begin(), p.end(), raw.begin()+offset);
                 offset += p.size();
