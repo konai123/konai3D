@@ -28,10 +28,10 @@ void RayGen()
     TraceRay(
             gRaytracingAccelerationStructure,
             RAY_FLAG_NONE,
-            0xFF,
-            0,
-            0,
-            0,
+            0xffffffff,
+            0,   /*Hit Gourp Index*/
+            1,   /*Ray Stride*/
+            0,   /*Miss Shader Index*/
             ray,
             payload);
 
