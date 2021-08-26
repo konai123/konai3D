@@ -5,7 +5,7 @@
 #pragma once
 
 #include "src/engine/graphics/device_com.h"
-#include "src/engine/graphics/rw_resource_buffer.h"
+#include "src/engine/graphics/frame_resource_buffer.h"
 #include "src/engine/graphics/resource_garbage_queue.h"
 
 _START_ENGINE
@@ -41,7 +41,7 @@ struct ShaderTable {
         return ALIGN(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT, MaxRecordSize * Records.size());
     }
 
-    bool Generate(RWResourceBuffer* buffer, UINT updateIdx, UINT currentFrame) {
+    bool Generate(FrameResourceBuffer* buffer, UINT currentFrame, ID3D12GraphicsCommandList* cmd_list) {
         std::vector<UINT8> raw(GetBytesSize());
         for (auto& record : Records) {
             UINT offset = 0;
@@ -51,7 +51,7 @@ struct ShaderTable {
             }
             offset = ALIGN(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT, offset);
         }
-        buffer->UpdateData(raw.data(), updateIdx, currentFrame);
+        buffer->UpdateData(raw.data(), currentFrame, cmd_list);
         return true;
     }
 

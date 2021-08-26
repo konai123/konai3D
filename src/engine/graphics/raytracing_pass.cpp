@@ -89,10 +89,7 @@ bool Raytracer::Initiate() {
         GRAPHICS_LOG_ERROR("Failed To Create ResourceBuffers");
         return false;
     }
-    if (!BuildRSShaderTable()) {
-        GRAPHICS_LOG_ERROR("Failed To Create Shader Tables");
-        return false;
-    }
+
 
     return true;
 }
@@ -208,11 +205,18 @@ void Raytracer::Render(
 
             _tlas.Generate(_device.get(), command_list);
             command_list->SetComputeRootShaderResourceView(1, _tlas.ResultDataBuffer->GetGPUVirtualAddress());
-            UpdateHitgroupTable(meshMap, materialMap, objs, currentFrameIndex);
+
+            BuildRSShaderTable(command_list);
+            UpdateHitgroupTable(meshMap, materialMap, objs, currentFrameIndex, command_list);
         }
 
         {
             //Dispatch Ray
+
+            _ray_gen_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
+            _miss_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
+            _hit_group_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
+
             D3D12_DISPATCH_RAYS_DESC desc = {};
 
             desc.RayGenerationShaderRecord.StartAddress = _ray_gen_shader_table_resource->GetResource(currentFrameIndex)->GetGPUVirtualAddress();
@@ -231,6 +235,10 @@ void Raytracer::Render(
             desc.Depth = 1;
 
             command_list->DispatchRays(&desc);
+
+            _ray_gen_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COMMON, currentFrameIndex, command_list);
+            _miss_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COMMON, currentFrameIndex, command_list);
+            _hit_group_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COMMON, currentFrameIndex, command_list);
         }
 
 
@@ -341,7 +349,8 @@ bool Raytracer::BuildHitgroupRootSignature() {
     return true;
 }
 
-bool Raytracer::UpdateHitgroupTable(MeshMap* meshMap, MaterialMap* matMap, std::vector<RenderObject*> objs, UINT currentFrame) {
+bool Raytracer::UpdateHitgroupTable(MeshMap* meshMap, MaterialMap* matMap, std::vector<RenderObject*> objs, UINT currentFrame,
+                                    ID3D12GraphicsCommandList* cmdList) {
     _hitgroup_table.Clear();
 
     for (int i = 0; i < objs.size(); i++) {
@@ -383,41 +392,49 @@ bool Raytracer::UpdateHitgroupTable(MeshMap* meshMap, MaterialMap* matMap, std::
             _hit_group_shader_table_resource->SafeRelease();
         }
 
-        _hit_group_shader_table_resource = std::make_unique<RWResourceBuffer>(_device, Renderer::NumPreFrames);
-        _hit_group_shader_table_resource->SetData(1, _hitgroup_table.GetBytesSize());
+        _hit_group_shader_table_resource = std::make_unique<FrameResourceBuffer>(_device, Renderer::NumPreFrames);
+        _hit_group_shader_table_resource->Initialize(CD3DX12_RESOURCE_DESC::Buffer(_hitgroup_table.GetBytesSize()));
     }
 
-    if (!_hitgroup_table.Generate(_hit_group_shader_table_resource.get(), 0, currentFrame)) {
+    if (!_hitgroup_table.Generate(_hit_group_shader_table_resource.get(),currentFrame, cmdList)) {
         return false;
     }
     return true;
 }
 
-bool Raytracer::BuildRSShaderTable() {
-    ShaderRecord ray_gen;
-    ShaderRecord miss;
+bool Raytracer::BuildRSShaderTable(ID3D12GraphicsCommandList* cmdList) {
 
-    _ray_gen_table.Clear();
-    _miss_table.Clear();
+    if (_ray_gen_shader_table_resource == nullptr) {
+        ShaderRecord ray_gen;
+        _ray_gen_table.Clear();
 
-    ray_gen.AddShaderID(_rtpso_info->GetShaderIdentifier(L"RayGen_12"));
-    miss.AddShaderID(_rtpso_info->GetShaderIdentifier(L"Miss_5"));
+        ray_gen.AddShaderID(_rtpso_info->GetShaderIdentifier(L"RayGen_12"));
+        _ray_gen_table.AddRecord(ray_gen);
 
-    _ray_gen_table.AddRecord(ray_gen);
-    _miss_table.AddRecord(miss);
+        _ray_gen_shader_table_resource = std::make_unique<FrameResourceBuffer>(_device, Renderer::NumPreFrames);
+        _ray_gen_shader_table_resource->Initialize(CD3DX12_RESOURCE_DESC::Buffer(_ray_gen_table.GetBytesSize()));
 
-    _ray_gen_shader_table_resource = std::make_unique<RWResourceBuffer>(_device, Renderer::NumPreFrames);
-    _ray_gen_shader_table_resource->SetData(1, _ray_gen_table.GetBytesSize());
-
-    _miss_shader_table_resource = std::make_unique<RWResourceBuffer>(_device, Renderer::NumPreFrames);
-    _miss_shader_table_resource->SetData(1, _miss_table.GetBytesSize());
-
-    for (UINT i = 0; i < Renderer::NumPreFrames; i++) {
-        if (!_ray_gen_table.Generate(_ray_gen_shader_table_resource.get(), 0, i)) {
-            return false;
+        for (UINT i = 0; i < Renderer::NumPreFrames; i++) {
+            if (!_ray_gen_table.Generate(_ray_gen_shader_table_resource.get(), i, cmdList)) {
+                return false;
+            }
         }
-        if (!_miss_table.Generate(_miss_shader_table_resource.get(), 0, i)) {
-            return false;
+    }
+
+    if (_miss_shader_table_resource == nullptr) {
+        ShaderRecord miss;
+
+        _miss_table.Clear();
+        miss.AddShaderID(_rtpso_info->GetShaderIdentifier(L"Miss_5"));
+        _miss_table.AddRecord(miss);
+
+        _miss_shader_table_resource = std::make_unique<FrameResourceBuffer>(_device, Renderer::NumPreFrames);
+        _miss_shader_table_resource->Initialize(CD3DX12_RESOURCE_DESC::Buffer(_miss_table.GetBytesSize()));
+
+        for (UINT i = 0; i < Renderer::NumPreFrames; i++) {
+            if (!_miss_table.Generate(_miss_shader_table_resource.get(), i, cmdList)) {
+                return false;
+            }
         }
     }
 

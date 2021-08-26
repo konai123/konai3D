@@ -8,6 +8,7 @@
 #include "src/engine/graphics/shader_table.h"
 #include "src/engine/graphics/constant_buffer.h"
 #include "src/engine/graphics/rw_resource_buffer.h"
+#include "src/engine/graphics/frame_resource_buffer.h"
 #include "src/engine/graphics/material_map.h"
 #include "src/engine/graphics/texture_map.h"
 #include "src/engine/graphics/mesh_map.h"
@@ -51,19 +52,19 @@ public:
 private:
     bool BuildGlobalRootSignature();
     bool BuildHitgroupRootSignature();
-    bool BuildRSShaderTable();
+    bool BuildRSShaderTable(ID3D12GraphicsCommandList* cmdList);
     bool BuildRSPipelineState();
     bool BuildResourceBuffer();
 
-    bool UpdateHitgroupTable(MeshMap* meshMap, MaterialMap* matMap, std::vector<RenderObject*> objs, UINT currentFrame);
+    bool UpdateHitgroupTable(MeshMap* meshMap, MaterialMap* matMap, std::vector<RenderObject*> objs, UINT currentFrame, ID3D12GraphicsCommandList* cmdList);
 
 private:
     Microsoft::WRL::ComPtr<ID3D12StateObject> _rtpso;
     Microsoft::WRL::ComPtr<ID3D12StateObjectProperties> _rtpso_info;
 
-    std::unique_ptr<RWResourceBuffer> _miss_shader_table_resource;
-    std::unique_ptr<RWResourceBuffer> _ray_gen_shader_table_resource;
-    std::unique_ptr<RWResourceBuffer> _hit_group_shader_table_resource;
+    std::unique_ptr<FrameResourceBuffer> _miss_shader_table_resource;
+    std::unique_ptr<FrameResourceBuffer> _ray_gen_shader_table_resource;
+    std::unique_ptr<FrameResourceBuffer> _hit_group_shader_table_resource;
 
     ShaderTable _hitgroup_table;
     ShaderTable _ray_gen_table;
