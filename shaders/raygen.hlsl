@@ -10,13 +10,19 @@ void RayGen()
     uint2 LaunchIndex = DispatchRaysIndex().xy;
     uint2 LaunchDimensions = DispatchRaysDimensions().xy;
 
-    float2 d = (((LaunchIndex.xy + 0.5f) / gResolution.xy) * 2.f - 1.f);
-    float aspectRatio = (gResolution.x / gResolution.y);
+    //Camera Position
+    float3 origin = float3(0.0f, 0.0f, 0.0f);
+    float focalLength = 1.0f;
+    float2 uv = float2(LaunchIndex) / float2(LaunchDimensions);
+    float2 ndc = uv * float2(2,-2) + float2(-1, +1);
+
+    float3 direction = float3(ndc.xy, focalLength) - origin;
+
 
     // Setup the ray
     RayDesc ray;
-    ray.Origin = gViewOriginAndTanHalfFovY.xyz;
-    ray.Direction = normalize((d.x * gViewMatrix[0].xyz * gViewOriginAndTanHalfFovY.w * aspectRatio) - (d.y * gViewMatrix[1].xyz * gViewOriginAndTanHalfFovY.w) + gViewMatrix[2].xyz);
+    ray.Origin = origin;
+    ray.Direction = direction;
     ray.TMin = 0.1f;
     ray.TMax = 1000.f;
 

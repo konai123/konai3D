@@ -30,7 +30,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
     Texture2D diffuse = gTexture2DTable[diffuseTextureIndex];
     float3 color = diffuse.SampleLevel(gsamPointClamp, vertex.TexCoord, 0.0f).rgb;
 
-	payload.ShadedColor = float4(color.rgb, 1.0f);
+	payload.ShadedColor = float4((vertex.Normal.xyz+1.f)*0.5, 1.0f);
 	payload.HitT = RayTCurrent();
 }
 

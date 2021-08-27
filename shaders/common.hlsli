@@ -31,7 +31,7 @@ Vertex GetVertexAttributes(Vertex v0, Vertex v1, Vertex v2, float3 barycentrics)
     float2 texuv = v0.TexCoord * barycentrics.x + v1.TexCoord * barycentrics.y + v2.TexCoord * barycentrics.z;;
     Vertex v;
     v.PosL = position;
-    v.Normal = normal;
+    v.Normal = normalize(mul(normal, (float3x3)WorldToObject3x4()));
     v.TangentU = tangentU;
     v.TexCoord = texuv;
 	return v;
