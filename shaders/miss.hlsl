@@ -6,7 +6,8 @@
 [shader("miss")]
 void Miss(inout HitInfo payload)
 {
-    payload.ShadedColor = float4(0.2f, 0.2f, 0.2f, 0.0f);
+    float t = 0.5f*(WorldRayDirection().y + 1.0f);
+    payload.ShadedColor = (1.0f-t)*float4(1.0f, 1.0f, 1.0f, 1.0f) + t*float4(0.5f, 0.7f, 1.0f, 1.0f);
     payload.HitT = -1.0f;
 }
 
