@@ -31,7 +31,7 @@ int main() {
     global::AssetPath = global::ExecutablePath / "assets";
 
 #if defined(_DEBUG) || defined(DEBUG)
-    global::ShaderPath = global::ExecutablePath / "shaders";
+    global::ShaderPath = std::filesystem::path(SOURCE_ROOT) / "shaders";
 #else
     global::ShaderPath = global::ExecutablePath / "shaders";
 #endif

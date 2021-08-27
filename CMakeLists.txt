@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.1)
 
 add_definitions(-DUNICODE)
 add_definitions(-D_UNICODE)
+add_definitions(-DSOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
