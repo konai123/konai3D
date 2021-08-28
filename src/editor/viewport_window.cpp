@@ -108,8 +108,8 @@ void ViewportWindow::OnUpdate(float delta) {
             }
             ImGui::Text("Fov");
             ImGui::SameLine();
-            static float angle = 10.0f;
-            ImGui::SliderFloat("Angle", &angle, 10.0f, 180.0f);
+            float angle = AI_RAD_TO_DEG(_camera->Fov);
+            ImGui::SliderFloat("Angle", &angle, 10.0f, 90.0f);
             _camera->Fov = AI_DEG_TO_RAD(angle);
             ImGui::EndMenu();
         }
@@ -224,6 +224,7 @@ void ViewportWindow::UpdateScreen() {
     auto camera_position = _camera->Position;
     _screen->ViewOriginAndTanHalfFovY = float4(camera_position.x, camera_position.y, camera_position.z, tanf(_camera->Fov * 0.5f));
     _screen->CameraPosition = camera_position;
+    _screen->Fov = _camera->Fov;
     DirectX::XMStoreFloat4x4(&_screen->ViewMatrix, _camera->GetViewMatrix());
     DirectX::XMStoreFloat4x4(&_screen->ProjectionMatrix, _camera->GetProjectionMatrix());
     DirectX::XMStoreFloat4x4(&_screen->InverseViewMatrix, _camera->GetInverseViewMatrix());
