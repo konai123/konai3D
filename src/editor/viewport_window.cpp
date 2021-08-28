@@ -26,7 +26,7 @@ _guizmo_oper(ImGuizmo::OPERATION::TRANSLATE),
 _guizmo_mode(ImGuizmo::MODE::WORLD),
 _screen(nullptr) {
     _camera = std::make_unique<Camera>(
-        0.25f,
+        1.0472f,
         static_cast<float>(_width) / static_cast<float>(_height),
         0.1f,
         1000.0f
@@ -106,6 +106,11 @@ void ViewportWindow::OnUpdate(float delta) {
             if (ImGui::MenuItem("Local", NULL, _guizmo_mode == ImGuizmo::MODE::LOCAL, true)) {
                 _guizmo_mode = ImGuizmo::MODE::LOCAL;
             }
+            ImGui::Text("Fov");
+            ImGui::SameLine();
+            static float angle = 10.0f;
+            ImGui::SliderFloat("Angle", &angle, 10.0f, 180.0f);
+            _camera->Fov = AI_DEG_TO_RAD(angle);
             ImGui::EndMenu();
         }
 
