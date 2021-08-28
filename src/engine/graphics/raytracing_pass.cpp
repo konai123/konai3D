@@ -136,9 +136,11 @@ void Raytracer::Render(
             CBPerFrame per_frame{
                 .Camera = {
                         .Position = render_screen->CameraPosition,
+                        .Pad0 = 0.0f,
                         .AspectRatio = render_screen->Width / static_cast<float>(render_screen->Height),
-                        .FocalLength = render_screen->Near,
-                        .Fov = render_screen->Fov
+                        .Fov = render_screen->Fov,
+                        .Near = render_screen->Near,
+                        .Far = render_screen->Far
                         },
                 .RenderTargetIdx = static_cast<UINT>(render_screen->GetShaderResourceHeapDesc()->_heap_index)
             };
