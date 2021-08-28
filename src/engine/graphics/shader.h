@@ -101,7 +101,7 @@ public:
         bool Build(std::filesystem::path path) {
             if (!Shader::Build(
                     {
-                            path / "miss.hlsl",
+                            path / "path_trace.hlsl",
                             path,
                             L"",
                             LibraryVersionedType::LIBRARY_PROFILE_6_3
@@ -112,7 +112,7 @@ public:
 
             if (!Shader::Build(
                     {
-                            path / "closest.hlsl",
+                            path / "path_trace.hlsl",
                             path,
                             L"",
                             LibraryVersionedType::LIBRARY_PROFILE_6_3
@@ -123,7 +123,7 @@ public:
 
             if (!Shader::Build(
                     {
-                            path / "raygen.hlsl",
+                            path / "path_trace.hlsl",
                             path,
                             L"",
                             LibraryVersionedType::LIBRARY_PROFILE_6_3

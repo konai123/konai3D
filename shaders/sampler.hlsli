@@ -1,11 +1,11 @@
 #ifndef SAMPLER_HLSLI
 #define SAMPLER_HLSLI
 
-SamplerState gsamPointWrap        : register(s0);
-SamplerState gsamPointClamp       : register(s1);
-SamplerState gsamLinearWrap       : register(s2);
-SamplerState gsamLinearClamp      : register(s3);
-SamplerState gsamAnisotropicWrap  : register(s4);
-SamplerState gsamAnisotropicClamp : register(s5);
+SamplerState gSamPointWrap        : register(s0);
+SamplerState gSamPointClamp       : register(s1);
+SamplerState gSamLinearWrap       : register(s2);
+SamplerState gSamLinearClamp      : register(s3);
+SamplerState gSamAnisotropicWrap  : register(s4);
+SamplerState gSamAnisotropicClamp : register(s5);
 
 #endif
