@@ -23,10 +23,7 @@ public:
     };
 
     struct CBPerFrame {
-        float4x4 View_mat;
-        float4 ViewOriginAndTanHalfFovY;
-        float2 Resolution;
-        float2 Pad;
+        ShaderType::Camera Camera;
         UINT RenderTargetIdx;
     };
 

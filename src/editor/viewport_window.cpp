@@ -42,6 +42,11 @@ _screen(nullptr) {
 
     auto camera_position = _camera->Position;
     _screen->ViewOriginAndTanHalfFovY = float4(camera_position.x, camera_position.y, camera_position.z, tanf(_camera->Fov * 0.5f));
+    _screen->CameraPosition = camera_position;
+    _screen->Near = _camera->Near;
+    _screen->Far = _camera->Far;
+    _screen->Fov = _camera->Fov;
+
     DirectX::XMStoreFloat4x4(&_screen->ViewMatrix, _camera->GetViewMatrix());
     DirectX::XMStoreFloat4x4(&_screen->ProjectionMatrix, _camera->GetProjectionMatrix());
     DirectX::XMStoreFloat4x4(&_screen->InverseViewMatrix, _camera->GetInverseViewMatrix());
@@ -213,6 +218,7 @@ void ViewportWindow::ControlViewport() {
 void ViewportWindow::UpdateScreen() {
     auto camera_position = _camera->Position;
     _screen->ViewOriginAndTanHalfFovY = float4(camera_position.x, camera_position.y, camera_position.z, tanf(_camera->Fov * 0.5f));
+    _screen->CameraPosition = camera_position;
     DirectX::XMStoreFloat4x4(&_screen->ViewMatrix, _camera->GetViewMatrix());
     DirectX::XMStoreFloat4x4(&_screen->ProjectionMatrix, _camera->GetProjectionMatrix());
     DirectX::XMStoreFloat4x4(&_screen->InverseViewMatrix, _camera->GetInverseViewMatrix());

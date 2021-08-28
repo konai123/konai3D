@@ -48,6 +48,11 @@ public:
     float4x4 InverseViewMatrix;
     float4x4 ProjectionMatrix;
     float4 ViewOriginAndTanHalfFovY;
+    float3 CameraPosition;
+    float Near;
+    float Far;
+    float Fov;
+
     UINT Width;
     UINT Height;
 

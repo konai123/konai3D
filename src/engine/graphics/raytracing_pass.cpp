@@ -134,13 +134,12 @@ void Raytracer::Render(
 
         {
             CBPerFrame per_frame{
-                .View_mat = render_screen->ViewMatrix,
-                .ViewOriginAndTanHalfFovY = render_screen->ViewOriginAndTanHalfFovY,
-                .Resolution = float2(
-                        static_cast<float>(render_screen->Width),
-                        static_cast<float>(render_screen->Height)
-                        ),
-                .Pad = float2(0.0f, 0.0f),
+                .Camera = {
+                        .Position = render_screen->CameraPosition,
+                        .AspectRatio = render_screen->Width / static_cast<float>(render_screen->Height),
+                        .FocalLength = render_screen->Near,
+                        .Fov = render_screen->Fov
+                        },
                 .RenderTargetIdx = static_cast<UINT>(render_screen->GetShaderResourceHeapDesc()->_heap_index)
             };
             _cb_buffer_per_frames->UpdateData(&per_frame, currentFrameIndex);
@@ -507,7 +506,7 @@ bool Raytracer::BuildRSPipelineState() {
     sub_objects[idx++] = hitGroup;
 
     D3D12_RAYTRACING_SHADER_CONFIG shaderDesc = {};
-    shaderDesc.MaxPayloadSizeInBytes = sizeof(ShaderType::HitInfo);	// RGB and HitT
+    shaderDesc.MaxPayloadSizeInBytes = sizeof(ShaderType::RayPayload);	// RGB and HitT
     shaderDesc.MaxAttributeSizeInBytes = D3D12_RAYTRACING_MAX_ATTRIBUTE_SIZE_IN_BYTES;
 
     D3D12_STATE_SUBOBJECT shaderConfigObject = {};

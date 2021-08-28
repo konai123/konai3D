@@ -11,10 +11,21 @@ public:
     int DiffuseTextureIndex = 0;
 };
 
-struct HitInfo
+struct RayPayload
 {
-    float4 ShadedColor;
-    float HitT;
+    float4 HitColor;
+    float3 Direction;
+    float Pad0;
+    float3 Origin;
+    float T;
+};
+
+struct Camera
+{
+    float3 Position;
+    float AspectRatio;
+    float FocalLength;
+    float Fov;
 };
 
 }

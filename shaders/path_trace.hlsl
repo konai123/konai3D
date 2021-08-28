@@ -8,49 +8,58 @@
 #include <sampler.hlsli>
 #include <math.hlsli>
 
+float4 RayColor(RayPayload raypay, uint maxDepth) {
+    float4 outColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
+
+    for (uint i = 0; i < maxDepth; i++) {
+        RayDesc r = raypay.Ray();
+        TraceRay(
+                gRaytracingAccelerationStructure,
+                RAY_FLAG_NONE,
+                0xffffffff,
+                0,   /*Hit Gourp Index*/
+                1,   /*Ray Stride*/
+                0,   /*Miss Shader Index*/
+                r,
+                raypay);
+
+        outColor *= 0.5f;
+
+        if (raypay.T < 0.0f) {
+            outColor *= raypay.HitColor;
+            break;
+        }
+    }
+
+    return float4(outColor.xyz, 1.0f);
+}
+
 [shader("raygeneration")]
 void RayGen()
 {
     uint2 LaunchIndex = DispatchRaysIndex().xy;
     uint2 LaunchDimensions = DispatchRaysDimensions().xy;
+    uint seed = GetSeed(LaunchIndex.x, LaunchIndex.y);
+    const uint sampleCount = 4;
 
     //Camera Position
-    float3 origin = float3(0.0f, 0.0f, 0.0f);
-    float focalLength = 1.0f;
-    float2 uv = float2(LaunchIndex) / float2(LaunchDimensions);
-    float2 ndc = uv * float2(2,-2) + float2(-1, +1);
-
-    float3 direction = float3(ndc.xy, focalLength) - origin;
-
-
-    // Setup the ray
-    RayDesc ray;
-    ray.Origin = origin;
-    ray.Direction = direction;
-    ray.TMin = 0.1f;
-    ray.TMax = 1000.f;
-
-    // Trace the ray
-    HitInfo payload;
-    payload.ShadedColor = float4(0.f, 0.f, 0.f, 0.f);
-    payload.HitT = 0.f;
-
-    TraceRay(
-            gRaytracingAccelerationStructure,
-            RAY_FLAG_NONE,
-            0xffffffff,
-            0,   /*Hit Gourp Index*/
-            1,   /*Ray Stride*/
-            0,   /*Miss Shader Index*/
-            ray,
-            payload);
+    float4 outColor = float4(0.f, 0.f, 0.f, 0.f);
+    for (uint i = 0; i < sampleCount; i++)
+    {
+        float2 uv = (float2(LaunchIndex) + ((RandomFloat01(seed), RandomFloat01(seed)) - 0.5)) / float2(LaunchDimensions);
+        float2 ndc = uv * float2(2,-2) + float2(-1, +1);
+        RayPayload raypay = gCamera.GetRayPayload(ndc);
+        outColor += RayColor(raypay, 1);
+    }
 
     RWTexture2D<float4> output = gRTOutputs[gRenderTargetIdx];
-    output[LaunchIndex.xy] = payload.ShadedColor;
+    outColor /= float(sampleCount);
+
+    output[LaunchIndex.xy] = float4(outColor.xyz, 1.0f);
 }
 
 [shader("closesthit")]
-void ClosestHit(inout HitInfo payload, Attributes attrib)
+void ClosestHit(inout RayPayload payload, Attributes attrib)
 {
     unsigned int idx0 = IndexBuffer[PrimitiveIndex() * 3 + 0];
     unsigned int idx1 = IndexBuffer[PrimitiveIndex() * 3 + 1];
@@ -68,15 +77,15 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
     Texture2D diffuse = gTexture2DTable[diffuseTextureIndex];
     float3 color = diffuse.SampleLevel(gSamPointClamp, vertex.TexCoord, 0.0f).rgb;
 
-	payload.ShadedColor = float4((vertex.Normal.xyz+1.f)*0.5, 1.0f);
-	payload.HitT = RayTCurrent();
+	payload.HitColor = float4((vertex.Normal.xyz+1.f)*0.5, 1.0f);
+	payload.T = RayTCurrent();
 }
 
 [shader("miss")]
-void Miss(inout HitInfo payload)
+void Miss(inout RayPayload payload)
 {
     float t = 0.5f*(WorldRayDirection().y + 1.0f);
-    payload.ShadedColor = (1.0f-t)*float4(1.0f, 1.0f, 1.0f, 1.0f) + t*float4(0.5f, 0.7f, 1.0f, 1.0f);
-    payload.HitT = -1.0f;
+    payload.HitColor = (1.0f-t)*float4(1.0f, 1.0f, 1.0f, 1.0f) + t*float4(0.5f, 0.7f, 1.0f, 1.0f);
+    payload.T = -1.0f;
 }
 #endif
