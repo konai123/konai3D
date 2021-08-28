@@ -16,6 +16,17 @@
 _START_ENGINE
 class RenderScreen{
 public:
+    struct CameraInfo {
+        float3 CameraPosition;
+        float3 CameraDirection;
+        float3 CameraUp;
+        float Near;
+        float Far;
+        float Fov;
+        float AspectRatio;
+    };
+
+public:
     RenderScreen (
             std::shared_ptr<DeviceCom> device,
             std::shared_ptr<ResourceDescriptorHeap> resource_heap_pool,
@@ -40,21 +51,20 @@ public:
     HeapDescriptorHandle *GetShaderResourceHeapDesc();
     HeapDescriptorHandle *GetDepthStencilHeapDesc();
 
+    void SetCameraInfo(const CameraInfo& info);
+    CameraInfo GetCameraInfo();
+
     bool Resize(UINT width, UINT height);
     UINT Size();
 
 public:
-    float4x4 ViewMatrix;
-    float4x4 InverseViewMatrix;
-    float4x4 ProjectionMatrix;
-    float4 ViewOriginAndTanHalfFovY;
-    float3 CameraPosition;
-    float Near;
-    float Far;
-    float Fov;
+    bool Updated;
 
     UINT Width;
     UINT Height;
+
+private:
+    CameraInfo _camera_info;
 
 private:
     bool CreateRenderTargets(bool isRecreation, UINT width, UINT height);

@@ -33,6 +33,10 @@ struct Camera
 {
     float3 Position;
     float Pad0;
+    float3 Direction;
+    float Pad1;
+    float3 UpVector;
+    float Pad2;
     float AspectRatio;
     float Fov;
     float Near;
@@ -40,8 +44,13 @@ struct Camera
 
     RayPayload GetRayPayload(float2 ndc, float seed) {
         //Camera Position
-        float FocalLength = 1.0f/tan(Fov/2.0f);
-        float3 direction = float3(ndc.xy, FocalLength) - Position;
+        float FocalLength = 1.0f/tan(Fov * 0.5f);
+        float3 r = normalize(cross(UpVector, Direction));
+        float3 f = normalize(cross(r, UpVector));
+        float3 u = normalize(cross(f, r));
+        ndc.x = AspectRatio * ndc.x;
+
+        float3 direction = mul(float3(ndc.xy, FocalLength), float3x3(r, u, f));
 
         RayPayload raypay;
         raypay.Direction = normalize(direction);

@@ -25,6 +25,8 @@ public:
     struct CBPerFrame {
         ShaderType::Camera Camera;
         UINT RenderTargetIdx;
+        UINT TotalFrameCount;
+        UINT IntegrationCount;
     };
 
     explicit Raytracer(std::shared_ptr<DeviceCom> deviceCom);
@@ -42,6 +44,8 @@ public:
                 MaterialMap *materialMap,
                 ResourceDescriptorHeap *heaps
     );
+
+    void Reset();
 
 public:
     inline static const UINT MAX_RENDER_OBJECT = 1000;
@@ -75,5 +79,7 @@ private:
     std::unique_ptr<ConstantBuffer> _cb_buffer_per_frames;
     std::unique_ptr<RWResourceBuffer> _rw_buffer_material;
     TLAS _tlas;
+    UINT _total_frame_cnt;
+    UINT _integration_cnt;
 };
 _END_ENGINE

@@ -67,8 +67,11 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> StaticSamplers() {
 
 Raytracer::Raytracer(std::shared_ptr<DeviceCom> deviceCom):
 _rtpso(nullptr),
-_device(deviceCom)
-{}
+_device(deviceCom),
+_total_frame_cnt(1),
+_integration_cnt(1)
+{
+}
 
 bool Raytracer::Initiate() {
     _tlas.Initialize(MAX_RENDER_OBJECT, _device.get());
@@ -106,7 +109,17 @@ void Raytracer::Render(
 ) {
     {
         if (screen->GetRenderObjectList().empty()) {
+            auto enter = CD3DX12_RESOURCE_BARRIER::Transition(screen->GetRenderTargetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
+            command_list->ResourceBarrier(1, &enter);
+            command_list->ClearRenderTargetView(screen->GetRenderTargetHeapDesc()->CpuHandle, Renderer::ClearColor, 0, nullptr);
+            auto out = CD3DX12_RESOURCE_BARRIER::Transition(screen->GetRenderTargetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON);
+            command_list->ResourceBarrier(1, &out);
             return;
+        }
+
+        if (screen->Updated) {
+            Reset();
+            screen->Updated = false;
         }
 
         command_list->SetComputeRootSignature(_global_root_signature.Get());
@@ -133,16 +146,25 @@ void Raytracer::Render(
         command_list->ResourceBarrier(1, &barrier_enter);
 
         {
+            auto camera_info = render_screen->GetCameraInfo();
+            ShaderType::Camera camera = {
+                    .Position = camera_info.CameraPosition,
+                    .Pad0 = 0.0f,
+                    .Direction = camera_info.CameraDirection,
+                    .Pad1 = 0.0f,
+                    .UpVector = camera_info.CameraUp,
+                    .Pad2 = 0.0f,
+                    .AspectRatio = camera_info.AspectRatio,
+                    .Fov = camera_info.Fov,
+                    .Near = camera_info.Near,
+                    .Far = camera_info.Far
+            };
+
             CBPerFrame per_frame{
-                .Camera = {
-                        .Position = render_screen->CameraPosition,
-                        .Pad0 = 0.0f,
-                        .AspectRatio = render_screen->Width / static_cast<float>(render_screen->Height),
-                        .Fov = render_screen->Fov,
-                        .Near = render_screen->Near,
-                        .Far = render_screen->Far
-                        },
-                .RenderTargetIdx = static_cast<UINT>(render_screen->GetShaderResourceHeapDesc()->_heap_index)
+                .Camera = camera,
+                .RenderTargetIdx = static_cast<UINT>(render_screen->GetShaderResourceHeapDesc()->_heap_index),
+                .TotalFrameCount = _total_frame_cnt++,
+                .IntegrationCount = _integration_cnt++
             };
             _cb_buffer_per_frames->UpdateData(&per_frame, currentFrameIndex);
         }
@@ -179,6 +201,11 @@ void Raytracer::Render(
             for (auto& name : names) {
                 auto obj = render_screen->GetRenderObject(name);
                 objs.push_back(obj);
+
+                if (obj->Updated) {
+                    Reset();
+                    obj->Updated = false;
+                }
 
                 if (obj_count >= MAX_RENDER_OBJECT) {
                     GRAPHICS_LOG_WARNING("Maximum render object overed!");
@@ -600,6 +627,10 @@ bool Raytracer::BuildResourceBuffer() {
     _rw_buffer_material->SetData(&material, MaterialMap::MaxMaterial,
                                  sizeof(ShaderType::Material));
     return true;
+}
+
+void Raytracer::Reset() {
+    _integration_cnt = 0;
 }
 
 _END_ENGINE

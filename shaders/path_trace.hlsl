@@ -39,24 +39,30 @@ void RayGen()
 {
     uint2 LaunchIndex = DispatchRaysIndex().xy;
     uint2 LaunchDimensions = DispatchRaysDimensions().xy;
-    uint seed = GetSeed(LaunchIndex.x, LaunchIndex.y);
-    const uint sampleCount = 30;
+    uint seed = uint(LaunchIndex.x * (5555) + LaunchIndex.y * uint(20328) + uint(gTotalFrameCount) * uint(24023));
+
+    const uint sampleCount = 4;
 
     //Camera Position
-    float4 outColor = float4(0.f, 0.f, 0.f, 0.f);
+    float3 outColor = float3(0.f, 0.f, 0.f);
     for (uint i = 0; i < sampleCount; i++)
     {
         float2 r = float2(RandomFloat01(seed), RandomFloat01(seed));
         float2 uv = (float2(LaunchIndex) + (r - 0.5)) / float2(LaunchDimensions);
         float2 ndc = uv * float2(2,-2) + float2(-1, +1);
         RayPayload raypay = gCamera.GetRayPayload(ndc, seed);
-        outColor += RayColor(raypay, 30);
+        outColor += RayColor(raypay, 30).xyz;
     }
 
     RWTexture2D<float4> output = gRTOutputs[gRenderTargetIdx];
     outColor /= float(sampleCount);
+    outColor = sqrt(outColor);
 
-    output[LaunchIndex.xy] = float4(sqrt(outColor.xyz), 1.0f);
+    if (gIntegrationCount > 1) {
+        outColor = lerp(outColor.xyz, float3(output[LaunchIndex.xy].xyz), 1.f/float(gIntegrationCount));
+    }
+
+    output[LaunchIndex.xy] = float4(outColor.xyz, 1.0f);
 }
 
 [shader("closesthit")]

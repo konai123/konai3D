@@ -36,6 +36,7 @@ bool ComponentWindow::AddComponent(std::string name) {
     if (!_viewport_window->GetRenderScreen()->AddRenderObject(name, newRenderObj)) {
         return false;
     }
+    _viewport_window->GetRenderScreen()->Updated = true;
     return true;
 }
 
@@ -159,6 +160,7 @@ void ComponentWindow::OnUpdate(float delta) {
 
         if (ImGui::Button("Delete")) {
             DeleteComponent(name);
+            curr = -1;
         }
     }else {
         _viewport_window->SelectedObject = nullptr;

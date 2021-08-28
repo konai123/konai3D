@@ -69,7 +69,7 @@ DirectX::XMMATRIX Camera::GetInverseViewMatrix() {
 }
 
 DirectX::XMMATRIX Camera::GetProjectionMatrix() {
-    return DirectX::XMMatrixPerspectiveFovLH(Fov * F_PI, Ratio, Near, Far);
+    return DirectX::XMMatrixPerspectiveFovLH(Fov, Ratio, Near, Far);
 }
 
 

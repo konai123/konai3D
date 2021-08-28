@@ -26,7 +26,7 @@ public:
     UINT ObjectID;
     std::string MeshID;
     UINT SubmeshID;
-
+    bool Updated;
 public:
     void SetTransform (DirectX::FXMMATRIX worldMat);
     void UpdateMaterial (std::string materialName);

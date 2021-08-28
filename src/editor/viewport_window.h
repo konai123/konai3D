@@ -41,6 +41,7 @@ private:
     float _camera_x_angle;
     float _camera_y_angle;
     bool _show_fps_counter;
+    bool _draw_grid;
     ImGuizmo::OPERATION _guizmo_oper;
     ImGuizmo::MODE _guizmo_mode;
 

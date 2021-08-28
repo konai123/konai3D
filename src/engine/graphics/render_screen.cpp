@@ -16,7 +16,8 @@ RenderScreen::RenderScreen(
 :
 _device(std::move(device)),
 _resource_heap(std::move(resource_heap_pool)),
-_clear_color(_clear_color)
+_clear_color(_clear_color),
+Updated(true)
 {
     CreateRenderTargets(false, width, height);
 };
@@ -33,12 +34,14 @@ bool RenderScreen::AddRenderObject(std::string name, RenderObject* renderObject)
         return false;
     }
     _render_objects[name] = renderObject;
+    Updated = true;
     return true;
 };
 
 bool RenderScreen::UnRegisterRenderObject(std::string name) {
     if (_render_objects.contains(name)) {
         _render_objects.erase(name);
+        Updated = true;
         return true;
     }
     return false;
@@ -92,6 +95,7 @@ HeapDescriptorHandle *RenderScreen::GetDepthStencilHeapDesc() {
 }
 
 bool RenderScreen::Resize(UINT width, UINT height) {
+    Updated = true;
     return CreateRenderTargets(true, width, height);
 }
 
@@ -209,4 +213,16 @@ bool RenderScreen::CreateDepthStencilBufferAndView(bool isRecreation, UINT width
     );
     return true;
 }
+
+RenderScreen::CameraInfo RenderScreen::GetCameraInfo() {
+    return _camera_info;
+}
+
+void RenderScreen::SetCameraInfo(const CameraInfo& info) {
+    if (::memcmp(&_camera_info, &info, sizeof(CameraInfo)) != 0) {
+        Updated = true;
+        _camera_info = info;
+    }
+}
+
 _END_ENGINE

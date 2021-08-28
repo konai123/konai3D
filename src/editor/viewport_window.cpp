@@ -13,7 +13,7 @@ ViewportWindow::ViewportWindow(_ENGINE::Renderer *renderer)
 :
 IMGUIWindow("Viewport"),
 _width(1920),
-_height(1080),
+_height(1920),
 _fps(0),
 _frame_cnt(0),
 _elapsed_time(0.0f),
@@ -24,9 +24,10 @@ _camera_x_angle(0.0f),
 _camera_y_angle(0.0f),
 _guizmo_oper(ImGuizmo::OPERATION::TRANSLATE),
 _guizmo_mode(ImGuizmo::MODE::WORLD),
+_draw_grid(true),
 _screen(nullptr) {
     _camera = std::make_unique<Camera>(
-        1.0472f,
+        0.7852,
         static_cast<float>(_width) / static_cast<float>(_height),
         0.1f,
         1000.0f
@@ -40,16 +41,16 @@ _screen(nullptr) {
     _screen = renderer->InstanceRenderScreen(_width, _height);
     AppAssert(_screen != nullptr);
 
+    _ENGINE::RenderScreen::CameraInfo camera_info;
     auto camera_position = _camera->Position;
-    _screen->ViewOriginAndTanHalfFovY = float4(camera_position.x, camera_position.y, camera_position.z, tanf(_camera->Fov * 0.5f));
-    _screen->CameraPosition = camera_position;
-    _screen->Near = _camera->Near;
-    _screen->Far = _camera->Far;
-    _screen->Fov = _camera->Fov;
-
-    DirectX::XMStoreFloat4x4(&_screen->ViewMatrix, _camera->GetViewMatrix());
-    DirectX::XMStoreFloat4x4(&_screen->ProjectionMatrix, _camera->GetProjectionMatrix());
-    DirectX::XMStoreFloat4x4(&_screen->InverseViewMatrix, _camera->GetInverseViewMatrix());
+    camera_info.CameraPosition = camera_position;
+    camera_info.Near = _camera->Near;
+    camera_info.Far = _camera->Far;
+    camera_info.Fov = _camera->Fov;
+    camera_info.CameraDirection = _camera->Direction;
+    camera_info.CameraUp = _camera->CameraUp;
+    camera_info.AspectRatio = _width / static_cast<float>(_height);
+    _screen->SetCameraInfo(camera_info);
 }
 
 void ViewportWindow::OnUpdate(float delta) {
@@ -82,6 +83,10 @@ void ViewportWindow::OnUpdate(float delta) {
             if (ImGui::MenuItem("Show FPS Counter", NULL, _show_fps_counter, true)) {
                 _show_fps_counter = !_show_fps_counter;
             }
+
+            if (ImGui::MenuItem("Show Grid", NULL, _draw_grid, true)) {
+                _draw_grid = !_draw_grid;
+            }
             ImGui::EndMenu();
         }
 
@@ -109,7 +114,7 @@ void ViewportWindow::OnUpdate(float delta) {
             ImGui::Text("Fov");
             ImGui::SameLine();
             float angle = AI_RAD_TO_DEG(_camera->Fov);
-            ImGui::SliderFloat("Angle", &angle, 10.0f, 90.0f);
+            ImGui::SliderFloat("Angle", &angle, 5.0f, 90.0f);
             _camera->Fov = AI_DEG_TO_RAD(angle);
             ImGui::EndMenu();
         }
@@ -133,17 +138,24 @@ void ViewportWindow::OnUpdate(float delta) {
 
     UpdateScreen();
     ImGuizmo::SetDrawlist();
-    ImGuizmo::DrawGrid(
-            reinterpret_cast<float*>(&_screen->ViewMatrix),
-            reinterpret_cast<float*>(&_screen->ProjectionMatrix),
-            identityMatrix,
-            100.0f);
+    float4x4 view_mat, project_mat;
+    DirectX::XMStoreFloat4x4(&view_mat, _camera->GetViewMatrix());
+    DirectX::XMStoreFloat4x4(&project_mat, _camera->GetProjectionMatrix());
 
     ImGuizmo::SetRect(cursor_pos.x, cursor_pos.y, size.x, size.y);
 
     ImGui::Image(reinterpret_cast<void *>(_screen->GetShaderResourceHeapDesc()->GpuHandle.ptr), size);
     if (SelectedObject != nullptr)
         EditTransform(SelectedObject);
+
+    if (_draw_grid) {
+        ImGuizmo::DrawGrid(
+                reinterpret_cast<float*>(&view_mat),
+                reinterpret_cast<float*>(&project_mat),
+                identityMatrix,
+                100.0f);
+    }
+
     ImGui::End();
 }
 
@@ -221,13 +233,16 @@ void ViewportWindow::ControlViewport() {
 }
 
 void ViewportWindow::UpdateScreen() {
+    _ENGINE::RenderScreen::CameraInfo camera_info;
     auto camera_position = _camera->Position;
-    _screen->ViewOriginAndTanHalfFovY = float4(camera_position.x, camera_position.y, camera_position.z, tanf(_camera->Fov * 0.5f));
-    _screen->CameraPosition = camera_position;
-    _screen->Fov = _camera->Fov;
-    DirectX::XMStoreFloat4x4(&_screen->ViewMatrix, _camera->GetViewMatrix());
-    DirectX::XMStoreFloat4x4(&_screen->ProjectionMatrix, _camera->GetProjectionMatrix());
-    DirectX::XMStoreFloat4x4(&_screen->InverseViewMatrix, _camera->GetInverseViewMatrix());
+    camera_info.CameraPosition = camera_position;
+    camera_info.Near = _camera->Near;
+    camera_info.Far = _camera->Far;
+    camera_info.Fov = _camera->Fov;
+    camera_info.CameraDirection = _camera->Direction;
+    camera_info.CameraUp = _camera->CameraUp;
+    camera_info.AspectRatio = _width / static_cast<float>(_height);
+    _screen->SetCameraInfo(camera_info);
 }
 
 _ENGINE::RenderScreen* ViewportWindow::GetRenderScreen() const {
@@ -235,15 +250,13 @@ _ENGINE::RenderScreen* ViewportWindow::GetRenderScreen() const {
 }
 
 void ViewportWindow::EditTransform(_ENGINE::RenderObject* targetObject) {
-    ImGuizmo::DrawCubes(
-            reinterpret_cast<float*>(&_screen->ViewMatrix),
-            reinterpret_cast<float*>(&_screen->ProjectionMatrix),
-            reinterpret_cast<float*>(&targetObject->WorldMatrix),
-            1
-            );
+    float4x4 view_mat, project_mat;
+    DirectX::XMStoreFloat4x4(&view_mat, _camera->GetViewMatrix());
+    DirectX::XMStoreFloat4x4(&project_mat, _camera->GetProjectionMatrix());
+
     ImGuizmo::Manipulate(
-            reinterpret_cast<float*>(&_screen->ViewMatrix),
-            reinterpret_cast<float*>(&_screen->ProjectionMatrix),
+            reinterpret_cast<float*>(&view_mat),
+            reinterpret_cast<float*>(&project_mat),
             _guizmo_oper,
             _guizmo_mode,
             reinterpret_cast<float*>(&targetObject->WorldMatrix)

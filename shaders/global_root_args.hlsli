@@ -11,6 +11,8 @@ cbuffer PerFrame : register(b1, space0)
 {
     Camera gCamera;
     uint gRenderTargetIdx;
+    uint gTotalFrameCount;
+    uint gIntegrationCount;
 };
 
 //SRVs
