@@ -69,4 +69,12 @@ struct Camera
     }
 };
 
+
+#define LightType_Point = 0
+struct Light
+{
+    int LightType;
+    float3 Position;
+};
+
 #endif

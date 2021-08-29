@@ -13,11 +13,13 @@ cbuffer PerFrame : register(b1, space0)
     uint gRenderTargetIdx;
     uint gTotalFrameCount;
     uint gIntegrationCount;
+    uint gNumberOfLight;
 };
 
 //SRVs
 StructuredBuffer<Material> gMaterials : register(t1, space0);
 RaytracingAccelerationStructure gRaytracingAccelerationStructure : register(t1, space1);
+StructuredBuffer<Light> gLights : register(t1, space2);
 
 
 #endif

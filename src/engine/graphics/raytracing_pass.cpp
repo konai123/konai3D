@@ -127,8 +127,13 @@ void Raytracer::Render(
 
         /*Bind TextureTables*/
         command_list->SetComputeRootShaderResourceView(2,
-                                                        _rw_buffer_material->GetResource(
-                                                                currentFrameIndex)->GetGPUVirtualAddress());
+                                                       _rw_buffer_material->GetResource(
+                                                               currentFrameIndex)->GetGPUVirtualAddress());
+
+        command_list->SetComputeRootShaderResourceView(5,
+                                                       _rw_buffer_light->GetResource(
+                                                               currentFrameIndex)->GetGPUVirtualAddress());
+
         command_list->SetComputeRootDescriptorTable(3,
                                                      heaps->GetShaderResourceHeap()->GetGPUDescriptorHandleForHeapStart());
 
@@ -144,6 +149,13 @@ void Raytracer::Render(
                 D3D12_RESOURCE_STATE_UNORDERED_ACCESS
         );
         command_list->ResourceBarrier(1, &barrier_enter);
+
+        //Update Lights
+        auto lights = render_screen->GetLightList();
+        for (int i = 0; i < lights.size(); i++) {
+            auto light_ptr = lights[i];
+            _rw_buffer_light->UpdateData(light_ptr, i, currentFrameIndex);
+        }
 
         {
             auto camera_info = render_screen->GetCameraInfo();
@@ -164,7 +176,8 @@ void Raytracer::Render(
                 .Camera = camera,
                 .RenderTargetIdx = static_cast<UINT>(render_screen->GetShaderResourceHeapDesc()->_heap_index),
                 .TotalFrameCount = _total_frame_cnt++,
-                .IntegrationCount = _integration_cnt++
+                .IntegrationCount = _integration_cnt++,
+                .NumberOfLight = static_cast<UINT>(lights.size())
             };
             _cb_buffer_per_frames->UpdateData(&per_frame, currentFrameIndex);
         }
@@ -173,6 +186,7 @@ void Raytracer::Render(
                 GetResource(currentFrameIndex)->GetGPUVirtualAddress());
 
         {
+            //Update Materials
             auto materials = materialMap->GetMaterialList();
             for (auto& mat: materials) {
                 auto material_desc = materialMap->GetMaterialDesc(mat);
@@ -329,12 +343,18 @@ bool Raytracer::BuildGlobalRootSignature() {
         uav_param.InitAsDescriptorTable(static_cast<UINT>(range_uav.size()), range_uav.data());
     }
 
+    CD3DX12_ROOT_PARAMETER1 light_param;
+    {
+        light_param.InitAsShaderResourceView(1, 2);
+    }
+
     std::vector<CD3DX12_ROOT_PARAMETER1> params = {
             cb_per_frame_param,
             raytracing_acceleration_structure,
             material_param,
             srv_param,
-            uav_param
+            uav_param,
+            light_param
     };
 
     auto static_samplers = StaticSamplers();

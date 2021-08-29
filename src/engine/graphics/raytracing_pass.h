@@ -27,6 +27,7 @@ public:
         UINT RenderTargetIdx;
         UINT TotalFrameCount;
         UINT IntegrationCount;
+        UINT NumberOfLight;
     };
 
     explicit Raytracer(std::shared_ptr<DeviceCom> deviceCom);
