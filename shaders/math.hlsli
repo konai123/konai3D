@@ -53,4 +53,14 @@ bool NearZero(float3 e) {
     return (abs(e[0]) < gEps) && (abs(e[1]) < gEps) && (abs(e[2]) < gEps);
 }
 
+bool InsideRay(float3 rayDirection, float3 surfaceNormal) {
+    return dot(rayDirection, surfaceNormal) > 0.0f;
+}
+
+float3 Refract(float3 indir, float3 normal, float ir) {
+    float cos_theta = min(dot(-indir, normal), 1.0f);
+    float3 r_out_perp =  ir * (indir + cos_theta*normal);
+    float3 r_out_parallel = -sqrt(abs(1.0f - dot(r_out_perp, r_out_perp))) * normal;
+    return r_out_perp + r_out_parallel;
+}
 #endif

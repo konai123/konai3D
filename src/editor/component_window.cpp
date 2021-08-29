@@ -116,7 +116,7 @@ void ComponentWindow::OnUpdate(float delta) {
         ImGui::SameLine();
         std::string mat_name = cmp->MaterialName;
         if (ImGui::Button(mat_name.data())) {
-            ImGui::OpenPopup("Material Selector");
+            ImGui::OpenPopup("Material");
         }
 
         auto mat_desc = _render_resource_map->MaterialMap->GetMaterialDesc(mat_name);

@@ -9,7 +9,8 @@ namespace ShaderType {
 
 enum MaterialType {
     Lambertian = 0,
-    Metal = 1
+    Metal,
+    Dielectric
 };
 
 struct Material {
@@ -17,6 +18,7 @@ public:
     int DiffuseTextureIndex = 0;
     MaterialType MaterialType;
     float Fuzz;
+    float RefractIndex;
 };
 
 struct RayPayload

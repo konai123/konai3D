@@ -25,8 +25,8 @@ bool K3DApp::Prepare(HWND hwnd, int width, int height, float dpiFactor) {
     if (!App::Prepare(hwnd, width, height, dpiFactor))
         return false;
 
-    SetMinHeight(480);
-    SetMinWidth(720);
+    SetMinWidth(1920);
+    SetMinHeight(1080);
 
     _imgui_renderer = std::make_shared<IMGUIRenderer>();
     _renderer = std::make_shared<_ENGINE::Renderer>();
@@ -64,8 +64,8 @@ bool K3DApp::Prepare(HWND hwnd, int width, int height, float dpiFactor) {
 
     {
         /* Load System Mesh, Texture */
-        auto system_texture_path = global::AssetPath / "textures" / "default_texture.jpg";
-        auto system_mesh_path = global::AssetPath / "meshes" / "cube.obj";
+        auto system_texture_path = global::AssetPath / "textures" / "default_texture.png";
+        auto system_mesh_path = global::AssetPath / "meshes" / "sphere.obj";
 
         _renderer->RenderResourceMap->TextureMap->AsyncLoad({system_texture_path});
         _renderer->RenderResourceMap->MeshMap->AsyncLoad({system_mesh_path});
@@ -73,7 +73,8 @@ bool K3DApp::Prepare(HWND hwnd, int width, int height, float dpiFactor) {
         _ENGINE::MaterialDesc mat_desc {
             .DiffuseTexturePath = system_texture_path.string(),
             .MaterialType = _ENGINE::ShaderType::Lambertian,
-            .Fuzz = 0.f
+            .Fuzz = 0.f,
+            .RefractIndex = 1.5f
         };
         _renderer->RenderResourceMap->MaterialMap->AddMaterial(DefaultMaterialName, mat_desc);
     }

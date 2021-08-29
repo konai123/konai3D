@@ -14,7 +14,7 @@ float4 RayColor(RayPayload raypay, uint maxDepth) {
 
     for (uint i = 0; i < maxDepth; i++) {
         RayDesc r;
-        r =  raypay.Ray(0.0001f, 100000.0f);
+        r =  raypay.Ray(0.001f, 100000.0f);
         TraceRay(
                 gRaytracingAccelerationStructure,
                 RAY_FLAG_NONE,
@@ -28,7 +28,7 @@ float4 RayColor(RayPayload raypay, uint maxDepth) {
         outColor *= raypay.HitColor;
         if (raypay.T < 0.0f) {
             if (i >= maxDepth - 1) {
-                return float4(0.0f, 0.0f, 0.0f, 0.0f);
+                return float4(0.0f, 0.0f, 0.0f, 1.0f);
             }
             break;
         }
@@ -54,7 +54,7 @@ void RayGen()
         float2 uv = (float2(LaunchIndex) + (r - 0.5)) / float2(LaunchDimensions);
         float2 ndc = uv * float2(2,-2) + float2(-1, +1);
         RayPayload raypay = gCamera.GetRayPayload(ndc, seed);
-        outColor += RayColor(raypay, 30).xyz;
+        outColor += RayColor(raypay, 15).xyz;
     }
 
     RWTexture2D<float4> output = gRTOutputs[gRenderTargetIdx];
@@ -92,7 +92,7 @@ void ClosestHit(inout RayPayload payload, Attributes attrib)
 
     //BSDF Init
     BSDF bsdf;
-    bsdf.Init(mat.MaterialType, color, mat.Fuzz);
+    bsdf.Init(mat.MaterialType, color, mat.Fuzz, mat.RefractIndex);
 
     float3 outDirection;
     float3 outAttenuation;
@@ -103,7 +103,7 @@ void ClosestHit(inout RayPayload payload, Attributes attrib)
     }
 
     payload.Origin = payload.At();
-    payload.Direction = normalize(payload.Origin + outDirection);
+    payload.Direction = normalize(outDirection);
 	payload.HitColor = float4(outAttenuation.xyz, 1.0f);
 }
 

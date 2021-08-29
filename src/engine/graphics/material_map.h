@@ -14,6 +14,7 @@ public:
     std::string DiffuseTexturePath;
     ShaderType::MaterialType MaterialType;
     float Fuzz;
+    float RefractIndex;
 };
 
 class MaterialMap {

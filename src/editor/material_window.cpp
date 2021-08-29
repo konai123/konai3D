@@ -4,6 +4,7 @@
 
 #include "src/macros.h"
 #include "src/editor/material_window.h"
+#include "src/k3d_app.h"
 
 _START_KONAI3D
 MaterialWindow::MaterialWindow(std::shared_ptr<_ENGINE::Renderer::ResourceMap> resourceMap)
@@ -16,12 +17,37 @@ _file_dialog(ImGuiFileBrowserFlags_MultipleSelection)
     _file_dialog.SetTypeFilters({".jpg", ".dds", ".hdr", ".tga"});
 }
 
+bool MaterialWindow::AddMaterial(std::string name) {
+    _ENGINE::MaterialDesc newMat = _render_resource_map->MaterialMap->GetMaterialDesc(K3DApp::DefaultMaterialName).value();
+    if (!_render_resource_map->MaterialMap->AddMaterial(name, newMat)) {
+        return false;
+    }
+    return true;
+}
+
 void MaterialWindow::OnUpdate(float delta) {
 
     auto window_name = GetWindowName();
     if (!ImGui::Begin(window_name.c_str(), &_open, ImGuiWindowFlags_None)) {
         ImGui::End();
         return;
+    }
+
+    if (ImGui::BeginPopup("AddMaterial")) {
+        static char buf[20] = {0,};
+        ImGui::InputText("Mat Name", buf, 20);
+        if (ImGui::Button("Ok")) {
+            if (!AddMaterial(buf)) {
+                APP_LOG_ERROR("Failed to add '{}' material", buf);
+            } else {
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        ImGui::EndPopup();
+    }
+
+    if (ImGui::Button("Add Material")) {
+        ImGui::OpenPopup("AddMaterial");
     }
 
     auto material_names = _render_resource_map->MaterialMap->GetMaterialList();
@@ -42,11 +68,15 @@ void MaterialWindow::OnUpdate(float delta) {
                 ImGui::OpenPopup("Select Diffuse Texture");
             }
 
-            if (ImGui::Combo("Material Type", reinterpret_cast<int*>(&material_desc.MaterialType), "Lambertian\0Metal\0\0")) {
+            if (ImGui::Combo("Material Type", reinterpret_cast<int*>(&material_desc.MaterialType), "Lambertian\0Metal\0Dielectric\0\0")) {
                 _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
             }
 
             if (ImGui::SliderFloat("Fuzz", &material_desc.Fuzz, 0.0f, 1.0f)) {
+                _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
+            }
+
+            if (ImGui::SliderFloat("Index Of Refract", &material_desc.RefractIndex, 1.0f, 5.0f)) {
                 _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
             }
         }

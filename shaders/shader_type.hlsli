@@ -2,12 +2,14 @@
 #define SHADER_TYPE_HLSLI
 
 #define MaterialType_Lambertian 0
-#define MaterialType_Metal 1
+#define MaterialType_Metal      1
+#define MaterialType_Dielectric 2
 
 struct Material {
     int DiffuseTextureIndex;
     int MaterialType;
     float Fuzz;
+    float RefractIndex;
 };
 
 struct RayPayload
@@ -66,4 +68,5 @@ struct Camera
         return raypay;
     }
 };
+
 #endif

@@ -6,11 +6,12 @@
 
 struct BSDF
 {
-    void Init(int matType, float3 baseColor, float fuzzValue)
+    void Init(int matType, float3 baseColor, float fuzzValue, float ir)
     {
         albedo = baseColor;
         fuzz = fuzzValue;
         materialType = matType;
+        refractIndex = ir;
     }
 
     bool Scatter(float3 inDirection, float3 normal, out float3 scatterDirection, out float3 attenuation, inout uint seed)
@@ -19,16 +20,22 @@ struct BSDF
             Lambertian lam;
             lam.albedo = albedo;
             return lam.Scatter(inDirection, normal, scatterDirection, attenuation, seed);
-        }else{
+        }else if (materialType == MaterialType_Metal) {
             Metal metal;
             metal.albedo = albedo;
             metal.fuzz = fuzz;
             return metal.Scatter(inDirection, normal, scatterDirection, attenuation, seed);
+        }else if (materialType == MaterialType_Dielectric) {
+            Dielectric diel;
+            diel.ir = refractIndex;
+            return diel.Scatter(inDirection, normal, scatterDirection, attenuation, seed);
         }
+        return false;
     }
 
     float3 albedo;
     float fuzz;
+    float refractIndex;
     int materialType;
 };
 

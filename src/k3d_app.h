@@ -34,7 +34,7 @@ public:
 
 public:
     static inline const std::string DefaultMaterialName = "default";
-    static inline const std::string DefaultMeshName = "cube";
+    static inline const std::string DefaultMeshName = "sphere";
 
 private:
     _ENGINE::RenderingOptions _rendering_options;

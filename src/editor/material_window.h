@@ -14,6 +14,9 @@ public:
     MaterialWindow(std::shared_ptr<_ENGINE::Renderer::ResourceMap> resourceMap);
 
 public:
+    bool AddMaterial(std::string materialName);
+
+public:
     virtual void OnUpdate(float delta) override;
     virtual void OnDestroy() override;
 

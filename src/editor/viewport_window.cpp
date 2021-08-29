@@ -13,7 +13,7 @@ ViewportWindow::ViewportWindow(_ENGINE::Renderer *renderer)
 :
 IMGUIWindow("Viewport"),
 _width(1920),
-_height(1920),
+_height(1080),
 _fps(0),
 _frame_cnt(0),
 _elapsed_time(0.0f),
