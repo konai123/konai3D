@@ -9,25 +9,20 @@ RenderObject::RenderObject() {
     WorldMatrix = DirectX::XMMatrixIdentity();
 }
 
-RenderObject::~RenderObject() {
-    _ENGINE::RenderObject::DiscardRenderObject(this);
-}
-
-RenderObject *RenderObject::AllocRenderObject() {
+std::optional<RenderObject> RenderObject::AllocRenderObject() {
     int idx = _pool.allocate();
-    if (idx < 0) return nullptr;
+    if (idx < 0) return std::nullopt;
 
     RenderObject& renderObj = _pool[idx];
     renderObj.ObjectID = idx;
     renderObj.MeshID = "";
     renderObj.MaterialName= "";
     renderObj.SubmeshID = -1;
-    return &renderObj;
+    return renderObj;
 }
 
-void RenderObject::DiscardRenderObject(RenderObject* obj) {
-    EngineAssert(obj != nullptr);
-    _pool.free(obj->ObjectID);
+void RenderObject::DiscardRenderObject(RenderObject& obj) {
+    _pool.free(obj.ObjectID);
 }
 
 void RenderObject::SetTransform(DirectX::FXMMATRIX worldMat) {

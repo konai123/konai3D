@@ -40,7 +40,7 @@ public:
     virtual ~RenderScreen();
 
 public:
-    bool AddRenderObject(std::string name, RenderObject* renderObject);
+    bool AddRenderObject(std::string name, std::string materialName, std::string meshID, int submeshID);
     bool UnRegisterRenderObject(std::string name);
     RenderObject *GetRenderObject(std::string name);
     std::vector<std::string> GetRenderObjectList();
@@ -86,7 +86,7 @@ private:
 private:
     std::shared_ptr<DeviceCom> _device;
     std::shared_ptr<ResourceDescriptorHeap> _resource_heap;
-    std::unordered_map<std::string, RenderObject*> _render_objects;
+    std::unordered_map<std::string, RenderObject> _render_objects;
     std::unordered_map<std::string, Light> _lights;
 
     Microsoft::WRL::ComPtr<ID3D12Resource> _dsv_buffer;

@@ -20,11 +20,11 @@ public:
 class RenderObject : public Positionable {
 public:
     RenderObject();
-    virtual ~RenderObject();
+    virtual ~RenderObject() = default;
 
 public:
-    static RenderObject* AllocRenderObject();
-    static void DiscardRenderObject(RenderObject* obj);
+    static std::optional<RenderObject> AllocRenderObject();
+    static void DiscardRenderObject(RenderObject& obj);
 
 public:
     virtual DirectX::XMMATRIX GetWorldMatrix() override;
@@ -42,7 +42,7 @@ public:
     void UpdateMesh (std::string meshName, UINT submeshID);
 
 private:
-    inline static Pool<RenderObject> _pool = Pool<RenderObject>(100, true);
+    inline static Pool<RenderObject> _pool = Pool<RenderObject>(0, true);
 
 };
 _END_ENGINE

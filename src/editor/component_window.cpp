@@ -28,12 +28,7 @@ _mesh_file_dialog(ImGuiFileBrowserFlags_MultipleSelection)
 }
 
 bool ComponentWindow::AddComponent(std::string name) {
-    auto newRenderObj = _ENGINE::RenderObject::AllocRenderObject();
-    newRenderObj->MaterialName = K3DApp::DefaultMaterialName;
-    newRenderObj->MeshID = K3DApp::DefaultMeshName;
-    newRenderObj->SubmeshID = 0;
-
-    if (!_viewport_window->GetRenderScreen()->AddRenderObject(name, newRenderObj)) {
+    if (!_viewport_window->GetRenderScreen()->AddRenderObject(name, K3DApp::DefaultMaterialName, K3DApp::DefaultMeshName, 0)) {
         return false;
     }
     return true;
@@ -110,6 +105,17 @@ void ComponentWindow::OnUpdate(float delta) {
     ImGui::SameLine();
     if (ImGui::Button("Add Light")) {
         ImGui::OpenPopup("AddLight");
+    }
+
+    static bool testOn = false;
+    if (ImGui::Button("Test")) {
+        testOn = true;
+    }
+
+    static std::string test = "A";
+    if (testOn) {
+        AddComponent(test);
+        test+="A";
     }
 
     auto names = _viewport_window->GetRenderScreen()->GetRenderObjectList();

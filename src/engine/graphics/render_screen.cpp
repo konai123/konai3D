@@ -28,18 +28,27 @@ RenderScreen::~RenderScreen() {
     _resource_heap->DiscardRenderTargetHeapDescriptor(_depth_stencil_view._heap_index);
 }
 
-bool RenderScreen::AddRenderObject(std::string name, RenderObject* renderObject) {
+bool RenderScreen::AddRenderObject(std::string name, std::string materialName, std::string meshID, int submeshID) {
     if (_render_objects.contains(name)) {
         GRAPHICS_LOG_WARNING("RenderObject {} already exist", name);
         return false;
     }
-    _render_objects[name] = renderObject;
+
+    auto newRenderObj = _ENGINE::RenderObject::AllocRenderObject();
+    if (!newRenderObj.has_value()) return false;
+
+    newRenderObj->MaterialName = materialName;
+    newRenderObj->MeshID = meshID;
+    newRenderObj->SubmeshID = submeshID;
+
+    _render_objects[name] = newRenderObj.value();
     Updated = true;
     return true;
 };
 
 bool RenderScreen::UnRegisterRenderObject(std::string name) {
     if (_render_objects.contains(name)) {
+        RenderObject::DiscardRenderObject(_render_objects[name]);
         _render_objects.erase(name);
         Updated = true;
         return true;
@@ -49,7 +58,7 @@ bool RenderScreen::UnRegisterRenderObject(std::string name) {
 
 RenderObject* RenderScreen::GetRenderObject(std::string name) {
     if (_render_objects.contains(name)) {
-        return _render_objects[name];
+        return &_render_objects[name];
     }
     return nullptr;
 }

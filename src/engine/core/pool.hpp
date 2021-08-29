@@ -46,13 +46,12 @@ public:
 public:
     virtual int allocate() {
         std::lock_guard<std::mutex> lock(_lock);
-        if (_curr > _capacity - 1) {
+        if (_curr >= _capacity) {
             if (!_auto_increment)
                 return -1;
 
-            PoolElement<T> e;
-            e._next = _curr + 1;
-            _elements.push_back(e);
+            _elements.emplace_back();
+            _elements[_elements.size()-1]._next = _curr+1;
             _capacity++;
         }
         int ret = _curr;
