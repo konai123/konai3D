@@ -13,7 +13,10 @@
 #include "src/engine/graphics/render_object.h"
 #include "src/engine/graphics/shader_types.h"
 
+
 _START_ENGINE
+
+typedef ShaderType::Light Light;
 class RenderScreen{
 public:
     struct CameraInfo {
@@ -41,6 +44,11 @@ public:
     bool UnRegisterRenderObject(std::string name);
     RenderObject *GetRenderObject(std::string name);
     std::vector<std::string> GetRenderObjectList();
+
+    bool AddLight(std::string name, Light light);
+    bool RemoveLight(std::string name);
+    Light *GetLight(std::string name);
+    std::vector<Light*> GetLightList();
 
     D3D12_VIEWPORT *GetViewPort();
     D3D12_RECT *GetScissorRect();
@@ -75,6 +83,7 @@ private:
     std::shared_ptr<DeviceCom> _device;
     std::shared_ptr<ResourceDescriptorHeap> _resource_heap;
     std::unordered_map<std::string, RenderObject*> _render_objects;
+    std::unordered_map<std::string, Light> _lights;
 
     Microsoft::WRL::ComPtr<ID3D12Resource> _dsv_buffer;
     Microsoft::WRL::ComPtr<ID3D12Resource> _render_target;

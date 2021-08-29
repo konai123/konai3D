@@ -47,5 +47,15 @@ struct Camera
 
 };
 
+enum LightType {
+    LightType_Point = 0
+};
+
+struct Light
+{
+    LightType LightType;
+    float3 Position;
+};
+
 }
 _END_ENGINE

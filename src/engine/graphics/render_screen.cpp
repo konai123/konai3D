@@ -62,6 +62,40 @@ std::vector<std::string> RenderScreen::GetRenderObjectList() {
     return ret;
 }
 
+bool RenderScreen::AddLight(std::string name, Light light) {
+    if (_lights.contains(name)) {
+        GRAPHICS_LOG_WARNING("Light {} already exist", name);
+        return false;
+    }
+    _lights[name] = light;
+    return true;
+}
+
+bool RenderScreen::RemoveLight(std::string name) {
+    if (_lights.contains(name)) {
+        GRAPHICS_LOG_WARNING("Light {} doesn't exist", name);
+        return false;
+    }
+    _lights.erase(name);
+    return true;
+}
+
+Light *RenderScreen::GetLight(std::string name) {
+    if (_lights.contains(name)) {
+        GRAPHICS_LOG_WARNING("Light {} doesn't exist", name);
+        return nullptr;
+    }
+    return &_lights[name];
+}
+
+std::vector<Light *> RenderScreen::GetLightList() {
+    std::vector<Light *> lights;
+    for (auto& p : _lights) {
+        lights.push_back(&p.second);
+    }
+    return lights;
+}
+
 UINT RenderScreen::Size() {
     return static_cast<UINT>(_render_objects.size());
 };
@@ -224,5 +258,6 @@ void RenderScreen::SetCameraInfo(const CameraInfo& info) {
         _camera_info = info;
     }
 }
+
 
 _END_ENGINE
