@@ -68,6 +68,7 @@ bool RenderScreen::AddLight(std::string name, Light light) {
         return false;
     }
     _lights[name] = light;
+    Updated = true;
     return true;
 }
 
@@ -77,6 +78,7 @@ bool RenderScreen::RemoveLight(std::string name) {
         return false;
     }
     _lights.erase(name);
+    Updated = true;
     return true;
 }
 
