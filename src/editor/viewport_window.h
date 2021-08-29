@@ -24,12 +24,12 @@ public:
     virtual Camera* GetCamera() const;
 
 private:
-    void EditTransform(_ENGINE::RenderObject* targetObject);
+    void EditTransform(_ENGINE::Positionable* targetObject);
 
 public:
     float ZoomSpeed;
     float DragSpeed;
-    _ENGINE::RenderObject* SelectedObject;
+    _ENGINE::Positionable* SelectedObject;
 
 private:
     ImGuiWindowFlags _window_flags = ImGuiWindowFlags_MenuBar;

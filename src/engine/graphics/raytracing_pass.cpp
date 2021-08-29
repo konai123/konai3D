@@ -153,7 +153,7 @@ void Raytracer::Render(
         //Update Lights
         auto lights = render_screen->GetLightList();
         for (int i = 0; i < lights.size(); i++) {
-            auto light_ptr = lights[i];
+            auto light_ptr = render_screen->GetLight(lights[i]);
             _rw_buffer_light->UpdateData(light_ptr, i, currentFrameIndex);
         }
 
@@ -218,11 +218,6 @@ void Raytracer::Render(
             for (auto& name : names) {
                 auto obj = render_screen->GetRenderObject(name);
                 objs.push_back(obj);
-
-                if (obj->Updated) {
-                    Reset();
-                    obj->Updated = false;
-                }
 
                 if (obj_count >= RenderScreen::MAX_RENDER_OBJECT) {
                     GRAPHICS_LOG_WARNING("Maximum render object overed!");

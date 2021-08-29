@@ -10,7 +10,14 @@
 #include "src/engine/core/pool.hpp"
 
 _START_ENGINE
-class RenderObject {
+class Positionable {
+DECLARE_CLASS_AS_INTERFACE(Positionable)
+public:
+    virtual DirectX::XMMATRIX GetWorldMatrix() = 0;
+    virtual void SetTransform (DirectX::FXMMATRIX worldMat) = 0;
+};
+
+class RenderObject : public Positionable {
 public:
     RenderObject();
     virtual ~RenderObject();
@@ -20,15 +27,17 @@ public:
     static void DiscardRenderObject(RenderObject* obj);
 
 public:
-    DirectX::XMMATRIX WorldMatrix;
+    virtual DirectX::XMMATRIX GetWorldMatrix() override;
+    virtual void SetTransform (DirectX::FXMMATRIX worldMat) override;
 
+public:
     std::string MaterialName;
     UINT ObjectID;
     std::string MeshID;
     UINT SubmeshID;
-    bool Updated;
+    DirectX::XMMATRIX WorldMatrix;
+
 public:
-    void SetTransform (DirectX::FXMMATRIX worldMat);
     void UpdateMaterial (std::string materialName);
     void UpdateMesh (std::string meshName, UINT submeshID);
 

@@ -48,7 +48,7 @@ public:
     bool AddLight(std::string name, Light light);
     bool RemoveLight(std::string name);
     Light *GetLight(std::string name);
-    std::vector<Light*> GetLightList();
+    std::vector<std::string> GetLightList();
 
     D3D12_VIEWPORT *GetViewPort();
     D3D12_RECT *GetScissorRect();

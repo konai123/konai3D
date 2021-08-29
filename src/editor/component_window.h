@@ -23,6 +23,9 @@ public:
     bool AddComponent(std::string name);
     bool DeleteComponent(std::string name);
 
+    bool AddLight(std::string name);
+    bool DeleteLight(std::string name);
+
 public:
     virtual void OnUpdate(float delta) override;
     virtual void OnDestroy() override;

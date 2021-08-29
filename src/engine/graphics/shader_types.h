@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "src/engine/graphics/render_object.h"
 
 _START_ENGINE
 namespace ShaderType {
@@ -51,10 +52,21 @@ enum LightType {
     LightType_Point = 0
 };
 
-struct Light
+struct Light : public Positionable
 {
     LightType LightType;
     float3 Position;
+
+public:
+    virtual DirectX::XMMATRIX GetWorldMatrix() {
+        return DirectX::XMMatrixTranslation(Position.x, Position.y, Position.z);
+    }
+
+    virtual void SetTransform (DirectX::FXMMATRIX worldMat) {
+        DirectX::XMVECTOR position, scale, rotation;
+        DirectX::XMMatrixDecompose(&scale, &rotation, &position, worldMat);
+        DirectX::XMStoreFloat3(&Position, position);
+    }
 };
 
 }

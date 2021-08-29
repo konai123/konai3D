@@ -73,7 +73,7 @@ bool RenderScreen::AddLight(std::string name, Light light) {
 }
 
 bool RenderScreen::RemoveLight(std::string name) {
-    if (_lights.contains(name)) {
+    if (!_lights.contains(name)) {
         GRAPHICS_LOG_WARNING("Light {} doesn't exist", name);
         return false;
     }
@@ -83,17 +83,17 @@ bool RenderScreen::RemoveLight(std::string name) {
 }
 
 Light *RenderScreen::GetLight(std::string name) {
-    if (_lights.contains(name)) {
+    if (!_lights.contains(name)) {
         GRAPHICS_LOG_WARNING("Light {} doesn't exist", name);
         return nullptr;
     }
     return &_lights[name];
 }
 
-std::vector<Light *> RenderScreen::GetLightList() {
-    std::vector<Light *> lights;
+std::vector<std::string> RenderScreen::GetLightList() {
+    std::vector<std::string> lights;
     for (auto& p : _lights) {
-        lights.push_back(&p.second);
+        lights.push_back(p.first);
     }
     return lights;
 }

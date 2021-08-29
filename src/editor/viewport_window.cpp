@@ -249,18 +249,19 @@ _ENGINE::RenderScreen* ViewportWindow::GetRenderScreen() const {
     return _screen.get();
 }
 
-void ViewportWindow::EditTransform(_ENGINE::RenderObject* targetObject) {
+void ViewportWindow::EditTransform(_ENGINE::Positionable* targetObject) {
     float4x4 view_mat, project_mat;
     DirectX::XMStoreFloat4x4(&view_mat, _camera->GetViewMatrix());
     DirectX::XMStoreFloat4x4(&project_mat, _camera->GetProjectionMatrix());
-
+    auto mat = targetObject->GetWorldMatrix();
     ImGuizmo::Manipulate(
             reinterpret_cast<float*>(&view_mat),
             reinterpret_cast<float*>(&project_mat),
             _guizmo_oper,
             _guizmo_mode,
-            reinterpret_cast<float*>(&targetObject->WorldMatrix)
+            reinterpret_cast<float*>(&mat)
     );
+    targetObject->SetTransform(mat);
 }
 
 _END_KONAI3D

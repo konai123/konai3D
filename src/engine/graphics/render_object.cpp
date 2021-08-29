@@ -7,7 +7,6 @@
 _START_ENGINE
 RenderObject::RenderObject() {
     WorldMatrix = DirectX::XMMatrixIdentity();
-    Updated = true;
 }
 
 RenderObject::~RenderObject() {
@@ -33,18 +32,20 @@ void RenderObject::DiscardRenderObject(RenderObject* obj) {
 
 void RenderObject::SetTransform(DirectX::FXMMATRIX worldMat) {
     WorldMatrix = worldMat;
-    Updated = true;
 }
+
+DirectX::XMMATRIX RenderObject::GetWorldMatrix() {
+    return WorldMatrix;
+}
+
 
 void RenderObject::UpdateMaterial (std::string materialName) {
     MaterialName = materialName;
-    Updated = true;
 }
 
 void RenderObject::UpdateMesh (std::string meshName, UINT submeshID) {
     MeshID = meshName;
     SubmeshID = 0;
-    Updated = true;
 }
 
 _END_ENGINE

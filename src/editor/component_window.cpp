@@ -36,7 +36,6 @@ bool ComponentWindow::AddComponent(std::string name) {
     if (!_viewport_window->GetRenderScreen()->AddRenderObject(name, newRenderObj)) {
         return false;
     }
-    _viewport_window->GetRenderScreen()->Updated = true;
     return true;
 }
 
@@ -50,6 +49,27 @@ bool ComponentWindow::DeleteComponent(std::string name) {
     }
     return true;
 }
+
+bool ComponentWindow::AddLight(std::string name) {
+    _ENGINE::Light light;
+    light.LightType = engine::ShaderType::LightType_Point;
+    light.Position = float3(0.0f, 0.0f, 0.0f);
+
+    if (!_viewport_window->GetRenderScreen()->AddLight(name, light)) {
+        return false;
+    }
+    return true;
+}
+
+bool ComponentWindow::DeleteLight(std::string name) {
+    if (_viewport_window->SelectedObject == _viewport_window->GetRenderScreen()->GetLight(name))
+        _viewport_window->SelectedObject = nullptr;
+
+    if (!_viewport_window->GetRenderScreen()->RemoveLight(name)) {
+        return false;
+    }
+    return false;
+};
 
 void ComponentWindow::OnUpdate(float delta) {
     std::string name = GetWindowName();
@@ -71,8 +91,25 @@ void ComponentWindow::OnUpdate(float delta) {
         ImGui::EndPopup();
     }
 
+    if (ImGui::BeginPopup("AddLight")) {
+        static char buf[20] = {0,};
+        ImGui::InputText("Light Name", buf, 20);
+        if (ImGui::Button("Ok")) {
+            if (!AddLight(buf)) {
+                APP_LOG_ERROR("Failed to add '{}' Light", buf);
+            } else {
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        ImGui::EndPopup();
+    }
+
     if (ImGui::Button("Add Component")) {
         ImGui::OpenPopup("AddComponent");
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Add Light")) {
+        ImGui::OpenPopup("AddLight");
     }
 
     auto names = _viewport_window->GetRenderScreen()->GetRenderObjectList();
@@ -82,7 +119,11 @@ void ComponentWindow::OnUpdate(float delta) {
     }
 
     static int curr = -1;
-    ImGui::ListBox("", &curr, c_names.data(), names.size());
+    static int curr_light = -1;
+
+    if (ImGui::ListBox("Components", &curr, c_names.data(), names.size())) {
+        curr_light = -1;
+    }
     ImGui::Separator();
 
     if (curr != -1 ) {
@@ -100,9 +141,9 @@ void ComponentWindow::OnUpdate(float delta) {
                 matrixRotation,
                 matrixScale
                 );
-        ImGui::InputFloat3("Tr", matrixTranslation);
-        ImGui::InputFloat3("Rt", matrixRotation);
-        ImGui::InputFloat3("Sc", matrixScale);
+        if (ImGui::InputFloat3("Tr", matrixTranslation)) _viewport_window->GetRenderScreen()->Updated = true;
+        if (ImGui::InputFloat3("Rt", matrixRotation)) _viewport_window->GetRenderScreen()->Updated = true;
+        if (ImGui::InputFloat3("Sc", matrixScale)) _viewport_window->GetRenderScreen()->Updated = true;
         ImGuizmo::RecomposeMatrixFromComponents(
                 matrixTranslation,
                 matrixRotation,
@@ -162,9 +203,54 @@ void ComponentWindow::OnUpdate(float delta) {
             DeleteComponent(name);
             curr = -1;
         }
-    }else {
-        _viewport_window->SelectedObject = nullptr;
     }
+
+
+    auto light_names = _viewport_window->GetRenderScreen()->GetLightList();
+    std::vector<const char*> c_light_names;
+    for (auto& name : light_names) {
+        c_light_names.push_back(name.data());
+    }
+
+    ImGui::Separator();
+    if (ImGui::ListBox("Lights", &curr_light, c_light_names.data(), c_light_names.size())) {
+        curr = -1;
+    }
+    ImGui::Separator();
+
+    if (curr_light != -1 ) {
+        auto name = light_names[curr_light];
+        auto light =  _viewport_window->GetRenderScreen()->GetLight(name);
+
+        _viewport_window->SelectedObject = light;
+
+        float4x4 world;
+        DirectX::XMStoreFloat4x4(&world, light->GetWorldMatrix());
+        float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+        ImGuizmo::DecomposeMatrixToComponents(
+                reinterpret_cast<float*>(&world),
+                matrixTranslation,
+                matrixRotation,
+                matrixScale
+        );
+        if (ImGui::InputFloat3("Tr", matrixTranslation))  _viewport_window->GetRenderScreen()->Updated = true;
+        if (ImGui::InputFloat3("Rt", matrixRotation))  _viewport_window->GetRenderScreen()->Updated = true;
+        if (ImGui::InputFloat3("Sc", matrixScale))  _viewport_window->GetRenderScreen()->Updated = true;
+        ImGuizmo::RecomposeMatrixFromComponents(
+                matrixTranslation,
+                matrixRotation,
+                matrixScale,
+                reinterpret_cast<float*>(&world)
+        );
+
+        light->SetTransform(DirectX::XMLoadFloat4x4(&world));
+
+        if (ImGui::Button("Delete")) {
+            DeleteLight(name);
+            curr_light = -1;
+        }
+    }
+
     ImGui::End();
 
     /*file browsers*/
@@ -181,6 +267,6 @@ void ComponentWindow::OnUpdate(float delta) {
 }
 
 void ComponentWindow::OnDestroy() {
-};
+}
 
 _END_KONAI3D
