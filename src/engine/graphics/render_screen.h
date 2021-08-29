@@ -71,6 +71,10 @@ public:
     UINT Width;
     UINT Height;
 
+public:
+    inline static const UINT MAX_RENDER_OBJECT = 1000;
+    inline static const UINT MAX_LIGHT = 100;
+
 private:
     CameraInfo _camera_info;
 
@@ -97,5 +101,6 @@ private:
 
     D3D12_VIEWPORT _viewport;
     D3D12_RECT _scissor_rect;
+
 };
 _END_ENGINE

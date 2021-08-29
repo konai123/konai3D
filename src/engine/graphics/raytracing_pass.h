@@ -47,9 +47,6 @@ public:
 
     void Reset();
 
-public:
-    inline static const UINT MAX_RENDER_OBJECT = 1000;
-
 private:
     bool BuildGlobalRootSignature();
     bool BuildHitgroupRootSignature();
@@ -78,6 +75,7 @@ private:
 
     std::unique_ptr<ConstantBuffer> _cb_buffer_per_frames;
     std::unique_ptr<RWResourceBuffer> _rw_buffer_material;
+    std::unique_ptr<RWResourceBuffer> _rw_buffer_light;
     TLAS _tlas;
     UINT _total_frame_cnt;
     UINT _integration_cnt;

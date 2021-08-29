@@ -74,7 +74,7 @@ _integration_cnt(1)
 }
 
 bool Raytracer::Initiate() {
-    _tlas.Initialize(MAX_RENDER_OBJECT, _device.get());
+    _tlas.Initialize(RenderScreen::MAX_RENDER_OBJECT, _device.get());
 
     if(!BuildGlobalRootSignature()) {
         GRAPHICS_LOG_ERROR("Failed To Create Global Rootsignature");
@@ -210,7 +210,7 @@ void Raytracer::Render(
                     obj->Updated = false;
                 }
 
-                if (obj_count >= MAX_RENDER_OBJECT) {
+                if (obj_count >= RenderScreen::MAX_RENDER_OBJECT) {
                     GRAPHICS_LOG_WARNING("Maximum render object overed!");
                     break;
                 }
@@ -621,6 +621,7 @@ bool Raytracer::BuildRSPipelineState() {
 bool Raytracer::BuildResourceBuffer() {
     CBPerFrame null_frame;
     ShaderType::Material material;
+    ShaderType::Light light;
 
     _cb_buffer_per_frames = std::move(std::make_unique<ConstantBuffer>(_device, Renderer::NumPreFrames));
     _cb_buffer_per_frames->SetData(&null_frame, sizeof(CBPerFrame));
@@ -629,6 +630,10 @@ bool Raytracer::BuildResourceBuffer() {
 
     _rw_buffer_material->SetData(&material, MaterialMap::MaxMaterial,
                                  sizeof(ShaderType::Material));
+
+    _rw_buffer_light = std::move(std::make_unique<RWResourceBuffer>(_device, Renderer::NumPreFrames));
+    _rw_buffer_light->SetData(&light, RenderScreen::MAX_LIGHT, sizeof(ShaderType::Light));
+
     return true;
 }
 
