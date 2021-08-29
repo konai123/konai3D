@@ -2,6 +2,7 @@
 #define MATH_HLSLI
 
 static const float gPI = 3.141592653;
+static const float gEps = 1e-8;
 
 uint wang_hash(inout uint seed)
 {
@@ -41,6 +42,15 @@ float3 RandomInUnitSphere(inout uint seed)
         if (length(p) >= 1.0f) continue;
         return p;
     }
+}
+
+float3 RandomUnitVector(inout uint seed)
+{
+    return normalize(RandomInUnitSphere(seed));
+}
+
+bool NearZero(float3 e) {
+    return (abs(e[0]) < gEps) && (abs(e[1]) < gEps) && (abs(e[2]) < gEps);
 }
 
 #endif

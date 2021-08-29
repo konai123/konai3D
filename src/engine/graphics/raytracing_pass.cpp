@@ -190,6 +190,8 @@ void Raytracer::Render(
 
                 ShaderType::Material material {
                         .DiffuseTextureIndex = resource->Handle._heap_index,
+                        .MaterialType = material_desc->MaterialType,
+                        .Fuzz = material_desc->Fuzz
                 };
                 _rw_buffer_material->UpdateData(&material, material_id, currentFrameIndex);
             }

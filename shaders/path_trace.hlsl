@@ -7,6 +7,7 @@
 #include <vertex.hlsli>
 #include <sampler.hlsli>
 #include <math.hlsli>
+#include <bsdf.hlsli>
 
 float4 RayColor(RayPayload raypay, uint maxDepth) {
     float4 outColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -24,9 +25,11 @@ float4 RayColor(RayPayload raypay, uint maxDepth) {
                 r,
                 raypay);
 
-        outColor *= 0.5f;
+        outColor *= raypay.HitColor;
         if (raypay.T < 0.0f) {
-            outColor *= raypay.HitColor;
+            if (i >= maxDepth - 1) {
+                return float4(0.0f, 0.0f, 0.0f, 0.0f);
+            }
             break;
         }
     }
@@ -85,14 +88,23 @@ void ClosestHit(inout RayPayload payload, Attributes attrib)
     int diffuseTextureIndex = mat.DiffuseTextureIndex;
     Texture2D diffuse = gTexture2DTable[diffuseTextureIndex];
     float3 color = diffuse.SampleLevel(gSamPointClamp, vertex.TexCoord, 0.0f).rgb;
-
-    uint seed = payload.Seed;
     float3 worldNormal = normalize(mul(vertex.Normal, (float3x3)WorldToObject3x4()));
 
+    //BSDF Init
+    BSDF bsdf;
+    bsdf.Init(mat.MaterialType, color, mat.Fuzz);
+
+    float3 outDirection;
+    float3 outAttenuation;
+    if (!bsdf.Scatter(payload.Direction, worldNormal, outDirection, outAttenuation, payload.Seed)) {
+        payload.HitColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
+        payload.T = -1.0f;
+        return;
+    }
+
     payload.Origin = payload.At();
-    payload.Direction = normalize(payload.Origin + worldNormal + normalize(RandomInUnitSphere(seed)));
-	payload.HitColor = float4((vertex.Normal.xyz+1.f)*0.5, 1.0f);
-	payload.Seed = seed;
+    payload.Direction = normalize(payload.Origin + outDirection);
+	payload.HitColor = float4(outAttenuation.xyz, 1.0f);
 }
 
 [shader("miss")]

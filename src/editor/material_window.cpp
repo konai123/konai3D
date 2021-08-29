@@ -41,6 +41,14 @@ void MaterialWindow::OnUpdate(float delta) {
             if (ImGui::ImageButton(reinterpret_cast<void *>(difffuse_texture.value().Handle.GpuHandle.ptr), image_size)) {
                 ImGui::OpenPopup("Select Diffuse Texture");
             }
+
+            if (ImGui::Combo("Material Type", reinterpret_cast<int*>(&material_desc.MaterialType), "Lambertian\0Metal\0\0")) {
+                _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
+            }
+
+            if (ImGui::SliderFloat("Fuzz", &material_desc.Fuzz, 0.0f, 1.0f)) {
+                _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
+            }
         }
 
         if (ImGui::BeginPopup("Select Diffuse Texture")) {

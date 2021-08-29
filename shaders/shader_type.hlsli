@@ -1,8 +1,13 @@
 #ifndef SHADER_TYPE_HLSLI
 #define SHADER_TYPE_HLSLI
 
+#define MaterialType_Lambertian 0
+#define MaterialType_Metal 1
+
 struct Material {
     int DiffuseTextureIndex;
+    int MaterialType;
+    float Fuzz;
 };
 
 struct RayPayload

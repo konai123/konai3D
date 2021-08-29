@@ -6,9 +6,17 @@
 
 _START_ENGINE
 namespace ShaderType {
+
+enum MaterialType {
+    Lambertian = 0,
+    Metal = 1
+};
+
 struct Material {
 public:
     int DiffuseTextureIndex = 0;
+    MaterialType MaterialType;
+    float Fuzz;
 };
 
 struct RayPayload
