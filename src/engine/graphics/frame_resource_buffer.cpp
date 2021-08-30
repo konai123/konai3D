@@ -76,6 +76,8 @@ void FrameResourceBuffer::SafeRelease() {
         ResourceGarbageQueue::Instance().SubmitResource(_resource[i]);
         _resource[i] = nullptr;
     }
+    ResourceGarbageQueue::Instance().SubmitResource(_upload_buffer);
+    _upload_buffer = nullptr;
 }
 
 ID3D12Resource *FrameResourceBuffer::GetResource(UINT currentFrameIdx) {

@@ -111,7 +111,8 @@ bool TextureMap::Contains(std::string name) {
 }
 
 std::optional<TextureResource> TextureMap::GetResource(std::string name) {
-    if (!Contains(name)) {
+    LocalReadLock lock(_rw_lock);
+    if (!_map.contains(name)) {
         GRAPHICS_LOG_ERROR("Cannot find texture: {}", name);
         return std::nullopt;
     }

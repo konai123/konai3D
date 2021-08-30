@@ -143,12 +143,12 @@ bool MeshMap::Contains(std::string name) {
 }
 
 MeshResources* MeshMap::GetResources(std::string name) {
-    if (!Contains(name)) {
+    LocalReadLock lock(_rw_lock);
+    if (!_map.contains(name)) {
         GRAPHICS_LOG_ERROR("Cannot find mesh resource: {}", name);
         return {};
     }
 
-    LocalReadLock lock(_rw_lock);
     return _map[name].get();
 }
 

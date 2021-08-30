@@ -107,17 +107,6 @@ void ComponentWindow::OnUpdate(float delta) {
         ImGui::OpenPopup("AddLight");
     }
 
-    static bool testOn = false;
-    if (ImGui::Button("Test")) {
-        testOn = true;
-    }
-
-    static std::string test = "A";
-    if (testOn) {
-        AddComponent(test);
-        test+="A";
-    }
-
     auto names = _viewport_window->GetRenderScreen()->GetRenderObjectList();
     std::vector<const char*> c_names;
     for (auto& name : names) {
