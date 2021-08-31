@@ -20,7 +20,8 @@ struct RayPayload
     float Seed;
     float3 Origin;
     float T;
-    float3 Pad1;
+    float Pdf;
+    float2 Pad1;
 
     float3 At() {
         return Origin + T*Direction;

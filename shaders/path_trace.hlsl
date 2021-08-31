@@ -25,7 +25,7 @@ float4 RayColor(RayPayload raypay, uint maxDepth) {
                 r,
                 raypay);
 
-        outColor *= raypay.HitColor;
+        outColor *= raypay.HitColor / raypay.Pdf;
         if (raypay.T < 0.0f) {
             if (i >= maxDepth - 1) {
                 return float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -56,6 +56,10 @@ void RayGen()
         RayPayload raypay = gCamera.GetRayPayload(ndc, seed);
         outColor += RayColor(raypay, 15).xyz;
     }
+
+    outColor.r = isnan(outColor.r) ? 0.0f : outColor.r;
+    outColor.g = isnan(outColor.g) ? 0.0f : outColor.g;
+    outColor.b = isnan(outColor.b) ? 0.0f : outColor.b;
 
     RWTexture2D<float4> output = gRTOutputs[gRenderTargetIdx];
     outColor /= float(sampleCount);
@@ -96,12 +100,15 @@ void ClosestHit(inout RayPayload payload, Attributes attrib)
 
     float3 outDirection;
     float3 outAttenuation;
-    if (!bsdf.Scatter(payload.Direction, worldNormal, outDirection, outAttenuation, payload.Seed)) {
+    float pdf;
+    if (!bsdf.Scatter(payload.Direction, worldNormal, outDirection, outAttenuation, pdf, payload.Seed)) {
         payload.HitColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
         payload.T = -1.0f;
+        payload.Pdf = 1.0f;
         return;
     }
 
+    payload.Pdf = pdf;
     payload.Origin = payload.At();
     payload.Direction = normalize(outDirection);
 	payload.HitColor = float4(outAttenuation.xyz, 1.0f);
@@ -112,6 +119,7 @@ void Miss(inout RayPayload payload)
 {
     float t = 0.5f*(WorldRayDirection().y + 1.0f);
     payload.HitColor = (1.0f-t)*float4(1.0f, 1.0f, 1.0f, 1.0f) + t*float4(0.5f, 0.7f, 1.0f, 1.0f);
+    payload.Pdf = 1.0f;
     payload.T = -1.0f;
 }
 #endif

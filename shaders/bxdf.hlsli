@@ -2,17 +2,17 @@
 #define BXDF_HLSLI
 
 #include <math.hlsli>
+#include <pdf.hlsli>
 
 struct Lambertian
 {
-    bool Scatter(float3 inDirection, float3 normal, out float3 scatterDirection, out float3 attenuation, inout uint seed)
+    bool Scatter(float3 inDirection, float3 normal, out float3 scatterDirection, out float3 attenuation, out float pdf, inout uint seed)
     {
-        scatterDirection = normalize(normal + RandomUnitVector(seed));
-        if (NearZero(scatterDirection))
-        {
-            scatterDirection = normal;
-        }
-        attenuation = albedo;
+        CosinePDF cPDF;
+        scatterDirection = cPDF.GetVector(normal, seed);
+        pdf = cPDF.PDF(normal, scatterDirection);
+
+        attenuation = albedo * pdf;
         return true;
     }
 
@@ -21,10 +21,11 @@ struct Lambertian
 
 struct Metal
 {
-    bool Scatter(float3 inDirection, float3 normal, out float3 scatterDirection, out float3 attenuation, inout uint seed)
+    bool Scatter(float3 inDirection, float3 normal, out float3 scatterDirection, out float3 attenuation, out float pdf, inout uint seed)
     {
         scatterDirection = normalize(reflect(inDirection, normal) + RandomInUnitSphere(seed) * fuzz);
         attenuation = albedo;
+        pdf = 1.0f;
         return (dot(scatterDirection, normal) > 0.0f);
     }
 
@@ -34,7 +35,7 @@ struct Metal
 
 struct Dielectric
 {
-    bool Scatter(float3 inDirection, float3 normal, out float3 scatterDirection, out float3 attenuation, inout uint seed)
+    bool Scatter(float3 inDirection, float3 normal, out float3 scatterDirection, out float3 attenuation, out float pdf, inout uint seed)
     {
         float ete = 1.0f/ir;
         if (InsideRay(inDirection, normal)) {
@@ -51,6 +52,7 @@ struct Dielectric
             scatterDirection = Refract(inDirection, normal, ete);
         }
         attenuation = float3(1.0f, 1.0f, 1.0f);
+        pdf = 1.0f;
         return true;
     }
 

@@ -14,21 +14,21 @@ struct BSDF
         refractIndex = ir;
     }
 
-    bool Scatter(float3 inDirection, float3 normal, out float3 scatterDirection, out float3 attenuation, inout uint seed)
+    bool Scatter(float3 inDirection, float3 normal, out float3 scatterDirection, out float3 attenuation, out float pdf, inout uint seed)
     {
         if (materialType == MaterialType_Lambertian) {
             Lambertian lam;
             lam.albedo = albedo;
-            return lam.Scatter(inDirection, normal, scatterDirection, attenuation, seed);
+            return lam.Scatter(inDirection, normal, scatterDirection, attenuation, pdf, seed);
         }else if (materialType == MaterialType_Metal) {
             Metal metal;
             metal.albedo = albedo;
             metal.fuzz = fuzz;
-            return metal.Scatter(inDirection, normal, scatterDirection, attenuation, seed);
+            return metal.Scatter(inDirection, normal, scatterDirection, attenuation, pdf, seed);
         }else if (materialType == MaterialType_Dielectric) {
             Dielectric diel;
             diel.ir = refractIndex;
-            return diel.Scatter(inDirection, normal, scatterDirection, attenuation, seed);
+            return diel.Scatter(inDirection, normal, scatterDirection, attenuation, pdf, seed);
         }
         return false;
     }

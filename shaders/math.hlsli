@@ -49,6 +49,30 @@ float3 RandomUnitVector(inout uint seed)
     return normalize(RandomInUnitSphere(seed));
 }
 
+float3 RandomCosineDirection(inout uint seed)
+{
+    float r1 = RandomFloat01(seed);
+    float r2 = RandomFloat01(seed);
+    float z = sqrt(1.0f-r2);
+
+    float phi = 2*gPI*r1;
+    float sr2 = sqrt(r2);
+    float x = cos(phi) * sr2;
+    float y = sin(phi) * sr2;
+
+    return float3(x, y, z);
+}
+
+float3x3 GetONB(float3 w)
+{
+    float3 axisZ, axisY, axisX;
+    axisZ = w;
+    float3 l = abs(w.x > 0.9f) ? float3(0.0f, 1.0f, 0.0f) : float3(1.0f, 0.0f, 0.0f);
+    axisY = normalize(cross(w, l));
+    axisX = cross(w, axisY);
+    return float3x3 (axisX, axisY, axisZ);
+}
+
 bool NearZero(float3 e) {
     return (abs(e[0]) < gEps) && (abs(e[1]) < gEps) && (abs(e[2]) < gEps);
 }
