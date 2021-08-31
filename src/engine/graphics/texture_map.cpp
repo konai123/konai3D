@@ -29,6 +29,7 @@ void TextureMap::AsyncLoad(std::vector<std::filesystem::path> paths) {
 
 void TextureMap::UpdateFromTextureLoader(DirectX::ResourceUploadBatch* uploader) {
     auto v = _texture_loader.Get();
+    if (v.size() == 0) return;
     AddTexture(std::move(v), uploader);
 }
 

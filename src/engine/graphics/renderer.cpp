@@ -182,10 +182,12 @@ void Renderer::OnRender(
     ResourceGarbageQueue& garbageQueue = ResourceGarbageQueue::Instance();
     if (!garbageQueue.WaitQ.empty()) {
         WaitAllFrameExecute();
+
         while (!garbageQueue.WaitQ.empty()) {
             garbageQueue.WaitQ.pop();
         }
     }
+
 }
 
 void Renderer::OnResizeGUI(UINT width, UINT height) {
@@ -303,7 +305,7 @@ DWORD Renderer::UploadWorker(PVOID context) {
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> copy_queue = pthis->_device->CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 
     //for upload blas
-    UINT fence_value = 0;
+    UINT64 fence_value = 0;
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> compute_queue = pthis->_device->CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE);
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList6> compute_list = pthis->_device->CreateGraphicsCommandList(D3D12_COMMAND_LIST_TYPE_COMPUTE);
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> compute_allocator = pthis->_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COMPUTE);
@@ -311,6 +313,7 @@ DWORD Renderer::UploadWorker(PVOID context) {
 
     GRAPHICS_LOG_INFO("Begin Uploader Thread");
     while (!pthis->_upload_worker_stop.load()) {
+
         uploader.Begin(D3D12_COMMAND_LIST_TYPE_COPY);
         compute_allocator->Reset();
         compute_list->Reset(compute_allocator.Get(), nullptr);

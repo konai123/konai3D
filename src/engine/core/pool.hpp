@@ -40,6 +40,7 @@ public:
     Pool &operator=(const Pool &) = delete;
     Pool &operator=(Pool &&) noexcept = default;
     auto &operator[](int idx) {
+        std::lock_guard<std::mutex> lock(_lock);
         return _elements[idx]._object;
     }
 

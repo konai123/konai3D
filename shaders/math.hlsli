@@ -67,9 +67,9 @@ float3x3 GetONB(float3 w)
 {
     float3 axisZ, axisY, axisX;
     axisZ = w;
-    float3 l = abs(w.x > 0.9f) ? float3(0.0f, 1.0f, 0.0f) : float3(1.0f, 0.0f, 0.0f);
+    float3 l = abs(w.x) > 0.9 ? float3(0.0f, 1.0f, 0.0f) : float3(1.0f, 0.0f, 0.0f);
     axisY = normalize(cross(w, l));
-    axisX = cross(w, axisY);
+    axisX = normalize(cross(w, axisY));
     return float3x3 (axisX, axisY, axisZ);
 }
 
