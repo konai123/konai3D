@@ -222,10 +222,12 @@ void Renderer::OnResizeGUI(UINT width, UINT height) {
 
 void Renderer::OnDestroy() {
     WaitAllFrameExecute();
+    _upload_worker_stop.store(true); //Exit Upload thread
+    ::SetEvent(_worker_event->Get());
+    ::WaitForSingleObject(_uplaod_worker_handle, INFINITE);
+
     _ui_renderer->OnDestroy();
     _device->Close();
-    _upload_worker_stop.store(true); //Exit Upload thread
-    ::WaitForSingleObject(_uplaod_worker_handle, INFINITE);
 }
 
 bool Renderer::CreateGUIDepthStencilBufferAndView(bool isRecreation, HeapDescriptorHandle *heapDescriptor,
