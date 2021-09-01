@@ -142,6 +142,10 @@ bool MeshMap::Contains(std::string name) {
     return _map.contains(name);
 }
 
+UINT MeshMap::UploadQueueSize() {
+    return _mesh_loader.Size();
+}
+
 MeshResources* MeshMap::GetResources(std::string name) {
     LocalReadLock lock(_rw_lock);
     if (!_map.contains(name)) {

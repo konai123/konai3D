@@ -103,6 +103,14 @@ Renderer::Initiate(HWND hWnd, UINT width, UINT height, std::filesystem::path sha
         }
     }
 
+    _worker_event = std::make_unique<ScopedHandle>(CreateEvent(NULL, FALSE, FALSE, NULL));
+    if (_worker_event->Get() == INVALID_HANDLE_VALUE) {
+        GRAPHICS_LOG_ERROR("Failed to create event");
+        return false;
+    }
+
+    _uplaod_worker_handle = ::CreateThread(NULL, 0, UploadWorker, this, 0, NULL);
+
     {
         /*Initialte Render Resource Maps*/
         RenderResourceMap = std::make_shared<ResourceMap>();
@@ -111,8 +119,6 @@ Renderer::Initiate(HWND hWnd, UINT width, UINT height, std::filesystem::path sha
         RenderResourceMap->MaterialMap = std::make_unique<MaterialMap>();
     }
 
-    _uplaod_worker_handle = ::CreateThread(NULL, 0, UploadWorker, this, 0, NULL);
-
     return true;
 }
 
@@ -120,6 +126,13 @@ void Renderer::OnRender(
         float delta,
         RenderScreen *screen
 ) {
+
+    {
+        if (RenderResourceMap->TextureMap->UploadQueueSize() + RenderResourceMap->MeshMap->UploadQueueSize() > 0) {
+            ::SetEvent(_worker_event->Get());
+        }
+    }
+
     auto frame_buffer = _frame_buffer_pool.RequestFrameBuffer(_device.get());
     frame_buffer->_allocator->Reset();
     _command_list->Reset(frame_buffer->_allocator.Get(), NULL);
@@ -313,7 +326,7 @@ DWORD Renderer::UploadWorker(PVOID context) {
 
     GRAPHICS_LOG_INFO("Begin Uploader Thread");
     while (!pthis->_upload_worker_stop.load()) {
-
+        WaitForSingleObject(pthis->_worker_event->Get(), INFINITE);
         uploader.Begin(D3D12_COMMAND_LIST_TYPE_COPY);
         compute_allocator->Reset();
         compute_list->Reset(compute_allocator.Get(), nullptr);

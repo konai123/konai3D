@@ -39,6 +39,7 @@ public:
     void AsyncLoad(std::vector<std::filesystem::path> paths);
     void UpdateFromMeshLoader(DirectX::ResourceUploadBatch* uploader, ID3D12GraphicsCommandList6* cmd_list);
     bool AddMeshes(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploader, ID3D12GraphicsCommandList6* cmd_list);
+    UINT UploadQueueSize();
     std::vector<std::string> GetMeshList();
 
 public:

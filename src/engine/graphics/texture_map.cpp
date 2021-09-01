@@ -111,6 +111,10 @@ bool TextureMap::Contains(std::string name) {
     return _map.contains(name);
 }
 
+UINT TextureMap::UploadQueueSize() {
+    return _texture_loader.Size();
+}
+
 std::optional<TextureResource> TextureMap::GetResource(std::string name) {
     LocalReadLock lock(_rw_lock);
     if (!_map.contains(name)) {

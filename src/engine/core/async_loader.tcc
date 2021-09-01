@@ -32,6 +32,12 @@ std::vector<TData> AsyncLoader<TData>::Get() {
 }
 
 template<typename TData>
+UINT engine::AsyncLoader<TData>::Size() {
+    std::lock_guard lock(_lock);
+    return _loaded.size();
+}
+
+template<typename TData>
 void AsyncLoader<TData>::Push(TData &&data) {
     std::lock_guard lock(_lock);
     _loaded.push(std::move(data));

@@ -25,6 +25,7 @@ public:
     void AsyncLoad(std::vector<std::filesystem::path> paths);
     void UpdateFromTextureLoader(DirectX::ResourceUploadBatch* uploader);
     void AddTexture(std::vector<Texture> &&, DirectX::ResourceUploadBatch* uploader);
+    UINT UploadQueueSize();
     std::vector<std::string> GetTextureList();
 
 public:

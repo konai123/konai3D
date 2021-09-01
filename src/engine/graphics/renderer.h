@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "src/engine/core/scoped_handle.h"
+
 #include "src/engine/graphics/device_com.h"
 #include "src/engine/graphics/frame_buffer_pool.h"
 #include "src/engine/graphics/resource_descriptor_heap.h"
@@ -94,6 +96,7 @@ private:
     D3D12_RECT _gui_scissor_rect;
     FrameBufferPool _frame_buffer_pool;
     RenderingOptions _rendering_options;
+    std::unique_ptr<ScopedHandle> _worker_event;
 
     std::shared_ptr<UIRenderer> _ui_renderer;
     UINT _current_frame;

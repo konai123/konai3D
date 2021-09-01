@@ -20,6 +20,7 @@ public:
 
 public:
     std::vector<TData> Get();
+    UINT Size();
     void AsyncLoad(std::vector<std::filesystem::path> paths);
 
 protected:
