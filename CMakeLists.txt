@@ -24,6 +24,7 @@ add_executable(
         src/global.cpp
         src/imgui_renderer.cpp
         src/camera.cpp
+        src/asset_manager.cpp
 
         src/editor/imgui_window.cpp
         src/editor/log_window.cpp
@@ -63,7 +64,7 @@ add_executable(
         src/engine/graphics/raytracing_pass.cpp
         src/engine/graphics/resource_garbage_queue.cpp
         src/engine/graphics/frame_resource_buffer.cpp
-        src/engine/core/scoped_handle.h)
+)
 
 #set_target_properties(${PROJECT_NAME} PROPERTIES
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
