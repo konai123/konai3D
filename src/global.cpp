@@ -9,6 +9,7 @@ namespace global{
 std::filesystem::path ExecutablePath;
 std::filesystem::path AssetPath;
 std::filesystem::path ShaderPath;
+std::filesystem::path ScreenPath;
 
 tString GetErrorMessageFromHR(HRESULT hr) {
     _com_error err(hr);

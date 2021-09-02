@@ -77,6 +77,7 @@ bool MeshMap::AddMeshes(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploade
     uploader->Upload(indexBuffer.Get(), 0, &subresource, 1);
 
     auto mesh_resources = std::make_unique<MeshResources>();
+    mesh_resources->MeshFile = meshes.FilePath;
     UINT ib_offset = 0;
     UINT vb_offset = 0;
 

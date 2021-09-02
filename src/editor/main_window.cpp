@@ -3,11 +3,29 @@
 //
 
 #include "src/editor/main_window.h"
+#include "src/asset_manager.h"
+#include "src/global.h"
+#include "src/macros.h"
 
 _START_KONAI3D
-MainWindow::MainWindow()
+MainWindow::MainWindow(
+        std::shared_ptr<IMGUIWindow> ViewportWindow,
+        std::shared_ptr<IMGUIWindow> ComponentWindow,
+        std::shared_ptr<IMGUIWindow> LogWindow,
+        std::shared_ptr<IMGUIWindow> MaterialWindow,
+        std::shared_ptr<_ENGINE::Renderer::ResourceMap> RenderResourceMap
+)
 :
-IMGUIWindow("Dockspace") {}
+_viewport_windows(ViewportWindow),
+_component_windows(ComponentWindow),
+_log_windows(LogWindow),
+_material_windows(MaterialWindow),
+_render_resource_map(RenderResourceMap),
+IMGUIWindow("Dockspace")
+{
+    _windows.resize(4);
+    _windows = {_viewport_windows, _component_windows, _log_windows, _material_windows};
+}
 
 void MainWindow::OnUpdate(float delta) {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
@@ -34,13 +52,33 @@ void MainWindow::OnUpdate(float delta) {
     /*
      * Top menu bar
      * */
+    bool openPopup = false;
+
+    if (ImGui::BeginPopupModal("SaveScreen")) {
+        static char buf[20] = {0,};
+        ImGui::InputText("SaveName", buf, 20);
+        if (ImGui::Button("Ok")) {
+            auto path = global::ScreenPath / buf;
+            if (!AssetManager::Instance().Save(path,
+                                               reinterpret_cast<ViewportWindow *>(_viewport_windows.get()),
+                                               _render_resource_map.get())) {
+                APP_LOG_ERROR("Failed to save screen {}", buf);
+            }
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Close")) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
     if (ImGui::BeginMenuBar()) {
-        if (ImGui::BeginMenu("Options")) {
-            // Disabling fullscreen would allow the window to be moved to the front of other windows,
-            // which we can't undo at the moment without finer window depth/z control.
-//            ImGui::MenuItem("Fullscreen", NULL, &opt_fullscreen);
-//            ImGui::MenuItem("Padding", NULL, &opt_padding);
-//            ImGui::Separator();
+        if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("Save")) {
+                openPopup= true;
+            }
+            ImGui::MenuItem("Load");
             ImGui::EndMenu();
         }
 
@@ -52,6 +90,11 @@ void MainWindow::OnUpdate(float delta) {
             ImGui::EndMenu();
         }
         ImGui::EndMenuBar();
+    }
+
+    if (openPopup) {
+        ImGui::OpenPopup("SaveScreen");
+        openPopup = false;
     }
 
     /*
@@ -70,13 +113,11 @@ void MainWindow::OnUpdate(float delta) {
 }
 
 void MainWindow::OnDestroy() {
-    for (int i = 0; i < _windows.size(); i++) {
-        _windows[i]->OnDestroy();
+    for (auto p_window : _windows) {
+        if (p_window != nullptr) {
+            p_window->OnDestroy();
+        }
     }
-}
-
-void MainWindow::AttachWindow(std::shared_ptr<IMGUIWindow> windows) {
-    _windows.push_back(windows);
 }
 
 bool MainWindow::IsCollapsed() {

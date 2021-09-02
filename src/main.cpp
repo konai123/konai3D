@@ -35,6 +35,7 @@ int main() {
 #else
     global::ShaderPath = global::ExecutablePath / "shaders";
 #endif
+    global::ScreenPath = global::AssetPath / "screens";
     LocalFree(argv);
 
     std::unique_ptr<_ENGINE::App> app = std::make_unique<K3DApp>();

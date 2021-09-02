@@ -11,6 +11,7 @@ namespace global
 extern std::filesystem::path ExecutablePath;
 extern std::filesystem::path AssetPath;
 extern std::filesystem::path ShaderPath;
+extern std::filesystem::path ScreenPath;
 
 tString GetErrorMessageFromHR(HRESULT hr);
 }//end namespace global

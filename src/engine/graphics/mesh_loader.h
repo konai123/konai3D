@@ -36,6 +36,7 @@ public:
 public:
     std::string Name;
     std::vector<Mesh> Mesh;
+    std::filesystem::path FilePath;
 };
 
 class MeshLoader : public _ENGINE::AsyncLoader<MeshFile> {

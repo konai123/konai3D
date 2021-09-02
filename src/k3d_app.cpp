@@ -38,7 +38,6 @@ bool K3DApp::Prepare(HWND hwnd, int width, int height, float dpiFactor) {
     }
 
     _log_window = std::make_shared<LogWindow>();
-    _main_window = std::make_shared<MainWindow>();
 
     if (!_log_window->Initiate()) {
         APP_LOG_ERROR("Failed to initialize log window.");
@@ -47,20 +46,17 @@ bool K3DApp::Prepare(HWND hwnd, int width, int height, float dpiFactor) {
 
     _rendering_options.scale_factor = dpiFactor;
     _renderer->SetRenderingOptions(_rendering_options);
-    _imgui_renderer->SetEditor(_main_window);
-
-    _ui_font_path = (global::AssetPath / "fonts" / "sansation" / "Sansation_Bold.ttf").string();
-    _imgui_renderer->AddFont(_ui_font_path.c_str(), 16);
-    _imgui_renderer->SetScale(dpiFactor);
 
     _viewport_window = std::make_shared<ViewportWindow>(_renderer.get());
     _component_window = std::make_shared<ComponentWindow>(_viewport_window, _renderer->RenderResourceMap);
     _material_window = std::make_shared<MaterialWindow>(_renderer->RenderResourceMap);;
 
-    _main_window->AttachWindow(_log_window);
-    _main_window->AttachWindow(_viewport_window);
-    _main_window->AttachWindow(_component_window);
-    _main_window->AttachWindow(_material_window);
+    _main_window = std::make_shared<MainWindow>(_viewport_window, _component_window, _log_window, _material_window, _renderer->RenderResourceMap);
+
+    _imgui_renderer->SetEditor(_main_window);
+    _ui_font_path = (global::AssetPath / "fonts" / "sansation" / "Sansation_Bold.ttf").string();
+    _imgui_renderer->AddFont(_ui_font_path.c_str(), 16);
+    _imgui_renderer->SetScale(dpiFactor);
 
     {
         /* Load System Mesh, Texture */

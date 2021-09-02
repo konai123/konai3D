@@ -28,6 +28,7 @@ struct MeshResources {
     };
 
     std::vector<std::unique_ptr<MeshResource>> Meshes;
+    std::filesystem::path MeshFile;
 };
 
 class MeshMap {

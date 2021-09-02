@@ -25,6 +25,7 @@ std::optional<MeshFile> MeshLoader::LoadMesh(std::filesystem::path path) {
     MeshFile mesh_file;
     std::string path_str = path.string();
     mesh_file.Clear();
+    mesh_file.FilePath = path;
     mesh_file.Name = path.filename().stem().string();
     const aiScene *scene = importer.ReadFile(path_str, aiProcess_ConvertToLeftHanded |
                                                    aiProcess_JoinIdenticalVertices |

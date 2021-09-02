@@ -17,6 +17,7 @@
 #include "src/engine/pch.h"
 
 /*std headers*/
+#include <fstream>
 
 /*windows headers*/
 
