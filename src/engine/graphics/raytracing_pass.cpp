@@ -117,28 +117,6 @@ void Raytracer::Render(
             return;
         }
 
-        if (screen->Updated) {
-            Reset();
-            screen->Updated = false;
-        }
-
-        command_list->SetComputeRootSignature(_global_root_signature.Get());
-        command_list->SetPipelineState1(_rtpso.Get());
-
-        /*Bind TextureTables*/
-        command_list->SetComputeRootShaderResourceView(2,
-                                                       _rw_buffer_material->GetResource(
-                                                               currentFrameIndex)->GetGPUVirtualAddress());
-
-        command_list->SetComputeRootShaderResourceView(5,
-                                                       _rw_buffer_light->GetResource(
-                                                               currentFrameIndex)->GetGPUVirtualAddress());
-
-        command_list->SetComputeRootDescriptorTable(3,
-                                                     heaps->GetShaderResourceHeap()->GetGPUDescriptorHandleForHeapStart());
-
-        command_list->SetComputeRootDescriptorTable(4,
-                                                    heaps->GetShaderResourceHeap()->GetGPUDescriptorHandleForHeapStart());
 
         RenderScreen *render_screen = screen;
         auto render_target = render_screen->GetRenderTargetResource();
@@ -182,13 +160,10 @@ void Raytracer::Render(
             _cb_buffer_per_frames->UpdateData(&per_frame, currentFrameIndex);
         }
 
-        command_list->SetComputeRootConstantBufferView(0, _cb_buffer_per_frames->
-                GetResource(currentFrameIndex)->GetGPUVirtualAddress());
-
         {
             //Update Materials
             auto materials = materialMap->GetMaterialList();
-            for (auto& mat: materials) {
+            for (auto &mat: materials) {
                 auto material_desc = materialMap->GetMaterialDesc(mat);
                 auto material_id = materialMap->GetMaterialID(mat);
                 if (material_id == -1) {
@@ -202,7 +177,7 @@ void Raytracer::Render(
                     continue;
                 }
 
-                ShaderType::Material material {
+                ShaderType::Material material{
                         .DiffuseTextureIndex = resource->Handle._heap_index,
                         .MaterialType = material_desc->MaterialType,
                         .Fuzz = material_desc->Fuzz,
@@ -210,48 +185,78 @@ void Raytracer::Render(
                 };
                 _rw_buffer_material->UpdateData(&material, material_id, currentFrameIndex);
             }
+        }
 
-            _tlas.Clear();
-            auto names = render_screen->GetRenderObjectList();
-            int obj_count = 0;
-            std::vector<RenderObject*> objs;
-            for (auto& name : names) {
-                auto obj = render_screen->GetRenderObject(name);
-                objs.push_back(obj);
+        _tlas.Clear();
+        std::vector<RenderObject*> objs;
+        auto names = render_screen->GetRenderObjectList();
+        int obj_count = 0;
+        for (auto& name : names) {
+            auto obj = render_screen->GetRenderObject(name);
 
-                if (obj_count >= RenderScreen::MAX_RENDER_OBJECT) {
-                    GRAPHICS_LOG_WARNING("Maximum render object overed!");
-                    break;
-                }
-
-                if (!meshMap->Contains(obj->MeshID)) {
-                    continue;
-                }
-
-                auto mesh_resources = meshMap->GetResources(obj->MeshID);
-                auto blas = mesh_resources->Meshes[obj->SubmeshID]->Blas.get();
-
-                D3D12_RAYTRACING_INSTANCE_DESC inst_desc;
-                inst_desc.InstanceID = obj->ObjectID;
-                inst_desc.InstanceMask = 0xFF;
-                inst_desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-                inst_desc.AccelerationStructure = blas->ResultDataBuffer->GetGPUVirtualAddress();
-                inst_desc.InstanceContributionToHitGroupIndex = obj_count * blas->GetSize();
-                DirectX::XMStoreFloat3x4(reinterpret_cast<DirectX::XMFLOAT3X4*>(inst_desc.Transform), obj->WorldMatrix);
-
-                _tlas.AddInstance(inst_desc);
-                obj_count++;
+            if (obj_count >= RenderScreen::MAX_RENDER_OBJECT) {
+                GRAPHICS_LOG_WARNING("Maximum render object overed!");
+                break;
             }
 
+
+            auto mat_name = obj->MaterialName;
+            auto mat_desc = materialMap->GetMaterialDesc(mat_name);
+
+            if (!mat_desc.has_value()) continue;
+            if (!meshMap->Contains(obj->MeshID)) continue;
+            if (!textureMap->Contains(mat_desc->DiffuseTexturePath)) continue;
+
+            auto mesh_resources = meshMap->GetResources(obj->MeshID);
+            auto blas = mesh_resources->Meshes[obj->SubmeshID]->Blas.get();
+
+            D3D12_RAYTRACING_INSTANCE_DESC inst_desc;
+            inst_desc.InstanceID = obj->ObjectID;
+            inst_desc.InstanceMask = 0xFF;
+            inst_desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+            inst_desc.AccelerationStructure = blas->ResultDataBuffer->GetGPUVirtualAddress();
+            inst_desc.InstanceContributionToHitGroupIndex = obj_count * blas->GetSize();
+            DirectX::XMStoreFloat3x4(reinterpret_cast<DirectX::XMFLOAT3X4*>(inst_desc.Transform), obj->WorldMatrix);
+
+            _tlas.AddInstance(inst_desc);
+            objs.push_back(obj);
+            obj_count++;
+        }
+
+        if (_tlas.Size() > 0)
+        {
             _tlas.Generate(_device.get(), command_list);
+            if (screen->Updated) {
+                Reset();
+                screen->Updated = false;
+            }
+
+            command_list->SetComputeRootSignature(_global_root_signature.Get());
+            command_list->SetPipelineState1(_rtpso.Get());
+
+            /*Bind TextureTables*/
+            command_list->SetComputeRootShaderResourceView(2,
+                                                           _rw_buffer_material->GetResource(
+                                                                   currentFrameIndex)->GetGPUVirtualAddress());
+
+            command_list->SetComputeRootShaderResourceView(5,
+                                                           _rw_buffer_light->GetResource(
+                                                                   currentFrameIndex)->GetGPUVirtualAddress());
+
+            command_list->SetComputeRootDescriptorTable(3,
+                                                        heaps->GetShaderResourceHeap()->GetGPUDescriptorHandleForHeapStart());
+
+            command_list->SetComputeRootDescriptorTable(4,
+                                                        heaps->GetShaderResourceHeap()->GetGPUDescriptorHandleForHeapStart());
+
+            command_list->SetComputeRootConstantBufferView(0, _cb_buffer_per_frames->
+                    GetResource(currentFrameIndex)->GetGPUVirtualAddress());
+
+
             command_list->SetComputeRootShaderResourceView(1, _tlas.ResultDataBuffer->GetGPUVirtualAddress());
 
             BuildRSShaderTable(command_list);
             UpdateHitgroupTable(meshMap, materialMap, objs, currentFrameIndex, command_list);
-        }
-
-        {
-            //Dispatch Ray
 
             _ray_gen_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
             _miss_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);

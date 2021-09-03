@@ -11,6 +11,7 @@ _START_ENGINE
 struct TLAS {
     bool Initialize(UINT maxInstance, DeviceCom *deviceCom);
     bool Generate(DeviceCom* deviceCom, ID3D12GraphicsCommandList5* cmdList);
+    UINT Size();
     void AddInstance(D3D12_RAYTRACING_INSTANCE_DESC& instDesc);
     void Clear();
 

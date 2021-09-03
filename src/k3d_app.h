@@ -33,8 +33,8 @@ public:
     virtual void OnDPIUpdate(float dpiFactor) override;
 
 public:
-    static inline const std::string DefaultMaterialName = "default";
-    static inline const std::string DefaultMeshName = "sphere";
+    static inline std::string DefaultMaterialName = "default";
+    static inline std::string DefaultMeshName = "sphere";
 
 private:
     _ENGINE::RenderingOptions _rendering_options;

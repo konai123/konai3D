@@ -10,6 +10,7 @@
 #include "src/engine/graphics/macros.h"
 #include "src/engine/graphics/device_com.h"
 #include "src/engine/graphics/blas.h"
+#include "src/engine/graphics/resource_garbage_queue.h"
 
 _START_ENGINE
 struct MeshResources {
@@ -45,6 +46,7 @@ public:
 
 public:
     bool Contains(std::string name);
+    void Clear();
     MeshResources* GetResources(std::string name);
 
 private:

@@ -22,21 +22,21 @@ void MeshLoader::Delegate(std::vector<std::filesystem::path> paths) {
 }
 
 std::optional<MeshFile> MeshLoader::LoadMesh(std::filesystem::path path) {
+    std::lock_guard<std::mutex> lock(_importer_lock);
     MeshFile mesh_file;
     std::string path_str = path.string();
     mesh_file.Clear();
     mesh_file.FilePath = path;
-    mesh_file.Name = path.filename().stem().string();
+//    mesh_file.Name = path.filename().stem().string();
     const aiScene *scene = importer.ReadFile(path_str, aiProcess_ConvertToLeftHanded |
-                                                   aiProcess_JoinIdenticalVertices |
-                                                   aiProcess_Triangulate |
-                                                   aiProcess_SortByPType |
-                                                   aiProcess_GenNormals |
-                                                   aiProcess_GenUVCoords |
-                                                   aiProcess_CalcTangentSpace |
-                                                   aiProcess_OptimizeMeshes |
-                                                   aiProcess_ValidateDataStructure);
-
+                                                       aiProcess_JoinIdenticalVertices |
+                                                       aiProcess_Triangulate |
+                                                       aiProcess_SortByPType |
+                                                       aiProcess_GenNormals |
+                                                       aiProcess_GenUVCoords |
+                                                       aiProcess_CalcTangentSpace |
+                                                       aiProcess_OptimizeMeshes |
+                                                       aiProcess_ValidateDataStructure);
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         GRAPHICS_LOG_ERROR(importer.GetErrorString());
         return std::nullopt;
@@ -44,6 +44,8 @@ std::optional<MeshFile> MeshLoader::LoadMesh(std::filesystem::path path) {
     else {
         Process(mesh_file, scene->mRootNode, scene);
     }
+
+
     return std::move(mesh_file);
 }
 

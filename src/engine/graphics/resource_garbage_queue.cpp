@@ -7,11 +7,14 @@
 _START_ENGINE
 ResourceGarbageQueue &ResourceGarbageQueue::Instance() {
     static ResourceGarbageQueue inst;
+    Activate = true;
     return inst;
 }
 
 void ResourceGarbageQueue::SubmitResource(Microsoft::WRL::ComPtr<ID3D12Resource> resource) {
-    WaitQ.push(resource);
+    if (Activate) {
+        WaitQ.push(resource);
+    }
 }
 
 void ResourceGarbageQueue::Flush() {

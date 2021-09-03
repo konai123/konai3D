@@ -27,7 +27,7 @@ void MeshMap::UpdateFromMeshLoader(DirectX::ResourceUploadBatch* uploader, ID3D1
 bool MeshMap::AddMeshes(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploader, ID3D12GraphicsCommandList6* cmd_list) {
     LocalWriteLock lock(_rw_lock);
 
-    auto name = meshes.Name;
+    auto name = meshes.FilePath.string();
     if (_map.contains(name)) {
         GRAPHICS_LOG_WARNING("'{}' Already has been registered.", name);
         return false;
@@ -147,10 +147,32 @@ UINT MeshMap::UploadQueueSize() {
     return _mesh_loader.Size();
 }
 
+void MeshMap::Clear() {
+    LocalWriteLock lock(_rw_lock);
+    _mesh_loader.Get();
+
+    for (auto& item : _map) {
+        auto resource = item.second.get();
+        auto& Meshes = resource->Meshes;
+        for (UINT i = 0; i < Meshes.size(); i++) {
+            auto p = Meshes[i].get();
+            if (p->VertexBuffer != nullptr)
+                ResourceGarbageQueue::Instance().SubmitResource(p->VertexBuffer);
+            if (p->IndexBuffer != nullptr)
+                ResourceGarbageQueue::Instance().SubmitResource(p->IndexBuffer);
+            if (p->Blas->ResultDataBuffer != nullptr)
+                ResourceGarbageQueue::Instance().SubmitResource(p->Blas->ResultDataBuffer);
+            if (p->Blas->ScratchBuffer != nullptr)
+                ResourceGarbageQueue::Instance().SubmitResource(p->Blas->ScratchBuffer);
+        }
+    }
+    _map.clear();
+    _nonamed_index = 0;
+}
+
 MeshResources* MeshMap::GetResources(std::string name) {
     LocalReadLock lock(_rw_lock);
     if (!_map.contains(name)) {
-        GRAPHICS_LOG_ERROR("Cannot find mesh resource: {}", name);
         return {};
     }
 

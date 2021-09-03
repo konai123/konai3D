@@ -122,4 +122,8 @@ void TLAS::AddInstance(D3D12_RAYTRACING_INSTANCE_DESC &instDesc) {
 void TLAS::Clear() {
     InstanceDescs.clear();
 }
+
+UINT TLAS::Size() {
+    return InstanceDescs.size();
+}
 _END_ENGINE

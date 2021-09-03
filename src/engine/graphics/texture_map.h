@@ -7,6 +7,7 @@
 #include "src/engine/graphics/device_com.h"
 #include "src/engine/graphics/texture_loader.h"
 #include "src/engine/graphics/resource_descriptor_heap.h"
+#include "src/engine/graphics/resource_garbage_queue.h"
 #include "src/engine/core/rwlock.hpp"
 
 _START_ENGINE
@@ -30,6 +31,7 @@ public:
 
 public:
     bool Contains(std::string name);
+    void Clear();
     std::optional<TextureResource> GetResource(std::string name);
 
 private:

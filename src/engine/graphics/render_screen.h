@@ -45,7 +45,7 @@ public:
     RenderObject *GetRenderObject(std::string name);
     std::vector<std::string> GetRenderObjectList();
 
-    bool AddLight(std::string name, Light light);
+    bool AddLight(std::string name, ShaderType::LightType lightType);
     bool RemoveLight(std::string name);
     Light *GetLight(std::string name);
     std::vector<std::string> GetLightList();

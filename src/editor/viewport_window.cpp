@@ -171,6 +171,16 @@ UINT ViewportWindow::GetHeight() const {
     return _height;
 }
 
+void ViewportWindow::SetWidth(UINT width) {
+    _screen->Resize(width, _height);
+    _width = width;
+}
+
+void ViewportWindow::SetHeight(UINT height) {
+    _screen->Resize(_width, height);
+    _height = height;
+}
+
 Camera* ViewportWindow::GetCamera() const {
     return _camera.get();
 }
@@ -262,6 +272,11 @@ void ViewportWindow::EditTransform(_ENGINE::Positionable* targetObject) {
             reinterpret_cast<float*>(&mat)
     );
     targetObject->SetTransform(mat);
+}
+
+void ViewportWindow::ResetCameraAngle() {
+    float _camera_x_angle = 0.0f;
+    float _camera_y_angle = 0.0f;
 }
 
 _END_KONAI3D

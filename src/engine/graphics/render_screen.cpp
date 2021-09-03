@@ -71,11 +71,14 @@ std::vector<std::string> RenderScreen::GetRenderObjectList() {
     return ret;
 }
 
-bool RenderScreen::AddLight(std::string name, Light light) {
+bool RenderScreen::AddLight(std::string name, ShaderType::LightType lightType) {
     if (_lights.contains(name)) {
         GRAPHICS_LOG_WARNING("Light {} already exist", name);
         return false;
     }
+    Light light;
+    light.LightType = lightType;
+    light.Position = {0.0f, 0.0f, 0.0f};
     _lights[name] = light;
     Updated = true;
     return true;
@@ -184,7 +187,9 @@ bool RenderScreen::CreateRenderTargetResourceAndView(bool isRecreation, UINT wid
     clear_value.Color[3] = _clear_color.f[3];
 
     auto properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    _render_target = nullptr;
+    if (_render_target != nullptr) {
+        ResourceGarbageQueue::Instance().SubmitResource(_render_target);
+    }
     _render_target = _device->CreateResource(
             &properties,
             &render_target_desc,
@@ -238,7 +243,9 @@ bool RenderScreen::CreateDepthStencilBufferAndView(bool isRecreation, UINT width
     clear_value.DepthStencil.Stencil = 0;
 
     auto properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    _dsv_buffer = nullptr;
+    if (_dsv_buffer != nullptr) {
+        ResourceGarbageQueue::Instance().SubmitResource(_dsv_buffer);
+    }
     _dsv_buffer = _device->CreateResource(
             &properties,
             &depth_stencil_desc,

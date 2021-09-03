@@ -20,8 +20,11 @@ public:
     virtual void ControlViewport();
     virtual UINT GetWidth() const;
     virtual UINT GetHeight() const;
+    virtual void SetWidth(UINT width);
+    virtual void SetHeight(UINT height);
     virtual _ENGINE::RenderScreen* GetRenderScreen() const;
     virtual Camera* GetCamera() const;
+    virtual void ResetCameraAngle();
 
 private:
     void EditTransform(_ENGINE::Positionable* targetObject);

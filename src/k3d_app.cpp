@@ -62,6 +62,7 @@ bool K3DApp::Prepare(HWND hwnd, int width, int height, float dpiFactor) {
         /* Load System Mesh, Texture */
         auto system_texture_path = global::AssetPath / "textures" / "default_texture.png";
         auto system_mesh_path = global::AssetPath / "meshes" / "sphere.obj";
+        DefaultMeshName = system_mesh_path.string();
 
         _renderer->RenderResourceMap->TextureMap->AsyncLoad({system_texture_path});
         _renderer->RenderResourceMap->MeshMap->AsyncLoad({system_mesh_path});

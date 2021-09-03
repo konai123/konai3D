@@ -59,6 +59,7 @@ void MaterialWindow::OnUpdate(float delta) {
     for(auto& mat_name : material_names) {
         auto material_desc = _render_resource_map->MaterialMap->GetMaterialDesc(mat_name).value();
         auto difffuse_texture = _render_resource_map->TextureMap->GetResource(material_desc.DiffuseTexturePath);
+        if (!difffuse_texture.has_value()) continue;
 
         ImGui::PushID(mat_name.data());
 
@@ -90,6 +91,7 @@ void MaterialWindow::OnUpdate(float delta) {
 
             for (auto& tex_name : texture_names) {
                 auto texture = _render_resource_map->TextureMap->GetResource(tex_name);
+                if (!texture.has_value()) continue;
                 auto texture_id = reinterpret_cast<void*>(texture->Handle.GpuHandle.ptr);
                 ImGui::Text(tex_name.data());
                 if (ImGui::ImageButton(texture_id, texture_size)) {

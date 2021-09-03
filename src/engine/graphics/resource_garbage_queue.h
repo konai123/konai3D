@@ -23,6 +23,9 @@ public:
     void SubmitResource(Microsoft::WRL::ComPtr<ID3D12Resource> resource);
     void Flush();
 
+public:
+    inline static bool Activate = false;
+
 protected:
     ResourceGarbageQueue() = default;
 

@@ -28,6 +28,8 @@ public:
     int GetMaterialID(std::string name);
     std::optional<MaterialDesc> GetMaterialDesc(std::string name);
     std::vector<std::string> GetMaterialList();
+    bool Contains(std::string name);
+    void Clear();
 
 public:
     inline static const UINT MaxMaterial = 1000;

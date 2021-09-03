@@ -349,4 +349,9 @@ DWORD Renderer::UploadWorker(PVOID context) {
     return 0;
 }
 
+Renderer::~Renderer() {
+    ResourceGarbageQueue::Instance().Activate = false;
+    ResourceGarbageQueue::Instance().Flush();
+}
+
 _END_ENGINE

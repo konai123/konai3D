@@ -115,10 +115,24 @@ UINT TextureMap::UploadQueueSize() {
     return _texture_loader.Size();
 }
 
+void TextureMap::Clear() {
+    LocalWriteLock lock(_rw_lock);
+    _texture_loader.Get();
+
+    for (auto &p : _map) {
+        if (p.second.Handle.IsVaild()) {
+            _resource_heap->DiscardShaderResourceHeapDescriptor(p.second.Handle._heap_index);
+            if (p.second.Resource != nullptr) {
+                ResourceGarbageQueue::Instance().SubmitResource(p.second.Resource);
+            }
+        }
+    }
+    _map.clear();
+}
+
 std::optional<TextureResource> TextureMap::GetResource(std::string name) {
     LocalReadLock lock(_rw_lock);
     if (!_map.contains(name)) {
-        GRAPHICS_LOG_ERROR("Cannot find texture: {}", name);
         return std::nullopt;
     }
     return _map[name];

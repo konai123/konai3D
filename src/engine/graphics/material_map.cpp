@@ -69,5 +69,19 @@ std::vector<std::string> MaterialMap::GetMaterialList() {
     return names;
 }
 
+void MaterialMap::Clear() {
+    auto strv = GetMaterialList();
+    for (auto& s : strv) {
+        DeleteMaterial(s);
+    }
+}
+
+bool MaterialMap::Contains(std::string name) {
+    if (_map.contains(name)) {
+        return true;
+    }
+    return false;
+}
+
 _END_ENGINE
 

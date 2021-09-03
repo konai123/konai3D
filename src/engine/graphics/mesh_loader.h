@@ -29,12 +29,10 @@ public:
     }
 
     void Clear() {
-        Name = "";
         Mesh.clear();
     }
 
 public:
-    std::string Name;
     std::vector<Mesh> Mesh;
     std::filesystem::path FilePath;
 };
@@ -51,6 +49,7 @@ public:
 private:
     void Process(MeshFile& model, aiNode *node, const aiScene *scene);
     void To(MeshFile& model, aiMesh* mesh);
+    std::mutex _importer_lock;
 };
 
 _END_ENGINE

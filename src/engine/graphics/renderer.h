@@ -29,7 +29,7 @@ struct RenderingOptions {
 class Renderer {
 public:
     Renderer();
-    ~Renderer() = default;
+    ~Renderer();
     Renderer &operator=(const Renderer &) = delete;
     Renderer &operator=(Renderer &&) noexcept = default;
     Renderer(const Renderer &) = delete;

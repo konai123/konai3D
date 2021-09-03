@@ -25,6 +25,7 @@ IMGUIWindow("Dockspace")
 {
     _windows.resize(4);
     _windows = {_viewport_windows, _component_windows, _log_windows, _material_windows};
+    _file_dialog.SetTitle("Load Screen");
 }
 
 void MainWindow::OnUpdate(float delta) {
@@ -78,7 +79,9 @@ void MainWindow::OnUpdate(float delta) {
             if (ImGui::MenuItem("Save")) {
                 openPopup= true;
             }
-            ImGui::MenuItem("Load");
+            if (ImGui::MenuItem("Load")) {
+                _file_dialog.Open();
+            }
             ImGui::EndMenu();
         }
 
@@ -105,6 +108,19 @@ void MainWindow::OnUpdate(float delta) {
             if (p_window != nullptr && p_window->IsCollapsed() == false) {
                 p_window->OnUpdate(delta);
             }
+        }
+    }
+
+    _file_dialog.Display();
+    if (_file_dialog.HasSelected()) {
+        auto selected = _file_dialog.GetSelected();
+        APP_LOG_INFO("Load Screen: {}", selected.string());
+        _file_dialog.ClearSelected();
+
+        if (!AssetManager::Instance().Load(selected,
+                                           reinterpret_cast<ViewportWindow *>(_viewport_windows.get()),
+                                           _render_resource_map.get())) {
+            APP_LOG_ERROR("Failed to load screen {}", selected.string());
         }
     }
 
