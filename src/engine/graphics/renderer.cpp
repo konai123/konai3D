@@ -358,4 +358,8 @@ Renderer::~Renderer() {
     ResourceGarbageQueue::Instance().Flush();
 }
 
+RenderingOptions Renderer::GetRenderingOptions() {
+    return _rendering_options;
+}
+
 _END_ENGINE

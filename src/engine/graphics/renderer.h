@@ -49,6 +49,7 @@ public:
     void OnResizeGUI(UINT width, UINT height, UIRenderer* uiRenderer);
     void OnDestroy(UIRenderer *uiRenderer = nullptr);
     void SetRenderingOptions(RenderingOptions options);
+    RenderingOptions GetRenderingOptions();
     void WaitAllFrameExecute();
     UINT GetCurrentFrameIndex() const;
     std::unique_ptr<RenderScreen> InstanceRenderScreen(UINT width, UINT height);

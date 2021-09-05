@@ -9,7 +9,7 @@
 #include "src/math.h"
 
 _START_KONAI3D
-ViewportWindow::ViewportWindow(_ENGINE::Renderer *renderer)
+ViewportWindow::ViewportWindow(std::shared_ptr<_ENGINE::Renderer> renderer)
 :
 IMGUIWindow("Viewport"),
 _width(1920),
@@ -25,7 +25,9 @@ _camera_y_angle(0.0f),
 _guizmo_oper(ImGuizmo::OPERATION::TRANSLATE),
 _guizmo_mode(ImGuizmo::MODE::WORLD),
 _draw_grid(true),
-_screen(nullptr) {
+_screen(nullptr),
+_renderer(renderer)
+{
     _camera = std::make_unique<Camera>(
         0.7852,
         static_cast<float>(_width) / static_cast<float>(_height),
@@ -38,7 +40,7 @@ _screen(nullptr) {
 
     DragSpeed = 1.0f / static_cast<float>(_width);
 
-    _screen = renderer->InstanceRenderScreen(_width, _height);
+    _screen = _renderer->InstanceRenderScreen(_width, _height);
     AppAssert(_screen != nullptr);
 
     _ENGINE::RenderScreen::CameraInfo camera_info;
@@ -51,6 +53,9 @@ _screen(nullptr) {
     camera_info.CameraUp = _camera->CameraUp;
     camera_info.AspectRatio = _width / static_cast<float>(_height);
     _screen->SetCameraInfo(camera_info);
+
+    auto options = _renderer->GetRenderingOptions();
+    _vsync = options.v_sync;
 }
 
 void ViewportWindow::OnUpdate(float delta) {
@@ -113,6 +118,13 @@ void ViewportWindow::OnUpdate(float delta) {
                 }
 
                 ImGui::EndMenu();
+            }
+
+            if (ImGui::MenuItem("VSync", NULL, _vsync, true)) {
+                _vsync = !_vsync;
+                auto curr = _renderer->GetRenderingOptions();
+                curr.v_sync = _vsync;
+                _renderer->SetRenderingOptions(curr);
             }
             ImGui::EndMenu();
         }

@@ -10,7 +10,7 @@
 _START_KONAI3D
 class ViewportWindow : public IMGUIWindow {
 public:
-    ViewportWindow(_ENGINE::Renderer* renderer);
+    ViewportWindow(std::shared_ptr<_ENGINE::Renderer> renderer);
     virtual ~ViewportWindow() = default;
 
 public:
@@ -45,11 +45,13 @@ private:
     float _camera_y_angle;
     bool _show_fps_counter;
     bool _draw_grid;
+    bool _vsync;
     ImGuizmo::OPERATION _guizmo_oper;
     ImGuizmo::MODE _guizmo_mode;
 
 private:
     std::unique_ptr<_ENGINE::RenderScreen> _screen;
+    std::shared_ptr<_ENGINE::Renderer> _renderer;
     std::unique_ptr<Camera> _camera;
 };
 _END_KONAI3D
