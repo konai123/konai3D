@@ -24,7 +24,7 @@ _upload_worker_stop(false)
 
 bool
 Renderer::Initiate(HWND hWnd, UINT width, UINT height, std::filesystem::path shaderDirectoryPath,
-                   std::shared_ptr<UIRenderer> uiRenderer) {
+                   UIRenderer* uiRenderer) {
     _gui_render_target_width = width;
     _gui_render_target_height = height;
 
@@ -84,12 +84,11 @@ Renderer::Initiate(HWND hWnd, UINT width, UINT height, std::filesystem::path sha
     _gui_view = _resource_heap->AllocShaderResourceHeapDescriptor();
 
     if (uiRenderer != nullptr) {
-        _ui_renderer = uiRenderer;
-        if (!_ui_renderer->Initiate(
+        if (!uiRenderer->OnInitiate(
                 hWnd, _device.get(), BackbufferFormat, _resource_heap->GetShaderResourceHeap().Get(), &_gui_view,
                 width, height, NumPreFrames)
                 ) {
-            GRAPHICS_LOG_ERROR("Failed to initialize imgui renderer.");
+            GRAPHICS_LOG_ERROR("Failed to initialize ui renderer.");
             return false;
         }
     }
@@ -124,7 +123,8 @@ Renderer::Initiate(HWND hWnd, UINT width, UINT height, std::filesystem::path sha
 
 void Renderer::OnRender(
         float delta,
-        RenderScreen *screen
+        RenderScreen *screen,
+        UIRenderer *uiRenderer
 ) {
 
     {
@@ -174,7 +174,9 @@ void Renderer::OnRender(
      * IMGUI Render pass
      * */
     {
-        _ui_renderer->OnGUIRender(delta, _command_list.Get());
+        if (uiRenderer != nullptr) {
+            uiRenderer->OnGUIRender(delta, _command_list.Get());
+        }
     }
 
     D3D12_RESOURCE_BARRIER barrier_out = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -203,7 +205,7 @@ void Renderer::OnRender(
 
 }
 
-void Renderer::OnResizeGUI(UINT width, UINT height) {
+void Renderer::OnResizeGUI(UINT width, UINT height, UIRenderer* uiRenderer) {
     _gui_render_target_width = width;
     _gui_render_target_height = height;
     _gui_viewport.Width = static_cast<float>(width);
@@ -217,16 +219,18 @@ void Renderer::OnResizeGUI(UINT width, UINT height) {
                                        _gui_render_target_height);
     CreateGUIRenderTargetBufferAndView(true);
 
-    _ui_renderer->OnResize(width, height);
+    uiRenderer->OnResize(width, height);
 }
 
-void Renderer::OnDestroy() {
+void Renderer::OnDestroy(UIRenderer* uiRenderer) {
     WaitAllFrameExecute();
     _upload_worker_stop.store(true); //Exit Upload thread
     ::SetEvent(_worker_event->Get());
     ::WaitForSingleObject(_uplaod_worker_handle, INFINITE);
 
-    _ui_renderer->OnDestroy();
+    if (uiRenderer != nullptr) {
+        uiRenderer->OnDestroy();
+    }
     _device->Close();
 }
 

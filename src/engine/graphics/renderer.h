@@ -40,13 +40,14 @@ public:
                   UINT width,
                   UINT height,
                   std::filesystem::path shaderDirectoryPath,
-                  std::shared_ptr<UIRenderer> uiRenderer = nullptr);
+                  UIRenderer* uiRenderer = nullptr);
     void OnRender(
             float delta,
-            RenderScreen *screen
+            RenderScreen *screen,
+            UIRenderer* uiRenderer = nullptr
     );
-    void OnResizeGUI(UINT width, UINT height);
-    void OnDestroy();
+    void OnResizeGUI(UINT width, UINT height, UIRenderer* uiRenderer);
+    void OnDestroy(UIRenderer *uiRenderer = nullptr);
     void SetRenderingOptions(RenderingOptions options);
     void WaitAllFrameExecute();
     UINT GetCurrentFrameIndex() const;
@@ -98,7 +99,6 @@ private:
     RenderingOptions _rendering_options;
     std::unique_ptr<ScopedHandle> _worker_event;
 
-    std::shared_ptr<UIRenderer> _ui_renderer;
     UINT _current_frame;
 
 private:

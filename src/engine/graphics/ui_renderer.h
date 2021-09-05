@@ -12,7 +12,7 @@ class UIRenderer
 DECLARE_CLASS_AS_INTERFACE(UIRenderer);
 
 public:
-    virtual bool Initiate(
+    virtual bool OnInitiate(
             const HWND hwnd,
             DeviceCom *device,
             const DXGI_FORMAT backbufferFormat,

@@ -17,7 +17,7 @@ public:
     virtual ~IMGUIRenderer() = default;
 
 public:
-    virtual bool Initiate(
+    virtual bool OnInitiate(
             const HWND hwnd,
             _ENGINE::DeviceCom *device,
             const DXGI_FORMAT backbufferFormat,

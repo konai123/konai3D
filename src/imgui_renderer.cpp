@@ -13,14 +13,14 @@ _app_width(0),
 _setting_path(""),
 _scale_factor(1.0f) {}
 
-bool IMGUIRenderer::Initiate(const HWND hwnd,
-                             _ENGINE::DeviceCom *device,
-                             const DXGI_FORMAT backbufferFormat,
-                             ID3D12DescriptorHeap *srvDescriptorHeap,
-                             _ENGINE::HeapDescriptorHandle *shaderResourceView,
-                             const UINT appWidth,
-                             const UINT appHeight,
-                             const UINT numFrameFlight
+bool IMGUIRenderer::OnInitiate(const HWND hwnd,
+                               _ENGINE::DeviceCom *device,
+                               const DXGI_FORMAT backbufferFormat,
+                               ID3D12DescriptorHeap *srvDescriptorHeap,
+                               _ENGINE::HeapDescriptorHandle *shaderResourceView,
+                               const UINT appWidth,
+                               const UINT appHeight,
+                               const UINT numFrameFlight
 ) {
 
     //Reference: https://github.com/ocornut/imgui/blob/docking/examples/example_win32_directx12/main.cpp

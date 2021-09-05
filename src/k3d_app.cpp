@@ -31,7 +31,7 @@ bool K3DApp::Prepare(HWND hwnd, int width, int height, float dpiFactor) {
     _imgui_renderer = std::make_shared<IMGUIRenderer>();
     _renderer = std::make_shared<_ENGINE::Renderer>();
     if (!_renderer->Initiate(
-            hwnd, width, height, global::ShaderPath, _imgui_renderer
+            hwnd, width, height, global::ShaderPath, _imgui_renderer.get()
     )) {
         APP_LOG_ERROR("Failed to initialize render system.");
         return false;
@@ -84,13 +84,13 @@ void K3DApp::OnStart() {
 
 void K3DApp::OnDestroy() {
     App::OnDestroy();
-    _renderer->OnDestroy();
+    _renderer->OnDestroy(_imgui_renderer.get());
 }
 
 void K3DApp::OnUpdate(float delta) {
     App::OnUpdate(delta);
     _ENGINE::RenderScreen* render_target = _viewport_window->GetRenderScreen();
-    _renderer->OnRender(delta, render_target);
+    _renderer->OnRender(delta, render_target, _imgui_renderer.get());
 }
 
 void K3DApp::OnLateUpdate(float delta) {
@@ -103,7 +103,7 @@ void K3DApp::OnResizeStart(int width, int height) {
 
 void K3DApp::OnResizeEnd() {
     App::OnResizeEnd();
-    _renderer->OnResizeGUI(GetWidth(), GetHeight());
+    _renderer->OnResizeGUI(GetWidth(), GetHeight(), _imgui_renderer.get());
 }
 
 void K3DApp::OnDPIUpdate(float dpiFactor) {
