@@ -169,8 +169,7 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
     auto option_width= json["Options"]["Width"].get<UINT>();
 
     viewportWindow->ResetCameraAngle();
-    viewportWindow->SetWidth(option_width);
-    viewportWindow->SetHeight(option_height);
+    viewportWindow->SetResolution(option_width, option_height);
 
     auto camera = viewportWindow->GetCamera();
     camera->Far = camera_far;

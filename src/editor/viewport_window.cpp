@@ -90,6 +90,33 @@ void ViewportWindow::OnUpdate(float delta) {
             ImGui::EndMenu();
         }
 
+        if (ImGui::BeginMenu("Rendering")) {
+            if (ImGui::BeginMenu("Resolution")) {
+                if (ImGui::MenuItem("3840X2160")) {
+                    SetResolution(3840, 2160);
+                    Update();
+                }
+
+                if (ImGui::MenuItem("2560X1440")) {
+                    SetResolution(2560, 1440);
+                    Update();
+                }
+
+                if (ImGui::MenuItem("1920X1080")) {
+                    SetResolution(1920, 1080);
+                    Update();
+                }
+
+                if (ImGui::MenuItem("960X540")) {
+                    SetResolution(960, 540);
+                    Update();
+                }
+
+                ImGui::EndMenu();
+            }
+            ImGui::EndMenu();
+        }
+
         if (ImGui::BeginMenu("Control")) {
             if (ImGui::MenuItem("Translate", NULL, _guizmo_oper == ImGuizmo::OPERATION::TRANSLATE, true)) {
                 _guizmo_oper = ImGuizmo::OPERATION::TRANSLATE;
@@ -171,13 +198,9 @@ UINT ViewportWindow::GetHeight() const {
     return _height;
 }
 
-void ViewportWindow::SetWidth(UINT width) {
-    _screen->Resize(width, _height);
+void ViewportWindow::SetResolution(UINT width, UINT height) {
+    _screen->Resize(width, height);
     _width = width;
-}
-
-void ViewportWindow::SetHeight(UINT height) {
-    _screen->Resize(_width, height);
     _height = height;
 }
 
