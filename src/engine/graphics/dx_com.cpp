@@ -26,7 +26,7 @@ bool DXCom::Initiate() {
     Microsoft::WRL::ComPtr<ID3D12Debug1> debug1;
     if (SUCCEEDED(::D3D12GetDebugInterface(IID_PPV_ARGS(debug1.ReleaseAndGetAddressOf())))) {
         debug1->EnableDebugLayer();
-        debug1->SetEnableGPUBasedValidation(true);
+        debug1->SetEnableGPUBasedValidation(false);
     }
 #endif
     ReturnFalseHRFailed(::CreateDXGIFactory1(IID_PPV_ARGS(&_dxgi_factory)));

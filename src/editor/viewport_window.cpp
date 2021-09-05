@@ -24,7 +24,7 @@ _camera_x_angle(0.0f),
 _camera_y_angle(0.0f),
 _guizmo_oper(ImGuizmo::OPERATION::TRANSLATE),
 _guizmo_mode(ImGuizmo::MODE::WORLD),
-_draw_grid(true),
+_draw_grid(false),
 _screen(nullptr),
 _renderer(renderer)
 {

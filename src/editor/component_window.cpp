@@ -239,7 +239,6 @@ void ComponentWindow::OnUpdate(float delta) {
         );
 
         light->SetTransform(DirectX::XMLoadFloat4x4(&world));
-
         if (ImGui::InputFloat("Radius", &light->Radius)) _viewport_window->Update();
 
         if (ImGui::Button("Delete")) {

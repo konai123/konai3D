@@ -55,13 +55,16 @@ struct Light : public Positionable
 
 public:
     virtual DirectX::XMMATRIX GetWorldMatrix() {
-        return DirectX::XMMatrixTranslation(Position.x, Position.y, Position.z);
+        auto t = DirectX::XMMatrixTranslation(Position.x, Position.y, Position.z);
+        auto s = DirectX::XMMatrixScaling(Radius, Radius, Radius);
+        return s*t;
     }
 
     virtual void SetTransform (DirectX::FXMMATRIX worldMat) {
         DirectX::XMVECTOR position, scale, rotation;
         DirectX::XMMatrixDecompose(&scale, &rotation, &position, worldMat);
         DirectX::XMStoreFloat3(&Position, position);
+        Radius = scale.m128_f32[0];
     }
 };
 _END_ENGINE

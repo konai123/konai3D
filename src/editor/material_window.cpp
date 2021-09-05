@@ -16,7 +16,7 @@ _viewport_window(viewportWindow),
 _file_dialog(ImGuiFileBrowserFlags_MultipleSelection)
 {
     _file_dialog.SetTitle("Load textures");
-    _file_dialog.SetTypeFilters({".jpg", ".dds", ".hdr", ".tga"});
+    _file_dialog.SetTypeFilters({".jpg", ".dds", ".hdr", ".tga", ".png"});
 }
 
 bool MaterialWindow::AddMaterial(std::string name) {

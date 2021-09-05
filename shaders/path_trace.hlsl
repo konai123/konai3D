@@ -93,13 +93,13 @@ bool ShootShadowRay(float3 origin, float3 target)
 
 void EstimateLight(float3 origin, inout float3 to, inout uint seed, out float lightPdf)
 {
-//    if (RandomFloat01(seed) < 0.5f) {
-//        int idx = RandomFloat01(seed) * gNumberOfLight+1;
-//        Light light = gLights[idx];
-//        to = light.ToLight(origin, seed);
-//    }
+    if (RandomFloat01(seed) < 0.5f) {
+        int idx = RandomFloat01(seed) * gNumberOfLight;
+        Light light = gLights[idx];
+        to = light.ToLight(origin, seed);
+    }
 
-    float lightPdfSum;
+    float lightPdfSum = 0.0f;
     for (uint i = 0; i < gNumberOfLight; i++) {
         lightPdfSum += gLights[i].PDF(origin, to);
     }
