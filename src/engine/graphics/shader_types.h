@@ -15,7 +15,7 @@ enum MaterialType {
 
 struct Material {
 public:
-    int DiffuseTextureIndex = 0;
+    int BaseColorTextureIndex = 0;
     MaterialType MaterialType;
     float Fuzz;
     float RefractIndex;

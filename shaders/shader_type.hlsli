@@ -6,7 +6,7 @@
 #define MaterialType_Dielectric 2
 
 struct Material {
-    int DiffuseTextureIndex;
+    int BaseColorTextureIndex;
     int MaterialType;
     float Fuzz;
     float RefractIndex;

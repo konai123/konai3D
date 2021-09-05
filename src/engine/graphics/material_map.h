@@ -11,7 +11,7 @@ _START_ENGINE
 
 struct MaterialDesc {
 public:
-    std::string DiffuseTexturePath;
+    std::string BaseColorTexturePath;
     ShaderType::MaterialType MaterialType;
     float Fuzz;
     float RefractIndex;

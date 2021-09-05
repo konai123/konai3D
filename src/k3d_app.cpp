@@ -68,7 +68,7 @@ bool K3DApp::Prepare(HWND hwnd, int width, int height, float dpiFactor) {
         _renderer->RenderResourceMap->MeshMap->AsyncLoad({system_mesh_path});
 
         _ENGINE::MaterialDesc mat_desc {
-            .DiffuseTexturePath = system_texture_path.string(),
+            .BaseColorTexturePath = system_texture_path.string(),
             .MaterialType = _ENGINE::ShaderType::Lambertian,
             .Fuzz = 0.f,
             .RefractIndex = 1.5f

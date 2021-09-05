@@ -43,7 +43,7 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
             auto meshPath = meshResource->MeshFile.string();
             auto subMesh = renObj->SubmeshID;
             auto matType = matDesc->MaterialType;
-            auto diffuseTexturePath = matDesc->DiffuseTexturePath;
+            auto diffuseTexturePath = matDesc->BaseColorTexturePath;
             auto refractIndex = matDesc->RefractIndex;
             auto fuzz = matDesc->Fuzz;
 
@@ -221,7 +221,7 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
         _ENGINE::MaterialDesc mat_desc;
         mat_desc.Fuzz = fuzz;
         mat_desc.RefractIndex = refract_idx;
-        mat_desc.DiffuseTexturePath = diffuse_texture_path;
+        mat_desc.BaseColorTexturePath = diffuse_texture_path;
         mat_desc.MaterialType = static_cast<_ENGINE::ShaderType::MaterialType>(material_type);
 
         if (!matMap->Contains(mat_name))
@@ -265,7 +265,7 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
         if (!matMap->Contains(K3DApp::DefaultMaterialName))
         {
             _ENGINE::MaterialDesc mat_desc {
-                    .DiffuseTexturePath = system_texture_path.string(),
+                    .BaseColorTexturePath = system_texture_path.string(),
                     .MaterialType = _ENGINE::ShaderType::Lambertian,
                     .Fuzz = 0.f,
                     .RefractIndex = 1.5f

@@ -13,7 +13,8 @@ MaterialWindow::MaterialWindow(std::shared_ptr<ViewportWindow> viewportWindow,
 IMGUIWindow("Material"),
 _render_resource_map(resourceMap),
 _viewport_window(viewportWindow),
-_file_dialog(ImGuiFileBrowserFlags_MultipleSelection) {
+_file_dialog(ImGuiFileBrowserFlags_MultipleSelection)
+{
     _file_dialog.SetTitle("Load textures");
     _file_dialog.SetTypeFilters({".jpg", ".dds", ".hdr", ".tga"});
 }
@@ -59,16 +60,16 @@ void MaterialWindow::OnUpdate(float delta) {
 
     for (auto &mat_name : material_names) {
         auto material_desc = _render_resource_map->MaterialMap->GetMaterialDesc(mat_name).value();
-        auto difffuse_texture = _render_resource_map->TextureMap->GetResource(material_desc.DiffuseTexturePath);
-        if (!difffuse_texture.has_value()) continue;
+        auto basecolor_texture = _render_resource_map->TextureMap->GetResource(material_desc.BaseColorTexturePath);
+        if (!basecolor_texture.has_value()) continue;
 
         ImGui::PushID(mat_name.data());
 
         if (ImGui::CollapsingHeader(mat_name.data())) {
-            ImGui::Text("Diffuse Texture");
-            if (ImGui::ImageButton(reinterpret_cast<void *>(difffuse_texture.value().Handle.GpuHandle.ptr),
+            ImGui::Text("Base Color Texture");
+            if (ImGui::ImageButton(reinterpret_cast<void *>(basecolor_texture.value().Handle.GpuHandle.ptr),
                                    image_size)) {
-                ImGui::OpenPopup("Select Diffuse Texture");
+                ImGui::OpenPopup("Select BaseColor Texture");
             }
 
             if (ImGui::Combo("Material Type", reinterpret_cast<int *>(&material_desc.MaterialType),
@@ -77,18 +78,22 @@ void MaterialWindow::OnUpdate(float delta) {
                 _viewport_window->Update();
             }
 
-            if (ImGui::SliderFloat("Fuzz", &material_desc.Fuzz, 0.0f, 1.0f)) {
-                _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
-                _viewport_window->Update();
+            if (material_desc.MaterialType == _ENGINE::ShaderType::Metal) {
+                if (ImGui::SliderFloat("Fuzz", &material_desc.Fuzz, 0.0f, 1.0f)) {
+                    _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
+                    _viewport_window->Update();
+                }
             }
 
-            if (ImGui::SliderFloat("Index Of Refract", &material_desc.RefractIndex, 1.0f, 5.0f)) {
-                _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
-                _viewport_window->Update();
+            if (material_desc.MaterialType == _ENGINE::ShaderType::Dielectric) {
+                if (ImGui::SliderFloat("Index Of Refract", &material_desc.RefractIndex, 1.0f, 5.0f)) {
+                    _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
+                    _viewport_window->Update();
+                }
             }
         }
 
-        if (ImGui::BeginPopup("Select Diffuse Texture")) {
+        if (ImGui::BeginPopup("Select BaseColor Texture")) {
             auto texture_size = ImVec2(400.0f, 200.0f);
 
             if (ImGui::Button("Load from file")) {
@@ -101,9 +106,9 @@ void MaterialWindow::OnUpdate(float delta) {
                 auto texture_id = reinterpret_cast<void *>(texture->Handle.GpuHandle.ptr);
                 ImGui::Text(tex_name.data());
                 if (ImGui::ImageButton(texture_id, texture_size)) {
-                    if (material_desc.DiffuseTexturePath != tex_name) {
+                    if (material_desc.BaseColorTexturePath != tex_name) {
                         _viewport_window->Update();
-                        material_desc.DiffuseTexturePath = tex_name;
+                        material_desc.BaseColorTexturePath = tex_name;
                         _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
                     }
                     ImGui::CloseCurrentPopup();
