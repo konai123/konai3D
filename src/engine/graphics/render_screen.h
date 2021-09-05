@@ -69,6 +69,7 @@ public:
 
     UINT Width;
     UINT Height;
+    std::optional<std::string> EnvTextureKey;
 
 public:
     inline static const UINT MAX_RENDER_OBJECT = 1000;

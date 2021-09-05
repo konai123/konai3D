@@ -4,12 +4,16 @@
 #define MaterialType_Lambertian 0
 #define MaterialType_Metal      1
 #define MaterialType_Dielectric 2
+#define MaterialType_Emitter    3
+
+#include <math.hlsli>
 
 struct Material {
     int BaseColorTextureIndex;
     int MaterialType;
     float Fuzz;
     float RefractIndex;
+    float3 EmittedColor;
 };
 
 struct RayPayload
@@ -21,6 +25,7 @@ struct RayPayload
     float3 Origin;
     float T;
     float Pdf;
+    uint CurrDepth;
 
     float3 At() {
         return Origin + T*Direction;
@@ -82,20 +87,46 @@ struct Camera
         raypay.Origin = Position;
         raypay.T = 0.f;
         raypay.Seed = seed;
+        raypay.Pdf = 1.0f;
+        raypay.HitColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
+        raypay.CurrDepth = 0;
         return raypay;
     }
 };
 
 
-#define LightType_Point 0
-#define LightType_Quad  1
+#define LightType_Shpere 0
 struct Light
 {
     int LightType;
     float3 Position;
-    float Pad;
-    float3 Intensity;
+    float Radius;
 
+    float PDF(float3 origin, float3 direction) {
+        if (LightType == LightType_Shpere) {
+            if (!HitSphere(Position, Radius, origin, direction)) {
+                return 0.0f;
+            }
+
+            float3 ls = (Position-origin);
+
+            float cos_theta_max = sqrt(1 - Radius*Radius/(dot(ls, ls)));
+            float solid_angle = 2*gPI*(1-cos_theta_max);
+            return  1.0f / solid_angle;
+        }
+        return 0.0f;
+    }
+
+    float3 ToLight(float3 origin, inout uint seed) {
+        if (LightType == LightType_Shpere) {
+            float3 direction = Position - origin;
+            float distance_squared = dot(direction, direction);
+            float3x3 uvw = GetONB(direction);
+
+            return mul(RandomToSphere(Radius, distance_squared, seed), uvw);
+        }
+        return float3(0.0f, 0.0f, 0.0f);
+    }
 };
 
 #endif

@@ -18,16 +18,14 @@
 _START_ENGINE
 class Raytracer {
 public:
-    struct CBPerObject {
-        UINT MaterialIdx;
-    };
-
     struct CBPerFrame {
         ShaderType::Camera Camera;
         UINT RenderTargetIdx;
         UINT TotalFrameCount;
         UINT IntegrationCount;
         UINT NumberOfLight;
+        int EnvTextureIdx;
+        float3 Pad;
     };
 
     explicit Raytracer(std::shared_ptr<DeviceCom> deviceCom);

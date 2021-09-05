@@ -10,10 +10,15 @@ struct Lambertian
     {
         CosinePDF cPDF;
         scatterDirection = cPDF.GetVector(normal, seed);
-        pdf = cPDF.PDF(normal, scatterDirection);
-
-        attenuation = albedo * pdf;
+        pdf = cPDF.PDF(scatterDirection);
+        attenuation = albedo;
         return true;
+    }
+
+    float Pdf(float3 direction, float3 n) {
+        float c = dot(n, normalize(direction));
+        if (c <= 0) return 0;
+        return c / gPI;
     }
 
     float3 albedo;

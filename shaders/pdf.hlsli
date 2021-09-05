@@ -7,15 +7,21 @@ struct CosinePDF
 {
     float3 GetVector(float3 w, inout uint seed)
     {
-        float3x3 onb = GetONB(w);
+        onb = GetONB(w);
+        currNormal = w;
         float3 direction = normalize(mul(RandomCosineDirection(seed), onb));
         return direction;
     }
 
-    float PDF(float3 w, float3 direction)
+    float PDF(float3 direction)
     {
-        return dot(w, direction) / gPI;
+        float c = dot(currNormal, normalize(direction));
+        if (c <= 0) return 0;
+        return c / gPI;
     }
+
+    float3 currNormal;
+    float3x3 onb;
 };
 
 #endif

@@ -6,12 +6,13 @@
 
 struct BSDF
 {
-    void Init(int matType, float3 baseColor, float fuzzValue, float ir, out bool isSpecular)
+    void Init(int matType, float3 baseColor, float fuzzValue, float ir, float3 emitted, out bool isSpecular)
     {
         albedo = baseColor;
         fuzz = fuzzValue;
         materialType = matType;
         refractIndex = ir;
+        emittedColor = emitted;
 
         if (materialType == MaterialType_Lambertian) {
             isSpecular = false;
@@ -35,11 +36,24 @@ struct BSDF
             Dielectric diel;
             diel.ir = refractIndex;
             return diel.Scatter(inDirection, normal, scatterDirection, attenuation, pdf, seed);
+        }else if (materialType == MaterialType_Emitter) {
+            attenuation = emittedColor;
+            return false;
         }
         return false;
     }
 
+    float Pdf(float3 direction, float3 n)
+    {
+        if (materialType == MaterialType_Lambertian) {
+            Lambertian lam;
+            return lam.Pdf(direction, n);
+        }
+        return 0;
+    }
+
     float3 albedo;
+    float3 emittedColor;
     float fuzz;
     float refractIndex;
     int materialType;

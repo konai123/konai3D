@@ -19,7 +19,10 @@ public:
     virtual void ControlViewport();
     virtual UINT GetWidth() const;
     virtual UINT GetHeight() const;
+
     virtual void SetResolution(UINT width, UINT height);
+    virtual bool VsyncEnabled();
+    virtual void SetVSync(bool set);
     virtual _ENGINE::RenderScreen* GetRenderScreen() const;
     virtual Camera* GetCamera() const;
     virtual void ResetCameraAngle();

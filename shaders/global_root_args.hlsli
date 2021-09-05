@@ -16,6 +16,8 @@ cbuffer PerFrame : register(b1, space0)
     uint gTotalFrameCount;
     uint gIntegrationCount;
     uint gNumberOfLight;
+    int gEnvTextureIdx;
+    float3 Pad;
 };
 
 //SRVs

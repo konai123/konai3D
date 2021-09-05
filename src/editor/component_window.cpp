@@ -48,7 +48,7 @@ bool ComponentWindow::DeleteComponent(std::string name) {
 bool ComponentWindow::AddLight(std::string name) {
     _ENGINE::Light light;
 
-    if (!_viewport_window->GetRenderScreen()->AddLight(name, engine::ShaderType::LightType_Point)) {
+    if (!_viewport_window->GetRenderScreen()->AddLight(name, engine::ShaderType::LightType_Sphere)) {
         return false;
     }
     return true;
@@ -239,13 +239,8 @@ void ComponentWindow::OnUpdate(float delta) {
         );
 
         light->SetTransform(DirectX::XMLoadFloat4x4(&world));
-        ImVec4 color = ImVec4(light->Intensity.x, light->Intensity.y, light->Intensity.z, 1.0f);
-        if (ImGui::ColorPicker4("LightIntencity", (float *) &color,
-                            ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_PickerHueWheel |
-                            ImGuiColorEditFlags_NoAlpha, NULL)) {
-            _viewport_window->Update();
-        }
-        light->Intensity = {color.x, color.y, color.z};
+
+        if (ImGui::InputFloat("Radius", &light->Radius)) _viewport_window->Update();
 
         if (ImGui::Button("Delete")) {
             DeleteLight(name);

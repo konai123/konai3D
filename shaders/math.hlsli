@@ -3,7 +3,7 @@
 
 static const float gPI = 3.141592653;
 static const float gEps = 1e-8;
-
+static const float gM1PI = 0.318309886183790671538;
 uint wang_hash(inout uint seed)
 {
     seed = (seed ^ 61) ^ (seed >> 16);
@@ -63,6 +63,18 @@ float3 RandomCosineDirection(inout uint seed)
     return float3(x, y, z);
 }
 
+float3 RandomToSphere(float radius, float distanceSquared, inout uint seed) {
+    float r1 = RandomFloat01(seed);
+    float r2 = RandomFloat01(seed);
+    float z = 1 + r2*(sqrt(1-radius*radius/distanceSquared) - 1);
+
+    float phi = 2*gPI*r1;
+    float x = cos(phi)*sqrt(1-z*z);
+    float y = sin(phi)*sqrt(1-z*z);
+
+    return float3(x, y, z);
+}
+
 float3x3 GetONB(float3 w)
 {
     float3 axisZ, axisY, axisX;
@@ -86,5 +98,22 @@ float3 Refract(float3 indir, float3 normal, float ir) {
     float3 r_out_perp =  ir * (indir + cos_theta*normal);
     float3 r_out_parallel = -sqrt(abs(1.0f - dot(r_out_perp, r_out_perp))) * normal;
     return r_out_perp + r_out_parallel;
+}
+
+float2 VectorToLatLong(float3 dir)
+{
+    float3 p = normalize(dir);
+    float u = (1.f + atan2(p.x, -p.z) * gM1PI) * 0.5f;
+    float v = acos(p.y) * gM1PI;
+    return float2(u, v);
+}
+
+bool HitSphere(float3 center, float radius, float3 origin, float3 direction) {
+    float3 oc = origin - center;
+    float a = dot(direction, direction);
+    float b = 2.0 * dot(oc, direction);
+    float c = dot(oc, oc) - radius*radius;
+    float discriminant = b*b - 4*a*c;
+    return discriminant > 0;
 }
 #endif

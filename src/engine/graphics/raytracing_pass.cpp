@@ -111,25 +111,8 @@ void Raytracer::Render(
         ResourceDescriptorHeap *heaps
 ) {
     {
-        if (screen->GetRenderObjectList().empty()) {
-            auto enter = CD3DX12_RESOURCE_BARRIER::Transition(screen->GetRenderTargetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
-            command_list->ResourceBarrier(1, &enter);
-            command_list->ClearRenderTargetView(screen->GetRenderTargetHeapDesc()->CpuHandle, Renderer::ClearColor, 0, nullptr);
-            auto out = CD3DX12_RESOURCE_BARRIER::Transition(screen->GetRenderTargetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON);
-            command_list->ResourceBarrier(1, &out);
-            return;
-        }
-
-
         RenderScreen *render_screen = screen;
         auto render_target = render_screen->GetRenderTargetResource();
-
-        D3D12_RESOURCE_BARRIER barrier_enter = CD3DX12_RESOURCE_BARRIER::Transition(
-                render_target,
-                D3D12_RESOURCE_STATE_COMMON,
-                D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-        );
-        command_list->ResourceBarrier(1, &barrier_enter);
 
         //Update Lights
         auto lights = render_screen->GetLightList();
@@ -138,8 +121,7 @@ void Raytracer::Render(
             ShaderType::Light l = {
                     .LightType = light_ptr->LightType,
                     .Position = light_ptr->Position,
-                    .Pad = 0.0f,
-                    .Intensity = light_ptr->Intensity
+                    .Radius = light_ptr->Radius
             };
             _rw_buffer_light->UpdateData(&l, i, currentFrameIndex);
         }
@@ -159,12 +141,21 @@ void Raytracer::Render(
                     .Far = camera_info.Far
             };
 
+            int env_tex_idx = -1;
+            if (render_screen->EnvTextureKey.has_value()) {
+                auto tex_opt = textureMap->GetResource(render_screen->EnvTextureKey.value());
+                if (tex_opt.has_value()) {
+                    env_tex_idx = tex_opt->Handle._heap_index;
+                }
+            }
+
             CBPerFrame per_frame{
                 .Camera = camera,
                 .RenderTargetIdx = static_cast<UINT>(render_screen->GetShaderResourceHeapDesc()->_heap_index),
                 .TotalFrameCount = _total_frame_cnt,
                 .IntegrationCount = _integration_cnt,
-                .NumberOfLight = static_cast<UINT>(lights.size())
+                .NumberOfLight = static_cast<UINT>(lights.size()),
+                .EnvTextureIdx = env_tex_idx
             };
             _cb_buffer_per_frames->UpdateData(&per_frame, currentFrameIndex);
         }
@@ -190,7 +181,8 @@ void Raytracer::Render(
                         .BaseColorTextureIndex = resource->Handle._heap_index,
                         .MaterialType = material_desc->MaterialType,
                         .Fuzz = material_desc->Fuzz,
-                        .RefractIndex = material_desc->RefractIndex
+                        .RefractIndex = material_desc->RefractIndex,
+                        .EmittedColor = material_desc->EmittedColor
                 };
                 _rw_buffer_material->UpdateData(&material, material_id, currentFrameIndex);
             }
@@ -232,18 +224,15 @@ void Raytracer::Render(
             obj_count++;
         }
 
-        if (_tlas[currentFrameIndex].Size() > 0)
+        if (true)
         {
             if (!_tlas[currentFrameIndex].Generate(_device.get(), command_list)) {
-                return;
             }
 
             if (!BuildRSShaderTable(command_list)) {
-                return;
             }
 
             if (!UpdateHitgroupTable(meshMap, materialMap, objs, currentFrameIndex, command_list)) {
-                return;
             }
 
             if (screen->Updated) {
@@ -251,6 +240,13 @@ void Raytracer::Render(
                 screen->Updated = false;
             }
 
+            auto barrier_enter = CD3DX12_RESOURCE_BARRIER::Transition(
+                    render_target,
+                    D3D12_RESOURCE_STATE_COMMON,
+                    D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+            );
+
+            command_list->ResourceBarrier(1, &barrier_enter);
             command_list->SetComputeRootSignature(_global_root_signature.Get());
             command_list->SetPipelineState1(_rtpso.Get());
 
@@ -277,7 +273,8 @@ void Raytracer::Render(
 
             _ray_gen_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
             _miss_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
-            _hit_group_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
+            if (_hit_group_shader_table_resource != nullptr)
+                _hit_group_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
 
             D3D12_DISPATCH_RAYS_DESC desc = {};
 
@@ -288,9 +285,11 @@ void Raytracer::Render(
             desc.MissShaderTable.SizeInBytes = _miss_shader_table_resource->GetResourceBytesSize();
             desc.MissShaderTable.StrideInBytes = _miss_table.MaxRecordSize;
 
-            desc.HitGroupTable.StartAddress = _hit_group_shader_table_resource->GetResource(currentFrameIndex)->GetGPUVirtualAddress();
-            desc.HitGroupTable.SizeInBytes = _hit_group_shader_table_resource->GetResourceBytesSize();
-            desc.HitGroupTable.StrideInBytes = _hitgroup_table.MaxRecordSize;
+            if (_hit_group_shader_table_resource) {
+                desc.HitGroupTable.StartAddress = _hit_group_shader_table_resource->GetResource(currentFrameIndex)->GetGPUVirtualAddress();
+                desc.HitGroupTable.SizeInBytes = _hit_group_shader_table_resource->GetResourceBytesSize();
+                desc.HitGroupTable.StrideInBytes = _hitgroup_table.MaxRecordSize;
+            }
 
             desc.Width = render_screen->Width;
             desc.Height = render_screen->Height;
@@ -300,19 +299,20 @@ void Raytracer::Render(
 
             _ray_gen_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COMMON, currentFrameIndex, command_list);
             _miss_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COMMON, currentFrameIndex, command_list);
-            _hit_group_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COMMON, currentFrameIndex, command_list);
+            if (_hit_group_shader_table_resource != nullptr)
+                _hit_group_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COMMON, currentFrameIndex, command_list);
+
+
+            auto barrier_out = CD3DX12_RESOURCE_BARRIER::Transition(
+                    render_target,
+                    D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+                    D3D12_RESOURCE_STATE_COMMON
+            );
+            command_list->ResourceBarrier(1, &barrier_out);
 
             _integration_cnt++;
             _total_frame_cnt++;
         }
-
-
-        barrier_enter = CD3DX12_RESOURCE_BARRIER::Transition(
-                render_target,
-                D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-                D3D12_RESOURCE_STATE_COMMON
-        );
-        command_list->ResourceBarrier(1, &barrier_enter);
     }
 }
 

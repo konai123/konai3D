@@ -15,6 +15,7 @@ public:
     ShaderType::MaterialType MaterialType;
     float Fuzz;
     float RefractIndex;
+    float3 EmittedColor;
 };
 
 class MaterialMap {

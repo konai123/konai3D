@@ -10,7 +10,8 @@ namespace ShaderType {
 enum MaterialType {
     Lambertian = 0,
     Metal,
-    Dielectric
+    Dielectric,
+    Emitter
 };
 
 struct Material {
@@ -19,6 +20,7 @@ public:
     MaterialType MaterialType;
     float Fuzz;
     float RefractIndex;
+    float3 EmittedColor;
 };
 
 struct RayPayload
@@ -30,6 +32,7 @@ struct RayPayload
     float3 Origin;
     float T;
     float Pdf;
+    UINT CurrDepth;
 };
 
 struct ShadowRayPayload
@@ -53,15 +56,14 @@ struct Camera
 };
 
 enum LightType {
-    LightType_Point = 0
+    LightType_Sphere = 0
 };
 
 struct Light
 {
     LightType LightType;
     float3 Position;
-    float Pad;
-    float3 Intensity;
+    float Radius;
 };
 
 }

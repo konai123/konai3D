@@ -122,9 +122,28 @@ void ViewportWindow::OnUpdate(float delta) {
 
             if (ImGui::MenuItem("VSync", NULL, _vsync, true)) {
                 _vsync = !_vsync;
-                auto curr = _renderer->GetRenderingOptions();
-                curr.v_sync = _vsync;
-                _renderer->SetRenderingOptions(curr);
+                SetVSync(_vsync);
+            }
+
+            if (ImGui::BeginMenu("Environment Map")) {
+                auto texture_names = _renderer->RenderResourceMap->TextureMap->GetTextureList();
+                auto texture_size = ImVec2(400.0f, 200.0f);
+
+                for (auto &tex_name : texture_names) {
+                    auto texture = _renderer->RenderResourceMap->TextureMap->GetResource(tex_name);
+                    if (!texture.has_value()) continue;
+                    auto texture_id = reinterpret_cast<void *>(texture->Handle.GpuHandle.ptr);
+                    ImGui::Text(tex_name.data());
+                    if (ImGui::ImageButton(texture_id, texture_size)) {
+                        if (!_screen->EnvTextureKey.has_value() || _screen->EnvTextureKey.value() != tex_name) {
+                            _screen->EnvTextureKey = tex_name;
+                            Update();
+                        }
+                        ImGui::CloseCurrentPopup();
+                    }
+                    ImGui::Separator();
+                }
+                ImGui::EndMenu();
             }
             ImGui::EndMenu();
         }
@@ -184,8 +203,9 @@ void ViewportWindow::OnUpdate(float delta) {
     ImGuizmo::SetRect(cursor_pos.x, cursor_pos.y, size.x, size.y);
 
     ImGui::Image(reinterpret_cast<void *>(_screen->GetShaderResourceHeapDesc()->GpuHandle.ptr), size);
-    if (SelectedObject != nullptr)
+    if (SelectedObject != nullptr) {
         EditTransform(SelectedObject);
+    }
 
     if (_draw_grid) {
         ImGuizmo::DrawGrid(
@@ -318,6 +338,17 @@ void ViewportWindow::ResetCameraAngle() {
 
 void ViewportWindow::Update() {
     _screen->Updated = true;
+}
+
+
+bool ViewportWindow::VsyncEnabled() {
+    return _vsync;
+}
+
+void ViewportWindow::SetVSync(bool set) {
+    auto curr = _renderer->GetRenderingOptions();
+    curr.v_sync = set;
+    _renderer->SetRenderingOptions(curr);
 }
 
 _END_KONAI3D

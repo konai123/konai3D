@@ -22,6 +22,7 @@ _file_dialog(ImGuiFileBrowserFlags_MultipleSelection)
 bool MaterialWindow::AddMaterial(std::string name) {
     _ENGINE::MaterialDesc newMat = _render_resource_map->MaterialMap->GetMaterialDesc(
             K3DApp::DefaultMaterialName).value();
+    newMat.EmittedColor = float3(0.0f, 0.0f, 0.0f);
     if (!_render_resource_map->MaterialMap->AddMaterial(name, newMat)) {
         return false;
     }
@@ -73,7 +74,7 @@ void MaterialWindow::OnUpdate(float delta) {
             }
 
             if (ImGui::Combo("Material Type", reinterpret_cast<int *>(&material_desc.MaterialType),
-                             "Lambertian\0Metal\0Dielectric\0\0")) {
+                             "Lambertian\0Metal\0Dielectric\0Emitter\0\0")) {
                 _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
                 _viewport_window->Update();
             }
@@ -90,6 +91,17 @@ void MaterialWindow::OnUpdate(float delta) {
                     _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
                     _viewport_window->Update();
                 }
+            }
+
+            if (material_desc.MaterialType == _ENGINE::ShaderType::Emitter) {
+                ImVec4 color = ImVec4(material_desc.EmittedColor.x, material_desc.EmittedColor.y, material_desc.EmittedColor.z, 1.0f);
+                if (ImGui::ColorPicker4("Emitted Color", (float *) &color,
+                                        ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_PickerHueWheel |
+                                        ImGuiColorEditFlags_NoAlpha, NULL)) {
+                    _viewport_window->Update();
+                }
+                material_desc.EmittedColor = {color.x, color.y, color.z};
+                _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
             }
         }
 

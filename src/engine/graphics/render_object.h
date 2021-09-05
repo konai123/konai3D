@@ -51,7 +51,7 @@ struct Light : public Positionable
 {
     ShaderType::LightType LightType;
     float3 Position;
-    float3 Intensity;
+    float Radius;
 
 public:
     virtual DirectX::XMMATRIX GetWorldMatrix() {

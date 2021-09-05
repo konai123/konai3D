@@ -46,6 +46,7 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
             auto diffuseTexturePath = matDesc->BaseColorTexturePath;
             auto refractIndex = matDesc->RefractIndex;
             auto fuzz = matDesc->Fuzz;
+            auto emitted = matDesc->EmittedColor;
 
             float4x4 worldMatrix;
             DirectX::XMStoreFloat4x4(&worldMatrix, renObj->GetWorldMatrix());
@@ -63,6 +64,7 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
                                                     {"DiffuseTexturePath", diffuseTexturePath},
                                                     {"RefractIndex",       refractIndex},
                                                     {"FuzzValue",          fuzz},
+                                                    {"EmittedColor", {emitted.x, emitted.y, emitted.z}},
                                                     {"WorldMatrix",        nlohmann::json(worldMatrixElem)},
                                                     {"MaterialName",       matName}
                                             });
@@ -74,7 +76,6 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
             auto light = screen_ptr->GetLight(s);
 
             int light_type = static_cast<int>(light->LightType);
-            float3 light_intencity = light->Intensity;
             float4x4 worldMatrix;
             DirectX::XMStoreFloat4x4(&worldMatrix, light->GetWorldMatrix());
             std::vector<float> worldMatrixElem;
@@ -85,8 +86,7 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
             json["Lights"].push_back({
                                              {"Name",        s},
                                              {"WorldMatrix", nlohmann::json(worldMatrixElem)},
-                                             {"LightType", light_type},
-                                             {"LightIntensity", {light_intencity.x, light_intencity.y, light_intencity.z}}
+                                             {"LightType", light_type}
                                      });
         }
     }
@@ -106,10 +106,20 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
 
     auto height = viewportWindow->GetHeight();
     auto width = viewportWindow->GetWidth();
+    auto env_map_path_opt = viewportWindow->GetRenderScreen()->EnvTextureKey;
+    std::string env_map;
+    if (env_map_path_opt.has_value()) {
+        env_map = env_map_path_opt.value();
+    }else {
+        env_map = "";
+    }
+
     {
         json["Options"] = {
                 {"Height", height},
-                {"Width",  width}
+                {"Width",  width},
+                {"EnvMap", env_map},
+                {"VSync", viewportWindow->VsyncEnabled()}
         };
     }
 
@@ -167,7 +177,15 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
 
     auto option_height = json["Options"]["Height"].get<UINT>();
     auto option_width= json["Options"]["Width"].get<UINT>();
+    auto env_map = json["Options"]["EnvMap"].get<std::string>();
+    auto vsync = json["Options"]["VSync"].get<bool>();
 
+    if (env_map.empty()) {
+        viewportWindow->GetRenderScreen()->EnvTextureKey = std::nullopt;
+    }else {
+        viewportWindow->GetRenderScreen()->EnvTextureKey = env_map;
+    }
+    viewportWindow->SetVSync(vsync);
     viewportWindow->ResetCameraAngle();
     viewportWindow->SetResolution(option_width, option_height);
 
@@ -217,20 +235,19 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
         auto refract_idx = renobj_json["RefractIndex"].get<int>();
         auto mat_name = renobj_json["MaterialName"].get<std::string>();
         auto world_mat = renobj_json["WorldMatrix"].get<std::vector<float>>();
+        auto emitted = renobj_json["EmittedColor"].get<std::vector<float>>();
 
         _ENGINE::MaterialDesc mat_desc;
         mat_desc.Fuzz = fuzz;
         mat_desc.RefractIndex = refract_idx;
         mat_desc.BaseColorTexturePath = diffuse_texture_path;
         mat_desc.MaterialType = static_cast<_ENGINE::ShaderType::MaterialType>(material_type);
+        mat_desc.EmittedColor = DirectX::XMFLOAT3(emitted.data());
 
         if (!matMap->Contains(mat_name))
         {
             matMap->AddMaterial(mat_name, mat_desc);
         }
-
-        textures.insert(std::filesystem::path(diffuse_texture_path));
-        meshes.insert(std::filesystem::path(mesh_path));
 
         screen_ptr->AddRenderObject(name, mat_name, mesh_path, submesh);
 
@@ -249,14 +266,12 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
         auto name = light_json["Name"].get<std::string>();
         auto type = light_json["LightType"].get<int>();
         auto world_mat = light_json["WorldMatrix"].get<std::vector<float>>();
-        auto intensity = light_json["LightIntensity"].get<std::vector<float>>();
 
         DirectX::XMFLOAT4X4 fmat(world_mat.data());
         screen_ptr->AddLight(name, static_cast<_ENGINE::ShaderType::LightType>(type));
         auto light = screen_ptr->GetLight(name);
         if (light != nullptr) {
             light->SetTransform(DirectX::XMLoadFloat4x4(&fmat));
-            light->Intensity = DirectX::XMFLOAT3(intensity.data());
         }
     }
 
