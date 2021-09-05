@@ -7,11 +7,15 @@
 
 #include "src/editor/imgui_window.h"
 #include "src/engine/graphics/renderer.h"
+#include "src/editor/viewport_window.h"
 
 _START_KONAI3D
 class MaterialWindow : public IMGUIWindow {
 public:
-    MaterialWindow(std::shared_ptr<_ENGINE::Renderer::ResourceMap> resourceMap);
+    MaterialWindow(
+            std::shared_ptr<ViewportWindow> viewportWindow,
+            std::shared_ptr<_ENGINE::Renderer::ResourceMap> resourceMap
+            );
 
 public:
     bool AddMaterial(std::string materialName);
@@ -23,6 +27,7 @@ public:
 private:
     ImGui::FileBrowser _file_dialog;
     std::shared_ptr<_ENGINE::Renderer::ResourceMap> _render_resource_map;
+    std::shared_ptr<ViewportWindow> _viewport_window;
 };
 
 _END_KONAI3D

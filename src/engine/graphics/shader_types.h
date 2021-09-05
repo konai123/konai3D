@@ -3,7 +3,6 @@
 //
 
 #pragma once
-#include "src/engine/graphics/render_object.h"
 
 _START_ENGINE
 namespace ShaderType {
@@ -31,7 +30,11 @@ struct RayPayload
     float3 Origin;
     float T;
     float Pdf;
-    float2 Pad1;
+};
+
+struct ShadowRayPayload
+{
+    bool Visibility;
 };
 
 struct Camera
@@ -53,21 +56,12 @@ enum LightType {
     LightType_Point = 0
 };
 
-struct Light : public Positionable
+struct Light
 {
     LightType LightType;
     float3 Position;
-
-public:
-    virtual DirectX::XMMATRIX GetWorldMatrix() {
-        return DirectX::XMMatrixTranslation(Position.x, Position.y, Position.z);
-    }
-
-    virtual void SetTransform (DirectX::FXMMATRIX worldMat) {
-        DirectX::XMVECTOR position, scale, rotation;
-        DirectX::XMMatrixDecompose(&scale, &rotation, &position, worldMat);
-        DirectX::XMStoreFloat3(&Position, position);
-    }
+    float Pad;
+    float3 Intensity;
 };
 
 }

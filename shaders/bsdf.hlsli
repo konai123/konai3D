@@ -6,12 +6,18 @@
 
 struct BSDF
 {
-    void Init(int matType, float3 baseColor, float fuzzValue, float ir)
+    void Init(int matType, float3 baseColor, float fuzzValue, float ir, out bool isSpecular)
     {
         albedo = baseColor;
         fuzz = fuzzValue;
         materialType = matType;
         refractIndex = ir;
+
+        if (materialType == MaterialType_Lambertian) {
+            isSpecular = false;
+        }else{
+            isSpecular = true;
+        }
     }
 
     bool Scatter(float3 inDirection, float3 normal, out float3 scatterDirection, out float3 attenuation, out float pdf, inout uint seed)

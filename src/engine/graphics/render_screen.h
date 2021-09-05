@@ -16,7 +16,6 @@
 
 _START_ENGINE
 
-typedef ShaderType::Light Light;
 class RenderScreen{
 public:
     struct CameraInfo {

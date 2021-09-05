@@ -21,7 +21,7 @@ bool FrameBufferPool::Initiate(
         const D3D12_COMMAND_LIST_TYPE type
 ) {
     EngineAssert(device != nullptr);
-    _commandQueue = std::move(commandQueue);
+    _commandQueue = commandQueue;
     _fence = device->CreateFence(_fence_value);
     _type = type;
 

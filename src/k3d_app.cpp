@@ -49,7 +49,7 @@ bool K3DApp::Prepare(HWND hwnd, int width, int height, float dpiFactor) {
 
     _viewport_window = std::make_shared<ViewportWindow>(_renderer.get());
     _component_window = std::make_shared<ComponentWindow>(_viewport_window, _renderer->RenderResourceMap);
-    _material_window = std::make_shared<MaterialWindow>(_renderer->RenderResourceMap);;
+    _material_window = std::make_shared<MaterialWindow>(_viewport_window, _renderer->RenderResourceMap);;
 
     _main_window = std::make_shared<MainWindow>(_viewport_window, _component_window, _log_window, _material_window, _renderer->RenderResourceMap);
 

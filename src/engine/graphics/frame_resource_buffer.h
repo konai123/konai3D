@@ -24,7 +24,7 @@ public:
 
 protected:
     std::shared_ptr<DeviceCom> _device;
-    Microsoft::WRL::ComPtr<ID3D12Resource> _upload_buffer;
+    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> _upload_buffer;
     std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> _resource;
     std::vector<D3D12_RESOURCE_STATES> _state;
     UINT _num_pre_frames;

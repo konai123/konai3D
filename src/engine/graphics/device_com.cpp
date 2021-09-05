@@ -348,7 +348,10 @@ bool DeviceCom::Present(bool VSync) {
     if (VSync) interval = 1u;
     UINT flags = (_dx_com->GetFeatures().present_allow_tearing && !VSync) ? DXGI_PRESENT_ALLOW_TEARING : 0u;
 
-    ReturnFalseHRFailed(_swapchain->Present(interval, flags));
+    HRESULT hr = _swapchain->Present(interval, flags);
+    if (FAILED(hr)) {
+        return false;
+    }
     return true;
 }
 

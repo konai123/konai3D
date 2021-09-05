@@ -15,6 +15,7 @@ Vertex GetVertexAttributes(Vertex v0, Vertex v1, Vertex v2, float3 barycentrics)
     float3 normal = v0.Normal * barycentrics.x + v1.Normal * barycentrics.y + v2.Normal * barycentrics.z;
     float3 tangentU = v0.TangentU * barycentrics.x + v1.TangentU * barycentrics.y + v2.TangentU * barycentrics.z;
     float2 texuv = v0.TexCoord * barycentrics.x + v1.TexCoord * barycentrics.y + v2.TexCoord * barycentrics.z;;
+
     Vertex v;
 
     v.Position = position;

@@ -74,6 +74,7 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
             auto light = screen_ptr->GetLight(s);
 
             int light_type = static_cast<int>(light->LightType);
+            float3 light_intencity = light->Intensity;
             float4x4 worldMatrix;
             DirectX::XMStoreFloat4x4(&worldMatrix, light->GetWorldMatrix());
             std::vector<float> worldMatrixElem;
@@ -84,7 +85,8 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
             json["Lights"].push_back({
                                              {"Name",        s},
                                              {"WorldMatrix", nlohmann::json(worldMatrixElem)},
-                                             {"LightType", light_type}
+                                             {"LightType", light_type},
+                                             {"LightIntensity", {light_intencity.x, light_intencity.y, light_intencity.z}}
                                      });
         }
     }
@@ -248,11 +250,14 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
         auto name = light_json["Name"].get<std::string>();
         auto type = light_json["LightType"].get<int>();
         auto world_mat = light_json["WorldMatrix"].get<std::vector<float>>();
+        auto intensity = light_json["LightIntensity"].get<std::vector<float>>();
+
         DirectX::XMFLOAT4X4 fmat(world_mat.data());
         screen_ptr->AddLight(name, static_cast<_ENGINE::ShaderType::LightType>(type));
         auto light = screen_ptr->GetLight(name);
         if (light != nullptr) {
             light->SetTransform(DirectX::XMLoadFloat4x4(&fmat));
+            light->Intensity = DirectX::XMFLOAT3(intensity.data());
         }
     }
 

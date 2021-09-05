@@ -79,6 +79,7 @@ bool RenderScreen::AddLight(std::string name, ShaderType::LightType lightType) {
     Light light;
     light.LightType = lightType;
     light.Position = {0.0f, 0.0f, 0.0f};
+    light.Intensity = {1.0f, 1.0f, 1.0f};
     _lights[name] = light;
     Updated = true;
     return true;

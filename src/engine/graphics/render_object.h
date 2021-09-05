@@ -8,6 +8,7 @@
 
 #include "src/engine/core/macros.h"
 #include "src/engine/core/pool.hpp"
+#include "src/engine/graphics/shader_types.h"
 
 _START_ENGINE
 class Positionable {
@@ -44,5 +45,23 @@ public:
 private:
     inline static Pool<RenderObject> _pool = Pool<RenderObject>(0, true);
 
+};
+
+struct Light : public Positionable
+{
+    ShaderType::LightType LightType;
+    float3 Position;
+    float3 Intensity;
+
+public:
+    virtual DirectX::XMMATRIX GetWorldMatrix() {
+        return DirectX::XMMatrixTranslation(Position.x, Position.y, Position.z);
+    }
+
+    virtual void SetTransform (DirectX::FXMMATRIX worldMat) {
+        DirectX::XMVECTOR position, scale, rotation;
+        DirectX::XMMatrixDecompose(&scale, &rotation, &position, worldMat);
+        DirectX::XMStoreFloat3(&Position, position);
+    }
 };
 _END_ENGINE

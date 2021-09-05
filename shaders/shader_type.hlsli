@@ -21,18 +21,35 @@ struct RayPayload
     float3 Origin;
     float T;
     float Pdf;
-    float2 Pad1;
 
     float3 At() {
         return Origin + T*Direction;
     }
 
     RayDesc Ray(float tMin, float tMax) {
+        const float OriginEpsilon = 0.0001f;
         RayDesc ray;
-        ray.Origin = Origin;
+        ray.Origin = Origin + Direction * OriginEpsilon;
         ray.Direction = Direction;
         ray.TMin = tMin;
         ray.TMax = tMax;
+        return ray;
+    }
+};
+
+struct ShadowRayPayload
+{
+    bool Visibility;
+
+    RayDesc Ray(float3 origin, float3 target) {
+        const float Epsilon = 0.0001f;
+        float3 direction = target - origin;
+
+        RayDesc ray;
+        ray.Origin = origin;
+        ray.Direction = normalize(direction);
+        ray.TMin = 0.001f;
+        ray.TMax = length(direction) - Epsilon;
         return ray;
     }
 };
@@ -65,17 +82,20 @@ struct Camera
         raypay.Origin = Position;
         raypay.T = 0.f;
         raypay.Seed = seed;
-
         return raypay;
     }
 };
 
 
-#define LightType_Point = 0
+#define LightType_Point 0
+#define LightType_Quad  1
 struct Light
 {
     int LightType;
     float3 Position;
+    float Pad;
+    float3 Intensity;
+
 };
 
 #endif

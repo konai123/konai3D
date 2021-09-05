@@ -16,7 +16,6 @@ public:
 public:
     virtual void OnUpdate(float delta) override;
     virtual void OnDestroy() override;
-    virtual void UpdateScreen();
     virtual void ControlViewport();
     virtual UINT GetWidth() const;
     virtual UINT GetHeight() const;
@@ -25,9 +24,11 @@ public:
     virtual _ENGINE::RenderScreen* GetRenderScreen() const;
     virtual Camera* GetCamera() const;
     virtual void ResetCameraAngle();
+    virtual void Update();
 
 private:
     void EditTransform(_ENGINE::Positionable* targetObject);
+    void UpdateScreen();
 
 public:
     float ZoomSpeed;

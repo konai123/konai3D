@@ -16,19 +16,19 @@ ComponentWindow::ComponentWindow(
         std::shared_ptr<ViewportWindow> viewportWindow,
         std::shared_ptr<_ENGINE::Renderer::ResourceMap> resourceMap
 )
-:
-IMGUIWindow("Components"),
-_viewport_window(std::move(viewportWindow)),
-_window_flags(ImGuiWindowFlags_MenuBar),
-_render_resource_map(std::move(resourceMap)),
-_mesh_file_dialog(ImGuiFileBrowserFlags_MultipleSelection)
-{
+        :
+        IMGUIWindow("Components"),
+        _viewport_window(std::move(viewportWindow)),
+        _window_flags(ImGuiWindowFlags_MenuBar),
+        _render_resource_map(std::move(resourceMap)),
+        _mesh_file_dialog(ImGuiFileBrowserFlags_MultipleSelection) {
     _mesh_file_dialog.SetTitle("Load meshes");
     _mesh_file_dialog.SetTypeFilters({".fbx", ".obj", ".ply"});
 }
 
 bool ComponentWindow::AddComponent(std::string name) {
-    if (!_viewport_window->GetRenderScreen()->AddRenderObject(name, K3DApp::DefaultMaterialName, K3DApp::DefaultMeshName, 0)) {
+    if (!_viewport_window->GetRenderScreen()->AddRenderObject(name, K3DApp::DefaultMaterialName,
+                                                              K3DApp::DefaultMeshName, 0)) {
         return false;
     }
     return true;
@@ -106,8 +106,8 @@ void ComponentWindow::OnUpdate(float delta) {
     }
 
     auto names = _viewport_window->GetRenderScreen()->GetRenderObjectList();
-    std::vector<const char*> c_names;
-    for (auto& name : names) {
+    std::vector<const char *> c_names;
+    for (auto &name : names) {
         c_names.push_back(name.data());
     }
 
@@ -119,9 +119,9 @@ void ComponentWindow::OnUpdate(float delta) {
     }
     ImGui::Separator();
 
-    if (curr != -1 ) {
+    if (curr != -1) {
         auto name = names[curr];
-        auto cmp =  _viewport_window->GetRenderScreen()->GetRenderObject(name);
+        auto cmp = _viewport_window->GetRenderScreen()->GetRenderObject(name);
 
         _viewport_window->SelectedObject = cmp;
 
@@ -129,19 +129,19 @@ void ComponentWindow::OnUpdate(float delta) {
         DirectX::XMStoreFloat4x4(&world, cmp->WorldMatrix);
         float matrixTranslation[3], matrixRotation[3], matrixScale[3];
         ImGuizmo::DecomposeMatrixToComponents(
-                reinterpret_cast<float*>(&world),
+                reinterpret_cast<float *>(&world),
                 matrixTranslation,
                 matrixRotation,
                 matrixScale
-                );
-        if (ImGui::InputFloat3("Tr", matrixTranslation)) _viewport_window->GetRenderScreen()->Updated = true;
-        if (ImGui::InputFloat3("Rt", matrixRotation)) _viewport_window->GetRenderScreen()->Updated = true;
-        if (ImGui::InputFloat3("Sc", matrixScale)) _viewport_window->GetRenderScreen()->Updated = true;
+        );
+        if (ImGui::InputFloat3("Tr", matrixTranslation)) _viewport_window->Update();
+        if (ImGui::InputFloat3("Rt", matrixRotation)) _viewport_window->Update();
+        if (ImGui::InputFloat3("Sc", matrixScale)) _viewport_window->Update();
         ImGuizmo::RecomposeMatrixFromComponents(
                 matrixTranslation,
                 matrixRotation,
                 matrixScale,
-                reinterpret_cast<float*>(&world)
+                reinterpret_cast<float *>(&world)
         );
 
         cmp->SetTransform(DirectX::XMLoadFloat4x4(&world));
@@ -168,6 +168,7 @@ void ComponentWindow::OnUpdate(float delta) {
                 ImGui::PushID(name.data());
                 if (ImGui::Button(name.data())) {
                     cmp->UpdateMesh(name, 0);
+                    _viewport_window->Update();
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::PopID();
@@ -181,6 +182,7 @@ void ComponentWindow::OnUpdate(float delta) {
                 ImGui::PushID(name.data());
                 if (ImGui::Button(name.data())) {
                     cmp->UpdateMaterial(name);
+                    _viewport_window->Update();
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::PopID();
@@ -200,8 +202,8 @@ void ComponentWindow::OnUpdate(float delta) {
 
 
     auto light_names = _viewport_window->GetRenderScreen()->GetLightList();
-    std::vector<const char*> c_light_names;
-    for (auto& name : light_names) {
+    std::vector<const char *> c_light_names;
+    for (auto &name : light_names) {
         c_light_names.push_back(name.data());
     }
 
@@ -211,9 +213,9 @@ void ComponentWindow::OnUpdate(float delta) {
     }
     ImGui::Separator();
 
-    if (curr_light != -1 ) {
+    if (curr_light != -1) {
         auto name = light_names[curr_light];
-        auto light =  _viewport_window->GetRenderScreen()->GetLight(name);
+        auto light = _viewport_window->GetRenderScreen()->GetLight(name);
 
         _viewport_window->SelectedObject = light;
 
@@ -221,22 +223,29 @@ void ComponentWindow::OnUpdate(float delta) {
         DirectX::XMStoreFloat4x4(&world, light->GetWorldMatrix());
         float matrixTranslation[3], matrixRotation[3], matrixScale[3];
         ImGuizmo::DecomposeMatrixToComponents(
-                reinterpret_cast<float*>(&world),
+                reinterpret_cast<float *>(&world),
                 matrixTranslation,
                 matrixRotation,
                 matrixScale
         );
-        if (ImGui::InputFloat3("Tr", matrixTranslation))  _viewport_window->GetRenderScreen()->Updated = true;
-        if (ImGui::InputFloat3("Rt", matrixRotation))  _viewport_window->GetRenderScreen()->Updated = true;
-        if (ImGui::InputFloat3("Sc", matrixScale))  _viewport_window->GetRenderScreen()->Updated = true;
+        if (ImGui::InputFloat3("Tr", matrixTranslation)) _viewport_window->Update();
+        if (ImGui::InputFloat3("Rt", matrixRotation)) _viewport_window->Update();
+        if (ImGui::InputFloat3("Sc", matrixScale)) _viewport_window->Update();
         ImGuizmo::RecomposeMatrixFromComponents(
                 matrixTranslation,
                 matrixRotation,
                 matrixScale,
-                reinterpret_cast<float*>(&world)
+                reinterpret_cast<float *>(&world)
         );
 
         light->SetTransform(DirectX::XMLoadFloat4x4(&world));
+        ImVec4 color = ImVec4(light->Intensity.x, light->Intensity.y, light->Intensity.z, 1.0f);
+        if (ImGui::ColorPicker4("LightIntencity", (float *) &color,
+                            ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_PickerHueWheel |
+                            ImGuiColorEditFlags_NoAlpha, NULL)) {
+            _viewport_window->Update();
+        }
+        light->Intensity = {color.x, color.y, color.z};
 
         if (ImGui::Button("Delete")) {
             DeleteLight(name);
@@ -251,7 +260,7 @@ void ComponentWindow::OnUpdate(float delta) {
     if (_mesh_file_dialog.HasSelected()) {
         auto selected = _mesh_file_dialog.GetMultiSelected();
         std::vector<std::string> v;
-        for (UINT i  = 0; i < selected.size(); i++) {
+        for (UINT i = 0; i < selected.size(); i++) {
             APP_LOG_INFO("Load Model: {}", selected[i].string());
         }
         _render_resource_map->MeshMap->AsyncLoad(selected);

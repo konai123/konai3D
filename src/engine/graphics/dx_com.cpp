@@ -18,15 +18,15 @@ _START_ENGINE
 DXCom::DXCom()
 :
 _dxgi_factory(nullptr),
-_dxgi_device(nullptr),
-_features(0) {}
+_dxgi_device(nullptr)
+{}
 
 bool DXCom::Initiate() {
 #if defined(DEBUG) || defined(_DEBUG)
     Microsoft::WRL::ComPtr<ID3D12Debug1> debug1;
     if (SUCCEEDED(::D3D12GetDebugInterface(IID_PPV_ARGS(debug1.ReleaseAndGetAddressOf())))) {
         debug1->EnableDebugLayer();
-        debug1->SetEnableGPUBasedValidation(false);
+        debug1->SetEnableGPUBasedValidation(true);
     }
 #endif
     ReturnFalseHRFailed(::CreateDXGIFactory1(IID_PPV_ARGS(&_dxgi_factory)));

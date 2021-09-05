@@ -68,13 +68,16 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> StaticSamplers() {
 Raytracer::Raytracer(std::shared_ptr<DeviceCom> deviceCom):
 _rtpso(nullptr),
 _device(deviceCom),
-_total_frame_cnt(1),
-_integration_cnt(1)
+_total_frame_cnt(0),
+_integration_cnt(0)
 {
 }
 
 bool Raytracer::Initiate() {
-    _tlas.Initialize(RenderScreen::MAX_RENDER_OBJECT, _device.get());
+    _tlas.resize(Renderer::NumPreFrames);
+    for (UINT i = 0; i < _tlas.size(); i++) {
+        _tlas[i].Initialize(RenderScreen::MAX_RENDER_OBJECT, _device.get());
+    }
 
     if(!BuildGlobalRootSignature()) {
         GRAPHICS_LOG_ERROR("Failed To Create Global Rootsignature");
@@ -132,7 +135,13 @@ void Raytracer::Render(
         auto lights = render_screen->GetLightList();
         for (int i = 0; i < lights.size(); i++) {
             auto light_ptr = render_screen->GetLight(lights[i]);
-            _rw_buffer_light->UpdateData(light_ptr, i, currentFrameIndex);
+            ShaderType::Light l = {
+                    .LightType = light_ptr->LightType,
+                    .Position = light_ptr->Position,
+                    .Pad = 0.0f,
+                    .Intensity = light_ptr->Intensity
+            };
+            _rw_buffer_light->UpdateData(&l, i, currentFrameIndex);
         }
 
         {
@@ -153,8 +162,8 @@ void Raytracer::Render(
             CBPerFrame per_frame{
                 .Camera = camera,
                 .RenderTargetIdx = static_cast<UINT>(render_screen->GetShaderResourceHeapDesc()->_heap_index),
-                .TotalFrameCount = _total_frame_cnt++,
-                .IntegrationCount = _integration_cnt++,
+                .TotalFrameCount = _total_frame_cnt,
+                .IntegrationCount = _integration_cnt,
                 .NumberOfLight = static_cast<UINT>(lights.size())
             };
             _cb_buffer_per_frames->UpdateData(&per_frame, currentFrameIndex);
@@ -187,13 +196,12 @@ void Raytracer::Render(
             }
         }
 
-        _tlas.Clear();
+        _tlas[currentFrameIndex].Clear();
         std::vector<RenderObject*> objs;
         auto names = render_screen->GetRenderObjectList();
         int obj_count = 0;
         for (auto& name : names) {
             auto obj = render_screen->GetRenderObject(name);
-
             if (obj_count >= RenderScreen::MAX_RENDER_OBJECT) {
                 GRAPHICS_LOG_WARNING("Maximum render object overed!");
                 break;
@@ -218,14 +226,26 @@ void Raytracer::Render(
             inst_desc.InstanceContributionToHitGroupIndex = obj_count * blas->GetSize();
             DirectX::XMStoreFloat3x4(reinterpret_cast<DirectX::XMFLOAT3X4*>(inst_desc.Transform), obj->WorldMatrix);
 
-            _tlas.AddInstance(inst_desc);
+            GRAPHICS_LOG_DEBUG("FRAME IDX: {}", currentFrameIndex);
+            _tlas[currentFrameIndex].AddInstance(inst_desc);
             objs.push_back(obj);
             obj_count++;
         }
 
-        if (_tlas.Size() > 0)
+        if (_tlas[currentFrameIndex].Size() > 0)
         {
-            _tlas.Generate(_device.get(), command_list);
+            if (!_tlas[currentFrameIndex].Generate(_device.get(), command_list)) {
+                return;
+            }
+
+            if (!BuildRSShaderTable(command_list)) {
+                return;
+            }
+
+            if (!UpdateHitgroupTable(meshMap, materialMap, objs, currentFrameIndex, command_list)) {
+                return;
+            }
+
             if (screen->Updated) {
                 Reset();
                 screen->Updated = false;
@@ -253,10 +273,7 @@ void Raytracer::Render(
                     GetResource(currentFrameIndex)->GetGPUVirtualAddress());
 
 
-            command_list->SetComputeRootShaderResourceView(1, _tlas.ResultDataBuffer->GetGPUVirtualAddress());
-
-            BuildRSShaderTable(command_list);
-            UpdateHitgroupTable(meshMap, materialMap, objs, currentFrameIndex, command_list);
+            command_list->SetComputeRootShaderResourceView(1, _tlas[currentFrameIndex].ResultDataBuffer->GetGPUVirtualAddress());
 
             _ray_gen_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
             _miss_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
@@ -284,6 +301,9 @@ void Raytracer::Render(
             _ray_gen_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COMMON, currentFrameIndex, command_list);
             _miss_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COMMON, currentFrameIndex, command_list);
             _hit_group_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COMMON, currentFrameIndex, command_list);
+
+            _integration_cnt++;
+            _total_frame_cnt++;
         }
 
 
@@ -447,7 +467,7 @@ bool Raytracer::UpdateHitgroupTable(MeshMap* meshMap, MaterialMap* matMap, std::
         _hit_group_shader_table_resource->Initialize(CD3DX12_RESOURCE_DESC::Buffer(_hitgroup_table.GetBytesSize()));
     }
 
-    if (!_hitgroup_table.Generate(_hit_group_shader_table_resource.get(),currentFrame, cmdList)) {
+    if (!_hitgroup_table.Generate(_hit_group_shader_table_resource.get(), currentFrame, cmdList)) {
         return false;
     }
     return true;
@@ -473,11 +493,14 @@ bool Raytracer::BuildRSShaderTable(ID3D12GraphicsCommandList* cmdList) {
     }
 
     if (_miss_shader_table_resource == nullptr) {
-        ShaderRecord miss;
+        ShaderRecord miss, shadow_miss;
 
         _miss_table.Clear();
         miss.AddShaderID(_rtpso_info->GetShaderIdentifier(L"Miss_5"));
         _miss_table.AddRecord(miss);
+
+        shadow_miss.AddShaderID(_rtpso_info->GetShaderIdentifier(L"Miss_Shadow"));
+        _miss_table.AddRecord(shadow_miss);
 
         _miss_shader_table_resource = std::make_unique<FrameResourceBuffer>(_device, Renderer::NumPreFrames);
         _miss_shader_table_resource->Initialize(CD3DX12_RESOURCE_DESC::Buffer(_miss_table.GetBytesSize()));
@@ -513,16 +536,25 @@ bool Raytracer::BuildRSPipelineState() {
 
     sub_objects[idx++] = desc;
 
+    std::vector<D3D12_EXPORT_DESC> misses;
     D3D12_EXPORT_DESC export_desc_miss = {};
     export_desc_miss.Name = L"Miss_5";
     export_desc_miss.ExportToRename = L"Miss";
     export_desc_miss.Flags = D3D12_EXPORT_FLAG_NONE;
 
+    D3D12_EXPORT_DESC export_desc_miss_shadow = {};
+    export_desc_miss_shadow.Name = L"Miss_Shadow";
+    export_desc_miss_shadow.ExportToRename = L"ShadowMiss";
+    export_desc_miss_shadow.Flags = D3D12_EXPORT_FLAG_NONE;
+
+    misses.push_back(export_desc_miss);
+    misses.push_back(export_desc_miss_shadow);
+
     D3D12_DXIL_LIBRARY_DESC lib_desc_miss;
     lib_desc_miss.DXILLibrary.BytecodeLength = Shader::RaytracePass.Miss->GetBufferSize();
     lib_desc_miss.DXILLibrary.pShaderBytecode = Shader::RaytracePass.Miss->GetBufferPointer();
-    lib_desc_miss.NumExports = 1;
-    lib_desc_miss.pExports = &export_desc_miss;
+    lib_desc_miss.NumExports = misses.size();
+    lib_desc_miss.pExports = misses.data();
 
     desc = {};
     desc.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
@@ -558,7 +590,7 @@ bool Raytracer::BuildRSPipelineState() {
     sub_objects[idx++] = hitGroup;
 
     D3D12_RAYTRACING_SHADER_CONFIG shaderDesc = {};
-    shaderDesc.MaxPayloadSizeInBytes = sizeof(ShaderType::RayPayload);	// RGB and HitT
+    shaderDesc.MaxPayloadSizeInBytes = sizeof(ShaderType::RayPayload);
     shaderDesc.MaxAttributeSizeInBytes = D3D12_RAYTRACING_MAX_ATTRIBUTE_SIZE_IN_BYTES;
 
     D3D12_STATE_SUBOBJECT shaderConfigObject = {};
@@ -567,7 +599,7 @@ bool Raytracer::BuildRSPipelineState() {
 
     sub_objects[idx++] = shaderConfigObject;
 
-    const WCHAR* shaderExports[] = { L"RayGen_12", L"Miss_5", L"HitGroup" };
+    const WCHAR* shaderExports[] = { L"RayGen_12", L"Miss_5", L"HitGroup" , L"Miss_Shadow"};
 
     // Add a state subobject for the association between shaders and the payload
     D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION shaderPayloadAssociation = {};
@@ -610,7 +642,7 @@ bool Raytracer::BuildRSPipelineState() {
     sub_objects[idx++] = globalRootSig;
 
     D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = {};
-    pipelineConfig.MaxTraceRecursionDepth = 1;
+    pipelineConfig.MaxTraceRecursionDepth = 2;
 
     D3D12_STATE_SUBOBJECT pipelineConfigObject = {};
     pipelineConfigObject.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;

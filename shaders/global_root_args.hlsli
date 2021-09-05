@@ -1,6 +1,8 @@
 #ifndef GLOBAL_ROOT_ARGS_HLSLI
 #define GLOBAL_ROOT_ARGS_HLSLI
 
+#include <shader_type.hlsli>
+
 //Descriptor tables
 Texture2D gTexture2DTable[] : register(t0, space100);
 Texture2DArray gTexture2DArrayTable[] : register(t0, space101);

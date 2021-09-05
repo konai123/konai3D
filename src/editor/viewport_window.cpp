@@ -264,19 +264,25 @@ void ViewportWindow::EditTransform(_ENGINE::Positionable* targetObject) {
     DirectX::XMStoreFloat4x4(&view_mat, _camera->GetViewMatrix());
     DirectX::XMStoreFloat4x4(&project_mat, _camera->GetProjectionMatrix());
     auto mat = targetObject->GetWorldMatrix();
-    ImGuizmo::Manipulate(
+    if (ImGuizmo::Manipulate(
             reinterpret_cast<float*>(&view_mat),
             reinterpret_cast<float*>(&project_mat),
             _guizmo_oper,
             _guizmo_mode,
             reinterpret_cast<float*>(&mat)
-    );
-    targetObject->SetTransform(mat);
+    )) {
+        targetObject->SetTransform(mat);
+        Update();
+    }
 }
 
 void ViewportWindow::ResetCameraAngle() {
     float _camera_x_angle = 0.0f;
     float _camera_y_angle = 0.0f;
+}
+
+void ViewportWindow::Update() {
+    _screen->Updated = true;
 }
 
 _END_KONAI3D

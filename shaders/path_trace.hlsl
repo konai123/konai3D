@@ -66,10 +66,51 @@ void RayGen()
     outColor = sqrt(outColor);
 
     if (gIntegrationCount > 1) {
-        outColor = lerp(outColor.xyz, float3(output[LaunchIndex.xy].xyz), 1.f/float(gIntegrationCount));
+        outColor = (gIntegrationCount * float3(output[LaunchIndex.xy].xyz) + outColor.xyz) / float(gIntegrationCount+1);
     }
 
     output[LaunchIndex.xy] = float4(outColor.xyz, 1.0f);
+}
+
+bool ShootShadowRay(float3 origin, float3 target)
+{
+    ShadowRayPayload raypay;
+    RayDesc r;
+    r =  raypay.Ray(origin, target);
+
+    raypay.Visibility = false;
+    const uint flag = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
+    TraceRay(
+            gRaytracingAccelerationStructure,
+            flag,
+            0xffffffff,
+            0,   /*Hit Group Index*/
+            1,   /*Ray Stride*/
+            1,   /*Miss Shader Index*/
+            r,
+            raypay);
+    return raypay.Visibility;
+}
+
+float3 SampleLight(float3 inDirection, float3 normal, float3 origin, inout uint seed)
+{
+    float lightPdf = 1.0f / float(gNumberOfLight);
+    int idx = min(RandomFloat01(seed) * gNumberOfLight, int(gNumberOfLight-1));
+    if (idx >= 0) {
+        Light light = gLights[idx];
+        float3 direction = light.Position - origin;
+        float ir = abs(dot(normalize(normal), normalize(direction)));
+
+        if (light.LightType == LightType_Point) {
+
+            bool visibility = ShootShadowRay(origin, light.Position);
+            float distance = length(direction);
+
+            float pdf = lightPdf; // point light pdf is one.
+            return (light.Intensity / (distance * distance)) * float(visibility) * ir / pdf;
+        }
+    }
+    return float3(0.0f, 0.0f, 0.0f);
 }
 
 [shader("closesthit")]
@@ -95,23 +136,30 @@ void ClosestHit(inout RayPayload payload, Attributes attrib)
     float3 worldNormal = normalize(mul(vertex.Normal, (float3x3)WorldToObject3x4()));
 
     //BSDF Init
+    bool isSpecular;
     BSDF bsdf;
-    bsdf.Init(mat.MaterialType, color, mat.Fuzz, mat.RefractIndex);
+    bsdf.Init(mat.MaterialType, color, mat.Fuzz, mat.RefractIndex, isSpecular);
 
     float3 outDirection;
     float3 outAttenuation;
-    float pdf;
-    if (!bsdf.Scatter(payload.Direction, worldNormal, outDirection, outAttenuation, pdf, payload.Seed)) {
+    float scatterPdf;
+    if (!bsdf.Scatter(payload.Direction, worldNormal, outDirection, outAttenuation, scatterPdf, payload.Seed)) {
         payload.HitColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
         payload.T = -1.0f;
         payload.Pdf = 1.0f;
         return;
     }
 
-    payload.Pdf = pdf;
+    if (!isSpecular) {
+        outAttenuation += SampleLight(payload.Direction, worldNormal, payload.At(), payload.Seed);
+    }
+
+
+    payload.Pdf = scatterPdf;
     payload.Origin = payload.At();
     payload.Direction = normalize(outDirection);
-	payload.HitColor = float4(outAttenuation.xyz, 1.0f);
+    payload.HitColor = float4(outAttenuation.xyz, 1.0f);
+
 }
 
 [shader("miss")]
@@ -121,5 +169,11 @@ void Miss(inout RayPayload payload)
     payload.HitColor = (1.0f-t)*float4(1.0f, 1.0f, 1.0f, 1.0f) + t*float4(0.5f, 0.7f, 1.0f, 1.0f);
     payload.Pdf = 1.0f;
     payload.T = -1.0f;
+}
+
+[shader("miss")]
+void ShadowMiss(inout ShadowRayPayload payload)
+{
+    payload.Visibility = true;
 }
 #endif

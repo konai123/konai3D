@@ -77,7 +77,7 @@ private:
     std::unique_ptr<ConstantBuffer> _cb_buffer_per_frames;
     std::unique_ptr<RWResourceBuffer> _rw_buffer_material;
     std::unique_ptr<RWResourceBuffer> _rw_buffer_light;
-    TLAS _tlas;
+    std::vector<TLAS> _tlas;
     UINT _total_frame_cnt;
     UINT _integration_cnt;
 };

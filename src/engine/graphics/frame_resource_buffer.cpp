@@ -22,19 +22,19 @@ bool FrameResourceBuffer::Initialize(CD3DX12_RESOURCE_DESC desc) {
         }
         _state.push_back(D3D12_RESOURCE_STATE_COMMON);
         _resource.push_back(resource);
-    }
 
-    auto upload_desc = CD3DX12_RESOURCE_DESC::Buffer(desc.Width);
-    auto properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-    _upload_buffer = _device->CreateResource(
-            &properties,
-            &upload_desc,
-            nullptr,
-            D3D12_HEAP_FLAG_NONE,
-            D3D12_RESOURCE_STATE_GENERIC_READ
-    );
-    if (_upload_buffer == nullptr)
-        return false;
+        auto upload_desc = CD3DX12_RESOURCE_DESC::Buffer(desc.Width);
+        properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+        _upload_buffer.push_back(_device->CreateResource(
+                &properties,
+                &upload_desc,
+                nullptr,
+                D3D12_HEAP_FLAG_NONE,
+                D3D12_RESOURCE_STATE_GENERIC_READ
+        ));
+        if (_upload_buffer[i] == nullptr)
+            return false;
+    }
 
     _bytes_size = desc.Width;
     return true;
@@ -49,7 +49,7 @@ bool FrameResourceBuffer::UpdateData(void *data, UINT currentFrameIdx, ID3D12Gra
     subresource.pData = data;
     subresource.RowPitch = GetResourceBytesSize();
     subresource.SlicePitch = subresource.RowPitch;
-    ::UpdateSubresources<1>(cmdList, _resource[currentFrameIdx].Get(), _upload_buffer.Get(), 0, 0, 1, &subresource);
+    ::UpdateSubresources<1>(cmdList, _resource[currentFrameIdx].Get(), _upload_buffer[currentFrameIdx].Get(), 0, 0, 1, &subresource);
 
     ResourceBarrier(current_state, currentFrameIdx, cmdList);
 
@@ -74,10 +74,10 @@ void FrameResourceBuffer::ResourceBarrier(D3D12_RESOURCE_STATES toState, UINT cu
 void FrameResourceBuffer::SafeRelease() {
     for (UINT i = 0; i < _num_pre_frames; i++) {
         ResourceGarbageQueue::Instance().SubmitResource(_resource[i]);
+        ResourceGarbageQueue::Instance().SubmitResource(_upload_buffer[i]);
         _resource[i] = nullptr;
+        _upload_buffer[i] = nullptr;
     }
-    ResourceGarbageQueue::Instance().SubmitResource(_upload_buffer);
-    _upload_buffer = nullptr;
 }
 
 ID3D12Resource *FrameResourceBuffer::GetResource(UINT currentFrameIdx) {
