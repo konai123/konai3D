@@ -229,8 +229,6 @@ void ComponentWindow::OnUpdate(float delta) {
                 matrixScale
         );
         if (ImGui::InputFloat3("Tr", matrixTranslation)) _viewport_window->Update();
-        if (ImGui::InputFloat3("Rt", matrixRotation)) _viewport_window->Update();
-        if (ImGui::InputFloat3("Sc", matrixScale)) _viewport_window->Update();
         ImGuizmo::RecomposeMatrixFromComponents(
                 matrixTranslation,
                 matrixRotation,

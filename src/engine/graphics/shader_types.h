@@ -21,6 +21,10 @@ public:
     float Fuzz;
     float RefractIndex;
     float3 EmittedColor;
+    float Pad0;
+    float3 Albedo;
+    float Pad1;
+    int UseBaseColorTexture;
 };
 
 struct RayPayload

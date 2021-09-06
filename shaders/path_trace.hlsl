@@ -123,9 +123,14 @@ void ClosestHit(inout RayPayload payload, Attributes attrib)
     Vertex vertex = GetVertexAttributes(vtx0, vtx1, vtx2, barycentrics);
 
     Material mat = gMaterials[gMaterialIdx];
-    int baseColorTextureIndex = mat.BaseColorTextureIndex;
-    Texture2D tex = gTexture2DTable[baseColorTextureIndex];
-    float3 color = tex.SampleLevel(gSamPointClamp, vertex.TexCoord, 0.0f).rgb;
+    float3 color;
+    if (mat.UseBaseColorTexture != 0) {
+        int baseColorTextureIndex = mat.BaseColorTextureIndex;
+        Texture2D tex = gTexture2DTable[baseColorTextureIndex];
+        color = tex.SampleLevel(gSamPointClamp, vertex.TexCoord, 0.0f).rgb;
+    }else {
+        color = mat.Albedo;
+    }
     float3 worldNormal = normalize(mul(vertex.Normal, (float3x3)WorldToObject3x4()));
 
     //BSDF Init

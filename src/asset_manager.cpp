@@ -47,6 +47,8 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
             auto refractIndex = matDesc->RefractIndex;
             auto fuzz = matDesc->Fuzz;
             auto emitted = matDesc->EmittedColor;
+            auto albedo = matDesc->Albedo;
+            auto useTexture = matDesc->UseBaseColorTexture;
 
             float4x4 worldMatrix;
             DirectX::XMStoreFloat4x4(&worldMatrix, renObj->GetWorldMatrix());
@@ -66,7 +68,9 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
                                                     {"FuzzValue",          fuzz},
                                                     {"EmittedColor", {emitted.x, emitted.y, emitted.z}},
                                                     {"WorldMatrix",        nlohmann::json(worldMatrixElem)},
-                                                    {"MaterialName",       matName}
+                                                    {"MaterialName",       matName},
+                                                    {"Albedo",       {albedo.x, albedo.y, albedo.z}},
+                                                    {"UseTexture",         useTexture}
                                             });
         }
     }
@@ -236,6 +240,8 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
         auto mat_name = renobj_json["MaterialName"].get<std::string>();
         auto world_mat = renobj_json["WorldMatrix"].get<std::vector<float>>();
         auto emitted = renobj_json["EmittedColor"].get<std::vector<float>>();
+        auto albedo = renobj_json["Albedo"].get<std::vector<float>>();
+        auto use_texture = renobj_json["UseTexture"].get<bool>();
 
         _ENGINE::MaterialDesc mat_desc;
         mat_desc.Fuzz = fuzz;
@@ -243,6 +249,8 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
         mat_desc.BaseColorTexturePath = diffuse_texture_path;
         mat_desc.MaterialType = static_cast<_ENGINE::ShaderType::MaterialType>(material_type);
         mat_desc.EmittedColor = DirectX::XMFLOAT3(emitted.data());
+        mat_desc.Albedo = DirectX::XMFLOAT3(albedo.data());
+        mat_desc.UseBaseColorTexture = use_texture;
 
         if (!matMap->Contains(mat_name))
         {

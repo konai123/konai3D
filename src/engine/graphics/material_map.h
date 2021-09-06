@@ -16,6 +16,8 @@ public:
     float Fuzz;
     float RefractIndex;
     float3 EmittedColor;
+    float3 Albedo;
+    bool UseBaseColorTexture;
 };
 
 class MaterialMap {

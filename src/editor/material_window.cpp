@@ -23,6 +23,7 @@ bool MaterialWindow::AddMaterial(std::string name) {
     _ENGINE::MaterialDesc newMat = _render_resource_map->MaterialMap->GetMaterialDesc(
             K3DApp::DefaultMaterialName).value();
     newMat.EmittedColor = float3(0.0f, 0.0f, 0.0f);
+    newMat.Albedo = float3(1.0f, 1.0f, 1.0f);
     if (!_render_resource_map->MaterialMap->AddMaterial(name, newMat)) {
         return false;
     }
@@ -67,10 +68,28 @@ void MaterialWindow::OnUpdate(float delta) {
         ImGui::PushID(mat_name.data());
 
         if (ImGui::CollapsingHeader(mat_name.data())) {
-            ImGui::Text("Base Color Texture");
-            if (ImGui::ImageButton(reinterpret_cast<void *>(basecolor_texture.value().Handle.GpuHandle.ptr),
-                                   image_size)) {
-                ImGui::OpenPopup("Select BaseColor Texture");
+            if (material_desc.MaterialType != _ENGINE::ShaderType::Dielectric &&
+                material_desc.MaterialType != _ENGINE::ShaderType::Emitter) {
+
+                if (ImGui::Checkbox("Use Color Texture", &material_desc.UseBaseColorTexture)) {
+                    _viewport_window->Update();
+                }
+                if (material_desc.UseBaseColorTexture) {
+                    ImGui::Text("Base Color Texture");
+                    if (ImGui::ImageButton(reinterpret_cast<void *>(basecolor_texture.value().Handle.GpuHandle.ptr),
+                                           image_size)) {
+                        ImGui::OpenPopup("Select BaseColor Texture");
+                    }
+                }else {
+                    ImVec4 color = ImVec4(material_desc.Albedo.x, material_desc.Albedo.y, material_desc.Albedo.z, 1.0f);
+                    if (ImGui::ColorPicker4("Emitted Color", (float *) &color,
+                                            ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR |
+                                            ImGuiColorEditFlags_NoAlpha, NULL)) {
+                        _viewport_window->Update();
+                    }
+                    material_desc.Albedo = {color.x, color.y, color.z};
+                }
+                _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
             }
 
             if (ImGui::Combo("Material Type", reinterpret_cast<int *>(&material_desc.MaterialType),

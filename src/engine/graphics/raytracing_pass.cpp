@@ -182,7 +182,11 @@ void Raytracer::Render(
                         .MaterialType = material_desc->MaterialType,
                         .Fuzz = material_desc->Fuzz,
                         .RefractIndex = material_desc->RefractIndex,
-                        .EmittedColor = material_desc->EmittedColor
+                        .EmittedColor = material_desc->EmittedColor,
+                        .Pad0 = 0.0f,
+                        .Albedo = material_desc->Albedo,
+                        .Pad1 = 0.0f,
+                        .UseBaseColorTexture = material_desc->UseBaseColorTexture ? 1 : 0
                 };
                 _rw_buffer_material->UpdateData(&material, material_id, currentFrameIndex);
             }
