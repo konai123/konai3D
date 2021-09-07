@@ -358,7 +358,8 @@ DWORD Renderer::UploadWorker(PVOID context) {
 
         for (int i = 0; i < mesh_resources.size(); i++) {
             auto resource = std::move(mesh_resources[i]);
-            pthis->RenderResourceMap->MeshMap->AddMesh(resource->MeshFile.string(), std::move(resource));
+            auto key = resource->MeshFile.string();
+            pthis->RenderResourceMap->MeshMap->AddMesh(key, std::move(resource));
         }
 
         for (int j = 0; j < texture_resources.size(); j++) {
