@@ -8,16 +8,17 @@
 _START_ENGINE
 Renderer::Renderer()
 :
-_command_queue(nullptr),
-_command_list(nullptr),
-_dsv_buffer_full_frame(nullptr),
-_gui_render_target_width(0),
-_gui_render_target_height(0),
-_gui_viewport({0}),
-_gui_scissor_rect({0}),
-_current_frame(0),
-RenderResourceMap(nullptr),
-_upload_worker_stop(false)
+        _3d_queue(nullptr),
+        _compute_queue(nullptr),
+        _command_list(nullptr),
+        _dsv_buffer_full_frame(nullptr),
+        _gui_render_target_width(0),
+        _gui_render_target_height(0),
+        _gui_viewport({0}),
+        _gui_scissor_rect({0}),
+        _current_frame(0),
+        RenderResourceMap(nullptr),
+        _upload_worker_stop(false)
 {
     _rendering_options = {.v_sync=true, .scale_factor = 1.0f};
 }
@@ -49,9 +50,15 @@ Renderer::Initiate(HWND hWnd, UINT width, UINT height, std::filesystem::path sha
         }
     }
 
-    _command_queue = _device->GetCommandQueue();
-    if (_command_queue == nullptr) {
-        GRAPHICS_LOG_ERROR("Failed to create a CommandQueue.");
+    _3d_queue = _device->GetCommandQueue();
+    if (_3d_queue == nullptr) {
+        GRAPHICS_LOG_ERROR("Failed to create a 3D Queue.");
+        return false;
+    }
+
+    _compute_queue = _device->CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE);
+    if (_compute_queue == nullptr) {
+        GRAPHICS_LOG_ERROR("Failed to create a Compute Queue");
         return false;
     }
 
@@ -61,7 +68,7 @@ Renderer::Initiate(HWND hWnd, UINT width, UINT height, std::filesystem::path sha
         return false;
     }
 
-    if (!_frame_buffer_pool.Initiate(_device.get(), _command_queue, NumPreFrames, D3D12_COMMAND_LIST_TYPE_DIRECT)) {
+    if (!_frame_buffer_pool.Initiate(_device.get(), _3d_queue, NumPreFrames, D3D12_COMMAND_LIST_TYPE_DIRECT)) {
         GRAPHICS_LOG_ERROR("Failed to initialize CommandExecutor.");
         return false;
     };
@@ -189,7 +196,7 @@ void Renderer::OnRender(
     _command_list->Close();
 
     ID3D12CommandList *cmd_list[] = {_command_list.Get()};
-    _command_queue->ExecuteCommandLists(_countof(cmd_list), cmd_list);
+    _3d_queue->ExecuteCommandLists(_countof(cmd_list), cmd_list);
     _device->Present(_rendering_options.v_sync);
     _frame_buffer_pool.DiscardFrameBuffer(frame_buffer);
     _current_frame = (_current_frame + 1) % (NumPreFrames);
@@ -337,8 +344,8 @@ DWORD Renderer::UploadWorker(PVOID context) {
         compute_allocator->Reset();
         compute_list->Reset(compute_allocator.Get(), nullptr);
 
-        pthis->RenderResourceMap->MeshMap->UpdateFromMeshLoader(&uploader, compute_list.Get());
-        pthis->RenderResourceMap->TextureMap->UpdateFromTextureLoader(&uploader);
+        auto mesh_resources = std::move(pthis->RenderResourceMap->MeshMap->FetchMeshLoader(&uploader, compute_list.Get()));
+        auto texture_resources = pthis->RenderResourceMap->TextureMap->FetchTextureLoader(&uploader);
 
         auto future = uploader.End(copy_queue.Get());
         future.wait();
@@ -348,6 +355,16 @@ DWORD Renderer::UploadWorker(PVOID context) {
         fence_value++;
         compute_queue->Signal(compute_fence.Get(), fence_value);
         compute_fence->SetEventOnCompletion(fence_value, nullptr);
+
+        for (int i = 0; i < mesh_resources.size(); i++) {
+            auto resource = std::move(mesh_resources[i]);
+            pthis->RenderResourceMap->MeshMap->AddMesh(resource->MeshFile.string(), std::move(resource));
+        }
+
+        for (int j = 0; j < texture_resources.size(); j++) {
+            auto resource = texture_resources[j];
+            pthis->RenderResourceMap->TextureMap->AddTexture(resource.Path.string(), resource);
+        }
     }
     GRAPHICS_LOG_INFO("End Uploader Thread");
     return 0;

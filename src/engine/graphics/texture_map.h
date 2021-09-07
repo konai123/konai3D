@@ -13,6 +13,7 @@
 _START_ENGINE
 
 struct TextureResource {
+    std::filesystem::path Path;
     HeapDescriptorHandle Handle;
     Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
 };
@@ -24,8 +25,8 @@ public:
 
 public:
     void AsyncLoad(std::vector<std::filesystem::path> paths);
-    void UpdateFromTextureLoader(DirectX::ResourceUploadBatch* uploader);
-    void AddTexture(std::vector<Texture> &&, DirectX::ResourceUploadBatch* uploader);
+    std::vector<TextureResource> FetchTextureLoader(DirectX::ResourceUploadBatch* uploader);
+    bool AddTexture(std::string key, TextureResource value);
     UINT UploadQueueSize();
     std::vector<std::string> GetTextureList();
 
@@ -35,13 +36,15 @@ public:
     std::optional<TextureResource> GetResource(std::string name);
 
 private:
+    std::optional<TextureResource> MakeTextureResource(Texture &&, DirectX::ResourceUploadBatch* uploader);
+
+private:
     std::string _default_texture;
     std::shared_ptr<DeviceCom> _device;
     std::shared_ptr<ResourceDescriptorHeap> _resource_heap;
     std::unordered_map<std::string, TextureResource> _map;
     TextureLoader _texture_loader;
     RWLock _rw_lock;
-
 };
 
 _END_ENGINE

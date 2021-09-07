@@ -39,8 +39,8 @@ public:
 
 public:
     void AsyncLoad(std::vector<std::filesystem::path> paths);
-    void UpdateFromMeshLoader(DirectX::ResourceUploadBatch* uploader, ID3D12GraphicsCommandList6* cmd_list);
-    bool AddMeshes(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploader, ID3D12GraphicsCommandList6* cmd_list);
+    std::vector<std::unique_ptr<MeshResources>> FetchMeshLoader(DirectX::ResourceUploadBatch* uploader, ID3D12GraphicsCommandList6* cmd_list);
+    bool AddMesh(std::string key, std::unique_ptr<MeshResources> value);
     UINT UploadQueueSize();
     std::vector<std::string> GetMeshList();
 
@@ -48,6 +48,9 @@ public:
     bool Contains(std::string name);
     void Clear();
     MeshResources* GetResources(std::string name);
+
+private:
+    std::unique_ptr<MeshResources> MakeMesheResource(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploader, ID3D12GraphicsCommandList6* cmd_list);
 
 private:
     std::shared_ptr<DeviceCom> _device;
