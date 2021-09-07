@@ -244,13 +244,6 @@ void Raytracer::Render(
                 screen->Updated = false;
             }
 
-            auto barrier_enter = CD3DX12_RESOURCE_BARRIER::Transition(
-                    render_target,
-                    D3D12_RESOURCE_STATE_COMMON,
-                    D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-            );
-
-            command_list->ResourceBarrier(1, &barrier_enter);
             command_list->SetComputeRootSignature(_global_root_signature.Get());
             command_list->SetPipelineState1(_rtpso.Get());
 
@@ -305,14 +298,6 @@ void Raytracer::Render(
             _miss_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COMMON, currentFrameIndex, command_list);
             if (_hit_group_shader_table_resource != nullptr)
                 _hit_group_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COMMON, currentFrameIndex, command_list);
-
-
-            auto barrier_out = CD3DX12_RESOURCE_BARRIER::Transition(
-                    render_target,
-                    D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-                    D3D12_RESOURCE_STATE_COMMON
-            );
-            command_list->ResourceBarrier(1, &barrier_out);
 
             _integration_cnt++;
             _total_frame_cnt++;
