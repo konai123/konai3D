@@ -80,7 +80,8 @@ private:
     std::atomic<bool> _upload_worker_stop;
 
 private:
-    Microsoft::WRL::ComPtr<ID3D12CommandQueue> _command_queue;
+    Microsoft::WRL::ComPtr<ID3D12CommandQueue> _3d_queue;
+    Microsoft::WRL::ComPtr<ID3D12CommandQueue> _compute_queue;
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList6> _command_list;
     Microsoft::WRL::ComPtr<ID3D12Resource> _dsv_buffer_full_frame;
 

@@ -17,22 +17,30 @@ void MeshMap::AsyncLoad(std::vector<std::filesystem::path> paths) {
     _mesh_loader.AsyncLoad(paths);
 }
 
-void MeshMap::UpdateFromMeshLoader(DirectX::ResourceUploadBatch* uploader, ID3D12GraphicsCommandList6* cmd_list) {
+std::vector<std::unique_ptr<MeshResources>> MeshMap::FetchMeshLoader(DirectX::ResourceUploadBatch* uploader, ID3D12GraphicsCommandList6* cmd_list) {
+    std::vector<std::unique_ptr<MeshResources>> vec;
     auto v = _mesh_loader.Get();
     for (auto& meshFile : v) {
-        AddMeshes(std::move(meshFile), uploader, cmd_list);
+        auto ptr = MakeMesheResource(std::move(meshFile), uploader, cmd_list);
+        if (ptr != nullptr) {
+            vec.push_back(std::move(ptr));
+        }
     }
+    return std::move(vec);
 }
-
-bool MeshMap::AddMeshes(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploader, ID3D12GraphicsCommandList6* cmd_list) {
+bool MeshMap::AddMesh(std::string key, std::unique_ptr<MeshResources> value) {
     LocalWriteLock lock(_rw_lock);
 
-    auto name = meshes.FilePath.string();
-    if (_map.contains(name)) {
-        GRAPHICS_LOG_WARNING("'{}' Already has been registered.", name);
+    if (_map.contains(key)) {
+        GRAPHICS_LOG_WARNING("'{}' Already has been registered.", key);
         return false;
     }
 
+    _map[key] = std::move(value);
+    return true;
+}
+
+std::unique_ptr<MeshResources> MeshMap::MakeMesheResource(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploader, ID3D12GraphicsCommandList6* cmd_list) {
     std::vector<Vertex> total_vertex;
     std::vector<UINT> total_index;
 
@@ -50,7 +58,7 @@ bool MeshMap::AddMeshes(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploade
 
     if (vertexBuffer == nullptr) {
         GRAPHICS_LOG_ERROR("Cannot create vertex buffer");
-        return false;
+        return nullptr;
     }
 
     D3D12_SUBRESOURCE_DATA subresource = {};
@@ -66,7 +74,7 @@ bool MeshMap::AddMeshes(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploade
 
     if (indexBuffer == nullptr) {
         GRAPHICS_LOG_ERROR("Cannot create vertex buffer");
-        return false;
+        return nullptr;
     }
 
     subresource = {};
@@ -114,7 +122,7 @@ bool MeshMap::AddMeshes(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploade
 
             if (!blas->Generate(_device.get(), cmd_list)) {
                 GRAPHICS_LOG_ERROR("Cannot create bottom level acceleration structure");
-                return false;
+                return nullptr;
             }
             info->Blas = std::move(blas);
         }
@@ -125,8 +133,7 @@ bool MeshMap::AddMeshes(MeshFile&& meshes, DirectX::ResourceUploadBatch* uploade
         mesh_resources->Meshes.push_back(std::move(info));
     }
 
-    _map[name] = std::move(mesh_resources);
-    return true;
+    return std::move(mesh_resources);
 }
 
 std::vector<std::string> MeshMap::GetMeshList() {
