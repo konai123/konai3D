@@ -17,6 +17,7 @@ public:
     virtual bool UpdateData(void *data, UINT currentFrameIdx, ID3D12GraphicsCommandList* cmdList);
     virtual UINT GetResourceBytesSize();
     virtual void ResourceBarrier(D3D12_RESOURCE_STATES toState, UINT currentFrameIdx, ID3D12GraphicsCommandList* cmdList);
+    virtual void ResourceBarrier(D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES toState, UINT currentFrameIdx, ID3D12GraphicsCommandList* cmdList);
     virtual void SafeRelease();
 
 public:

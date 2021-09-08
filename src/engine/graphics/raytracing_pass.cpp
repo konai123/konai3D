@@ -203,7 +203,6 @@ void Raytracer::Render(
                 break;
             }
 
-
             auto mat_name = obj->MaterialName;
             auto mat_desc = materialMap->GetMaterialDesc(mat_name);
 
@@ -228,80 +227,65 @@ void Raytracer::Render(
             obj_count++;
         }
 
-        if (true)
-        {
-            if (!_tlas[currentFrameIndex].Generate(_device.get(), command_list)) {
-            }
+        _tlas[currentFrameIndex].Generate(_device.get(), command_list);
+        BuildRSShaderTable(command_list);
+        UpdateHitgroupTable(meshMap, materialMap, objs, currentFrameIndex, command_list);
 
-            if (!BuildRSShaderTable(command_list)) {
-            }
-
-            if (!UpdateHitgroupTable(meshMap, materialMap, objs, currentFrameIndex, command_list)) {
-            }
-
-            if (screen->Updated) {
-                Reset();
-                screen->Updated = false;
-            }
-
-            command_list->SetComputeRootSignature(_global_root_signature.Get());
-            command_list->SetPipelineState1(_rtpso.Get());
-
-            /*Bind TextureTables*/
-            command_list->SetComputeRootShaderResourceView(2,
-                                                           _rw_buffer_material->GetResource(
-                                                                   currentFrameIndex)->GetGPUVirtualAddress());
-
-            command_list->SetComputeRootShaderResourceView(5,
-                                                           _rw_buffer_light->GetResource(
-                                                                   currentFrameIndex)->GetGPUVirtualAddress());
-
-            command_list->SetComputeRootDescriptorTable(3,
-                                                        heaps->GetShaderResourceHeap()->GetGPUDescriptorHandleForHeapStart());
-
-            command_list->SetComputeRootDescriptorTable(4,
-                                                        heaps->GetShaderResourceHeap()->GetGPUDescriptorHandleForHeapStart());
-
-            command_list->SetComputeRootConstantBufferView(0, _cb_buffer_per_frames->
-                    GetResource(currentFrameIndex)->GetGPUVirtualAddress());
-
-
-            command_list->SetComputeRootShaderResourceView(1, _tlas[currentFrameIndex].ResultDataBuffer->GetGPUVirtualAddress());
-
-            _ray_gen_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
-            _miss_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
-            if (_hit_group_shader_table_resource != nullptr)
-                _hit_group_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
-
-            D3D12_DISPATCH_RAYS_DESC desc = {};
-
-            desc.RayGenerationShaderRecord.StartAddress = _ray_gen_shader_table_resource->GetResource(currentFrameIndex)->GetGPUVirtualAddress();
-            desc.RayGenerationShaderRecord.SizeInBytes = _ray_gen_shader_table_resource->GetResourceBytesSize();
-
-            desc.MissShaderTable.StartAddress = _miss_shader_table_resource->GetResource(currentFrameIndex)->GetGPUVirtualAddress();
-            desc.MissShaderTable.SizeInBytes = _miss_shader_table_resource->GetResourceBytesSize();
-            desc.MissShaderTable.StrideInBytes = _miss_table.MaxRecordSize;
-
-            if (_hit_group_shader_table_resource) {
-                desc.HitGroupTable.StartAddress = _hit_group_shader_table_resource->GetResource(currentFrameIndex)->GetGPUVirtualAddress();
-                desc.HitGroupTable.SizeInBytes = _hit_group_shader_table_resource->GetResourceBytesSize();
-                desc.HitGroupTable.StrideInBytes = _hitgroup_table.MaxRecordSize;
-            }
-
-            desc.Width = render_screen->Width;
-            desc.Height = render_screen->Height;
-            desc.Depth = 1;
-
-            command_list->DispatchRays(&desc);
-
-            _ray_gen_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COMMON, currentFrameIndex, command_list);
-            _miss_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COMMON, currentFrameIndex, command_list);
-            if (_hit_group_shader_table_resource != nullptr)
-                _hit_group_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COMMON, currentFrameIndex, command_list);
-
-            _integration_cnt++;
-            _total_frame_cnt++;
+        if (screen->Updated) {
+            Reset();
+            screen->Updated = false;
         }
+
+        command_list->SetComputeRootSignature(_global_root_signature.Get());
+        command_list->SetPipelineState1(_rtpso.Get());
+
+        /*Bind TextureTables*/
+        command_list->SetComputeRootConstantBufferView(0, _cb_buffer_per_frames->
+                GetResource(currentFrameIndex)->GetGPUVirtualAddress());
+        command_list->SetComputeRootShaderResourceView(1, _tlas[currentFrameIndex].ResultDataBuffer->GetGPUVirtualAddress());
+        command_list->SetComputeRootShaderResourceView(2,
+                                                       _rw_buffer_material->GetResource(
+                                                               currentFrameIndex)->GetGPUVirtualAddress());
+        command_list->SetComputeRootDescriptorTable(3,
+                                                    heaps->GetShaderResourceHeap()->GetGPUDescriptorHandleForHeapStart());
+        command_list->SetComputeRootDescriptorTable(4,
+                                                    heaps->GetShaderResourceHeap()->GetGPUDescriptorHandleForHeapStart());
+        command_list->SetComputeRootShaderResourceView(5,
+                                                       _rw_buffer_light->GetResource(
+                                                               currentFrameIndex)->GetGPUVirtualAddress());
+
+        _ray_gen_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COPY_DEST,
+                                                        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
+        _miss_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COPY_DEST,
+                                                     D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
+        if (_hit_group_shader_table_resource != nullptr)
+            _hit_group_shader_table_resource->ResourceBarrier(D3D12_RESOURCE_STATE_COPY_DEST,
+                                                              D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, currentFrameIndex, command_list);
+
+
+        D3D12_DISPATCH_RAYS_DESC desc = {};
+
+        desc.RayGenerationShaderRecord.StartAddress = _ray_gen_shader_table_resource->GetResource(currentFrameIndex)->GetGPUVirtualAddress();
+        desc.RayGenerationShaderRecord.SizeInBytes = _ray_gen_shader_table_resource->GetResourceBytesSize();
+
+        desc.MissShaderTable.StartAddress = _miss_shader_table_resource->GetResource(currentFrameIndex)->GetGPUVirtualAddress();
+        desc.MissShaderTable.SizeInBytes = _miss_shader_table_resource->GetResourceBytesSize();
+        desc.MissShaderTable.StrideInBytes = _miss_table.MaxRecordSize;
+
+        if (_hit_group_shader_table_resource) {
+            desc.HitGroupTable.StartAddress = _hit_group_shader_table_resource->GetResource(currentFrameIndex)->GetGPUVirtualAddress();
+            desc.HitGroupTable.SizeInBytes = _hit_group_shader_table_resource->GetResourceBytesSize();
+            desc.HitGroupTable.StrideInBytes = _hitgroup_table.MaxRecordSize;
+        }
+
+        desc.Width = render_screen->Width;
+        desc.Height = render_screen->Height;
+        desc.Depth = 1;
+
+        command_list->DispatchRays(&desc);
+
+        _integration_cnt++;
+        _total_frame_cnt++;
     }
 }
 

@@ -43,15 +43,11 @@ bool FrameResourceBuffer::Initialize(CD3DX12_RESOURCE_DESC desc) {
 bool FrameResourceBuffer::UpdateData(void *data, UINT currentFrameIdx, ID3D12GraphicsCommandList* cmdList) {
     auto current_state = _state[currentFrameIdx];
 
-    ResourceBarrier(D3D12_RESOURCE_STATE_COPY_DEST, currentFrameIdx, cmdList);
-
     D3D12_SUBRESOURCE_DATA subresource;
     subresource.pData = data;
     subresource.RowPitch = GetResourceBytesSize();
     subresource.SlicePitch = subresource.RowPitch;
     ::UpdateSubresources<1>(cmdList, _resource[currentFrameIdx].Get(), _upload_buffer[currentFrameIdx].Get(), 0, 0, 1, &subresource);
-
-    ResourceBarrier(current_state, currentFrameIdx, cmdList);
 
     return true;
 }
@@ -64,6 +60,19 @@ void FrameResourceBuffer::ResourceBarrier(D3D12_RESOURCE_STATES toState, UINT cu
     auto resource_barrier_enter = CD3DX12_RESOURCE_BARRIER::Transition(
             _resource[currentFrameIdx].Get(),
             _state[currentFrameIdx],
+            toState
+    );
+
+    cmdList->ResourceBarrier(1, &resource_barrier_enter);
+    _state[currentFrameIdx] = toState;
+}
+
+void FrameResourceBuffer::ResourceBarrier(D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES toState,
+                                          UINT currentFrameIdx, ID3D12GraphicsCommandList *cmdList) {
+
+    auto resource_barrier_enter = CD3DX12_RESOURCE_BARRIER::Transition(
+            _resource[currentFrameIdx].Get(),
+            beforeState,
             toState
     );
 

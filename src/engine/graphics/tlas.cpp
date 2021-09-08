@@ -107,11 +107,7 @@ bool TLAS::Generate(DeviceCom *deviceCom, ID3D12GraphicsCommandList5 *cmdList) {
     build_desc.DestAccelerationStructureData = ResultDataBuffer->GetGPUVirtualAddress();
 
     cmdList->BuildRaytracingAccelerationStructure(&build_desc, 0, nullptr);
-    D3D12_RESOURCE_BARRIER uav_barrier;
-    uav_barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    uav_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-    uav_barrier.UAV.pResource = ResultDataBuffer.Get();
-    cmdList->ResourceBarrier(1, &uav_barrier);
+
     return true;
 }
 

@@ -52,11 +52,8 @@ public:
     D3D12_VIEWPORT *GetViewPort();
     D3D12_RECT *GetScissorRect();
     ID3D12Resource *GetRenderTargetResource();
-    ID3D12Resource *GetDepthStencilResource();
 
-    HeapDescriptorHandle *GetRenderTargetHeapDesc();
     HeapDescriptorHandle *GetShaderResourceHeapDesc();
-    HeapDescriptorHandle *GetDepthStencilHeapDesc();
 
     void SetCameraInfo(const CameraInfo& info);
     CameraInfo GetCameraInfo();
@@ -81,7 +78,6 @@ private:
 private:
     bool CreateRenderTargets(bool isRecreation, UINT width, UINT height);
     bool CreateRenderTargetResourceAndView(bool isRecreation, UINT width, UINT height);
-    bool CreateDepthStencilBufferAndView(bool isRecreation, UINT width, UINT height);
 
 private:
     std::shared_ptr<DeviceCom> _device;
@@ -89,14 +85,9 @@ private:
     std::unordered_map<std::string, RenderObject> _render_objects;
     std::unordered_map<std::string, Light> _lights;
 
-    Microsoft::WRL::ComPtr<ID3D12Resource> _dsv_buffer;
     Microsoft::WRL::ComPtr<ID3D12Resource> _render_target;
 
-    HeapDescriptorHandle _render_target_view;
-    HeapDescriptorHandle _unordered_view;
     HeapDescriptorHandle _shader_view;
-    HeapDescriptorHandle _depth_stencil_view;
-
     DirectX::XMVECTORF32 _clear_color;
 
     D3D12_VIEWPORT _viewport;
