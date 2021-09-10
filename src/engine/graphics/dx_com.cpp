@@ -34,15 +34,6 @@ bool DXCom::Initiate() {
         return false;
     }
 
-#if defined(DEBUG) || defined(_DEBUG)
-    Microsoft::WRL::ComPtr<ID3D12InfoQueue> info_queue;
-    if (SUCCEEDED(_dxgi_device.As(&info_queue))) {
-        info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
-        info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-        info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
-    }
-#endif
-
     //Check DXGI_FEATURE_PRESENT_ALLOW_TEARING
     Microsoft::WRL::ComPtr<IDXGIFactory5> factory5;
     HRESULT hr = _dxgi_factory.As(&factory5);
@@ -98,6 +89,15 @@ bool DXCom::PrepareDevice() {
         HRESULT hr = D3D12CreateDevice(
                 adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&_dxgi_device)
         );
+
+#if defined(DEBUG) || defined(_DEBUG)
+        Microsoft::WRL::ComPtr<ID3D12InfoQueue> info_queue;
+        if (SUCCEEDED(_dxgi_device.As(&info_queue))) {
+            info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+            info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+            info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+        }
+#endif
 
         if (SUCCEEDED(hr)) {
             GRAPHICS_LOG_INFO("using Primary Adapter.");

@@ -56,9 +56,12 @@ DeviceCom::CreateSwapchain(
 
     UINT swapchain_flag = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
     if (_dx_com->GetFeatures().present_allow_tearing)
-        swapchain_flag |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+        swapchain_flag = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
     swapchain_desc.Format = backbufferFormat;
+    swapchain_desc.Stereo = false;
+    swapchain_desc.Scaling = DXGI_SCALING_NONE;
+    swapchain_desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
     swapchain_desc.Width = width;
     swapchain_desc.Height = height;
     swapchain_desc.Flags = swapchain_flag;

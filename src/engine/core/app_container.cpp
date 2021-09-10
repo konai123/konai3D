@@ -114,6 +114,7 @@ WINAPI AppContainer::DefaultWndProc(AppContainer *appContainer, HWND hWnd, UINT 
             int width = LOWORD(lParam);
             int height = HIWORD(lParam);
             appContainer->GetApp()->OnResizeStart(width, height);
+            appContainer->AppResizing = true;
             if (wParam == SIZE_MINIMIZED) {
                 appContainer->AppMinimized = true;
                 appContainer->AppMaximized = false;
@@ -121,26 +122,25 @@ WINAPI AppContainer::DefaultWndProc(AppContainer *appContainer, HWND hWnd, UINT 
                 appContainer->AppMinimized = false;
                 appContainer->AppMaximized = true;
                 appContainer->GetApp()->OnResizeEnd();
+                appContainer->AppResizing = false;
             } else if (wParam == SIZE_RESTORED) {
+                if (appContainer->AppMaximized || appContainer->AppMinimized)
+                {
+                    appContainer->GetApp()->OnResizeEnd();
+                    appContainer->AppResizing = false;
+                }
                 if (appContainer->AppMinimized) appContainer->AppMinimized = false;
                 if (appContainer->AppMaximized) appContainer->AppMaximized = false;
-                if (appContainer->AppResizing) {
-                    return 0;
-                }
-                appContainer->GetApp()->OnResizeEnd();
             }
             return 0;
         }
-        case WM_ENTERSIZEMOVE:
-            appContainer->AppResizing = true;
-            appContainer->Timer.Stop();
-            return 0;
+
         case WM_EXITSIZEMOVE: {
-            int width = LOWORD(lParam);
-            int height = HIWORD(lParam);
-            appContainer->AppResizing = false;
-            appContainer->GetApp()->OnResizeEnd();
-            appContainer->Timer.Start();
+            if (appContainer->AppResizing) {
+                appContainer->AppResizing = false;
+                appContainer->GetApp()->OnResizeEnd();
+                appContainer->Timer.Start();
+            }
             return 0;
         }
         case WM_DESTROY:
