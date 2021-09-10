@@ -25,8 +25,8 @@ bool K3DApp::Prepare(HWND hwnd, int width, int height, float dpiFactor) {
     if (!App::Prepare(hwnd, width, height, dpiFactor))
         return false;
 
-    SetMinWidth(1920);
-    SetMinHeight(1080);
+    SetMinWidth(1920/4);
+    SetMinHeight(1080/4);
 
     _imgui_renderer = std::make_shared<IMGUIRenderer>();
     _renderer = std::make_shared<_ENGINE::Renderer>();
