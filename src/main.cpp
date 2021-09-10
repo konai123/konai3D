@@ -42,7 +42,7 @@ int main() {
     app->SetAppName(_T("konai3D"));
 
     auto container = std::make_unique<_ENGINE::AppContainer>();
-    if (!container->Initiate(1920/2, 1080/2, std::move(app), exe_path.wstring(), WndProc))
+    if (!container->Initiate(1920, 1080, std::move(app), exe_path.wstring(), WndProc))
         return -1;
     int retv = container->Run();
     container.reset();
