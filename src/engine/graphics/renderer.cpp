@@ -154,8 +154,9 @@ void Renderer::OnRender(
     _command_list->RSSetViewports(1, &_gui_viewport);
     _command_list->RSSetScissorRects(1, &_gui_scissor_rect);
 
+    auto render_target = _device->GetCurrentBackBuffer();
     D3D12_RESOURCE_BARRIER barrier_enter = CD3DX12_RESOURCE_BARRIER::Transition(
-            _device->GetCurrentBackBuffer().Get(),
+            render_target.Get(),
             D3D12_RESOURCE_STATE_PRESENT,
             D3D12_RESOURCE_STATE_RENDER_TARGET
     );
@@ -181,7 +182,7 @@ void Renderer::OnRender(
     }
 
     D3D12_RESOURCE_BARRIER barrier_out = CD3DX12_RESOURCE_BARRIER::Transition(
-            _device->GetCurrentBackBuffer().Get(),
+            render_target.Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET,
             D3D12_RESOURCE_STATE_PRESENT
     );
