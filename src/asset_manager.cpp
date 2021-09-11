@@ -28,20 +28,15 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
 
     auto allTextures = textureMap->GetTextureList();
     auto allMeshes = meshMap->GetMeshList();
+    auto allMaterials = matMap->GetMaterialList();
 
     json["Textures"] = allTextures;
     json["Meshes"] = allMeshes;
 
     {
-        for (auto &s : renObjStrV) {
-            auto renObj = screen_ptr->GetRenderObject(s);
-
-            auto matName = renObj->MaterialName;
+        for (auto &s : allMaterials) {
+            auto matName = s;
             auto matDesc = matMap->GetMaterialDesc(matName);
-            auto meshResource = meshMap->GetResources(renObj->MeshID);
-
-            auto meshPath = meshResource->MeshFile.string();
-            auto subMesh = renObj->SubmeshID;
             auto matType = matDesc->MaterialType;
             auto diffuseTexturePath = matDesc->BaseColorTexturePath;
             auto refractIndex = matDesc->RefractIndex;
@@ -49,6 +44,29 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
             auto emitted = matDesc->EmittedColor;
             auto albedo = matDesc->Albedo;
             auto useTexture = matDesc->UseBaseColorTexture;
+
+            json["Materials"].push_back({
+                                                    {"MaterialName",       matName},
+                                                    {"MaterialType",       matType},
+                                                    {"DiffuseTexturePath", diffuseTexturePath},
+                                                    {"RefractIndex",       refractIndex},
+                                                    {"FuzzValue",          fuzz},
+                                                    {"EmittedColor", {emitted.x, emitted.y, emitted.z}},
+                                                    {"Albedo",       {albedo.x, albedo.y, albedo.z}},
+                                                    {"UseTexture",         useTexture}
+                                            });
+        }
+    }
+
+    {
+        for (auto &s : renObjStrV) {
+            auto renObj = screen_ptr->GetRenderObject(s);
+
+            auto matName = renObj->MaterialName;
+            auto meshResource = meshMap->GetResources(renObj->MeshID);
+            auto meshPath = meshResource->MeshFile.string();
+            auto subMesh = renObj->SubmeshID;
+
 
             float4x4 worldMatrix;
             DirectX::XMStoreFloat4x4(&worldMatrix, renObj->GetWorldMatrix());
@@ -62,15 +80,8 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
                                                     {"Name",               s},
                                                     {"MeshPath",           meshPath},
                                                     {"SubMesh",            subMesh},
-                                                    {"MaterialType",       matType},
-                                                    {"DiffuseTexturePath", diffuseTexturePath},
-                                                    {"RefractIndex",       refractIndex},
-                                                    {"FuzzValue",          fuzz},
-                                                    {"EmittedColor", {emitted.x, emitted.y, emitted.z}},
                                                     {"WorldMatrix",        nlohmann::json(worldMatrixElem)},
                                                     {"MaterialName",       matName},
-                                                    {"Albedo",       {albedo.x, albedo.y, albedo.z}},
-                                                    {"UseTexture",         useTexture}
                                             });
         }
     }
@@ -227,21 +238,16 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
         meshes.insert(m);
     }
 
-    for (UINT i = 0; i < json["RenderObjects"].size(); i++) {
-        auto& renobj_json = json["RenderObjects"][i];
-
-        auto diffuse_texture_path = renobj_json["DiffuseTexturePath"].get<std::string>();
-        auto fuzz = renobj_json["FuzzValue"].get<float>();
-        auto material_type = renobj_json["MaterialType"].get<int>();
-        auto mesh_path = renobj_json["MeshPath"].get<std::string>();
-        auto submesh = renobj_json["SubMesh"].get<int>();
-        auto name = renobj_json["Name"].get<std::string>();
-        auto refract_idx = renobj_json["RefractIndex"].get<int>();
-        auto mat_name = renobj_json["MaterialName"].get<std::string>();
-        auto world_mat = renobj_json["WorldMatrix"].get<std::vector<float>>();
-        auto emitted = renobj_json["EmittedColor"].get<std::vector<float>>();
-        auto albedo = renobj_json["Albedo"].get<std::vector<float>>();
-        auto use_texture = renobj_json["UseTexture"].get<bool>();
+    for (UINT i = 0; i < json["Materials"].size(); i++) {
+        auto& material = json["Materials"][i];
+        auto diffuse_texture_path = material["DiffuseTexturePath"].get<std::string>();
+        auto fuzz = material["FuzzValue"].get<float>();
+        auto material_type = material["MaterialType"].get<int>();
+        auto refract_idx = material["RefractIndex"].get<int>();
+        auto mat_name = material["MaterialName"].get<std::string>();
+        auto emitted = material["EmittedColor"].get<std::vector<float>>();
+        auto albedo = material["Albedo"].get<std::vector<float>>();
+        auto use_texture = material["UseTexture"].get<bool>();
 
         _ENGINE::MaterialDesc mat_desc;
         mat_desc.Fuzz = fuzz;
@@ -256,6 +262,16 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
         {
             matMap->AddMaterial(mat_name, mat_desc);
         }
+    }
+
+    for (UINT i = 0; i < json["RenderObjects"].size(); i++) {
+        auto& renobj_json = json["RenderObjects"][i];
+
+        auto mesh_path = renobj_json["MeshPath"].get<std::string>();
+        auto submesh = renobj_json["SubMesh"].get<int>();
+        auto name = renobj_json["Name"].get<std::string>();
+        auto mat_name = renobj_json["MaterialName"].get<std::string>();
+        auto world_mat = renobj_json["WorldMatrix"].get<std::vector<float>>();
 
         screen_ptr->AddRenderObject(name, mat_name, mesh_path, submesh);
 
