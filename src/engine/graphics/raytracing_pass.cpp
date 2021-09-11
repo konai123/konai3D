@@ -172,13 +172,17 @@ void Raytracer::Render(
 
                 materialMap->UpdateMaterial(mat, material_desc.value());
 
-                auto resource = textureMap->GetResource(material_desc.value().BaseColorTexturePath);
-                if (!resource) {
-                    continue;
+                int textureIdx = -1;
+                if (material_desc->UseBaseColorTexture) {
+                    auto resource = textureMap->GetResource(material_desc.value().BaseColorTexturePath);
+                    if (!resource) {
+                        continue;
+                    }
+                    textureIdx = resource->Handle._heap_index;
                 }
 
                 ShaderType::Material material{
-                        .BaseColorTextureIndex = resource->Handle._heap_index,
+                        .BaseColorTextureIndex = textureIdx,
                         .MaterialType = material_desc->MaterialType,
                         .Fuzz = material_desc->Fuzz,
                         .RefractIndex = material_desc->RefractIndex,
@@ -208,7 +212,8 @@ void Raytracer::Render(
 
             if (!mat_desc.has_value()) continue;
             if (!meshMap->Contains(obj->MeshID)) continue;
-            if (!textureMap->Contains(mat_desc->BaseColorTexturePath)) continue;
+            if (mat_desc->UseBaseColorTexture)
+                if (!textureMap->Contains(mat_desc->BaseColorTexturePath)) continue;
 
             auto mesh_resources = meshMap->GetResources(obj->MeshID);
             auto blas = mesh_resources->Meshes[obj->SubmeshID]->Blas.get();

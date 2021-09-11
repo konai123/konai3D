@@ -63,7 +63,6 @@ void MaterialWindow::OnUpdate(float delta) {
     for (auto &mat_name : material_names) {
         auto material_desc = _render_resource_map->MaterialMap->GetMaterialDesc(mat_name).value();
         auto basecolor_texture = _render_resource_map->TextureMap->GetResource(material_desc.BaseColorTexturePath);
-        if (!basecolor_texture.has_value()) continue;
 
         ImGui::PushID(mat_name.data());
 
@@ -76,9 +75,15 @@ void MaterialWindow::OnUpdate(float delta) {
                 }
                 if (material_desc.UseBaseColorTexture) {
                     ImGui::Text("Base Color Texture");
-                    if (ImGui::ImageButton(reinterpret_cast<void *>(basecolor_texture.value().Handle.GpuHandle.ptr),
-                                           image_size)) {
-                        ImGui::OpenPopup("Select BaseColor Texture");
+                    if (basecolor_texture.has_value()) {
+                        if (ImGui::ImageButton(reinterpret_cast<void *>(basecolor_texture.value().Handle.GpuHandle.ptr),
+                                               image_size)) {
+                            ImGui::OpenPopup("Select BaseColor Texture");
+                        }
+                    }else{
+                        if (ImGui::Button("Select Texture")) {
+                            ImGui::OpenPopup("Select BaseColor Texture");
+                        }
                     }
                 }else {
                     ImVec4 color = ImVec4(material_desc.Albedo.x, material_desc.Albedo.y, material_desc.Albedo.z, 1.0f);
@@ -149,6 +154,10 @@ void MaterialWindow::OnUpdate(float delta) {
             ImGui::EndPopup();
         }
         ImGui::PopID();
+    }
+
+    if (ImGui::Button("Texture Load from file")) {
+        _file_dialog.Open();
     }
 
     ImGui::End();
