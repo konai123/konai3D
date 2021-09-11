@@ -348,6 +348,7 @@ bool ViewportWindow::VsyncEnabled() {
 void ViewportWindow::SetVSync(bool set) {
     auto curr = _renderer->GetRenderingOptions();
     curr.v_sync = set;
+    _vsync = set;
     _renderer->SetRenderingOptions(curr);
 }
 
