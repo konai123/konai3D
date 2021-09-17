@@ -33,7 +33,7 @@ float4 RayColor(RayPayload raypay, uint maxDepth) {
         }
     }
 
-    return raypay.HitColor;
+    return float4(raypay.L.xyz, 1.0f);
 }
 
 [shader("raygeneration")]
@@ -91,19 +91,32 @@ bool ShootShadowRay(float3 origin, float3 target)
     return raypay.Visibility;
 }
 
-void EstimateLight(float3 origin, inout float3 to, inout uint seed, out float lightPdf)
+//Direct Lighting
+float3 EstimateDirection(Light light, float3 origin, float3 wg, float3 wo, BSDF bsdf, inout uint seed)
 {
-    if (RandomFloat01(seed) < 0.5f) {
-        int idx = RandomFloat01(seed) * gNumberOfLight;
-        Light light = gLights[idx];
-        to = light.ToLight(origin, seed);
+    float3 Lo = float3(0.0f, 0.0f, 0.0f);
+    if (!bsdf.IsGlass) {
+        LightSample sample = SampleLi(light, origin);
+        if (sample.Pdf > 0.0f && any(sample.Li)) {
+            bool vis = ShootShadowRay(origin + wg * 0.0001f, sample.Position);
+            float weight = PowerHeuristic(1, sample.Pdf, 1, bsdf.PDF(sample.Wi, wg, wo));
+            Lo += bsdf.F(sample.Wi, wg, wo) * sample.Li * float(vis) * weight / sample.Pdf;
+        }
     }
 
-    float lightPdfSum = 0.0f;
-    for (uint i = 0; i < gNumberOfLight; i++) {
-        lightPdfSum += gLights[i].PDF(origin, to);
+    return Lo;
+}
+
+float3 SampleOneLight(float3 origin, float3 wg, float3 wo, BSDF bsdf, inout uint seed)
+{
+    if (gNumberOfLight == 0) {
+        return float3(0.0f, 0.0f, 0.0f);
     }
-    lightPdf = lightPdfSum * (1.0f / float(gNumberOfLight));
+    float lightPdf = 1.0f / gNumberOfLight;
+    int lightIndex = RandomFloat01(seed) * gNumberOfLight;
+    Light light = gLights[lightIndex];
+
+    return EstimateDirection(light, origin, wg, wo, bsdf, seed) / lightPdf;
 }
 
 [shader("closesthit")]
@@ -121,6 +134,7 @@ void ClosestHit(inout RayPayload payload, Attributes attrib)
 
 	float3 barycentrics = float3((1.0f - attrib.uv.x - attrib.uv.y), attrib.uv.x, attrib.uv.y);
     Vertex vertex = GetVertexAttributes(vtx0, vtx1, vtx2, barycentrics);
+    float3 worldNormal = normalize(mul(vertex.Normal, (float3x3)WorldToObject3x4()));
 
     Material mat = gMaterials[gMaterialIdx];
     float3 color;
@@ -129,54 +143,46 @@ void ClosestHit(inout RayPayload payload, Attributes attrib)
         Texture2D tex = gTexture2DTable[baseColorTextureIndex];
         color = tex.SampleLevel(gSamPointClamp, vertex.TexCoord, 0.0f).rgb;
     }else {
-        color = mat.Albedo;
+        color = mat.BaseColor;
     }
-    float3 worldNormal = normalize(mul(vertex.Normal, (float3x3)WorldToObject3x4()));
 
     //BSDF Init
-    bool isSpecular;
     BSDF bsdf;
-    bsdf.Init(mat.MaterialType, color, mat.Fuzz, mat.RefractIndex, mat.EmittedColor, isSpecular);
+    bsdf.Init(mat.MaterialType, color, mat.EmissiveColor, mat.RefractIndex, mat.Metallic, mat.SpecularPower, mat.Roughness);
 
-    float3 outDirection;
-    float3 outAttenuation;
-    float scatterPdf;
-    if (!bsdf.Scatter(payload.Direction, worldNormal, outDirection, outAttenuation, scatterPdf, payload.Seed)) {
-        outAttenuation /= payload.Pdf;
-        if (payload.CurrDepth == 0) {
-            payload.HitColor = float4(outAttenuation.xyz, 1.0f);
-        }else{
-            payload.HitColor *= float4(outAttenuation.xyz, 1.0f);
-        }
+    float3 origin = payload.At();
+    float3 wg = worldNormal;
+    float3 wo = -payload.Direction;
+
+    if (!bsdf.IsGlass) {
+        payload.L += payload.Beta * SampleOneLight(origin, wg, wo, bsdf, payload.Seed);
+    }
+
+    BXDFSample sample;
+    sample = bsdf.Sample(wo, wg, payload.Seed);
+    if (sample.Pdf <= 0.0f) {
         payload.T = -1.0f;
         return;
     }
 
-    outAttenuation /= payload.Pdf;
-    if (payload.CurrDepth == 0) {
-        payload.HitColor = float4(outAttenuation.xyz, 1.0f);
-    }else{
-        payload.HitColor *= float4(outAttenuation.xyz, 1.0f);
+    //Indirect light
+    payload.Beta *= bsdf.F(sample.Wi, wg, wo) / bsdf.PDF(sample.Wi, wg, wo);
+    payload.L += bsdf.EmissiveColor;
+    payload.Direction = sample.Wi;
+    payload.Origin = origin;
+
+    //Russian roulette
+    float3 rr = payload.Beta;
+    float maxCmp = max(rr.x, max(rr.y, rr.z));
+    if (maxCmp < 1.0f && payload.CurrDepth > 1) {
+        float q = max(0.0f, 1.0f - maxCmp);
+        if (RandomFloat01(payload.Seed) < q) {
+            payload.T = -1.0f;
+        }
+        payload.Beta /= 1.0f - q;
     }
 
-    if (gNumberOfLight == 0 || isSpecular) {
-        payload.Origin = payload.At();
-        payload.Direction = normalize(outDirection);
-        payload.Pdf = 1.0f;
-        return;
-    }
-
-    float lightPdf;
-    EstimateLight(payload.At(), outDirection, payload.Seed, lightPdf);
-
-    scatterPdf = bsdf.Pdf(outDirection, worldNormal);
-
-    float pdf = 0.5 * lightPdf + 0.5 * scatterPdf;
-
-    payload.Origin = payload.At();
-    payload.Direction = normalize(outDirection);
-    payload.HitColor *= bsdf.Pdf(outDirection, worldNormal);
-    payload.Pdf = pdf;
+    return;
 }
 
 [shader("miss")]
@@ -187,15 +193,9 @@ void Miss(inout RayPayload payload)
 
         float2 uv = VectorToLatLong(payload.Direction);
         float4 c = env.SampleLevel(gSamLinearClamp, uv, 0.0f);
-
-        c /= payload.Pdf;
-        if (payload.CurrDepth == 0) {
-            payload.HitColor = float4(c.xyz, 1.0f);
-        }else{
-            payload.HitColor *= float4(c.xyz, 1.0f);
-        }
+        payload.L += payload.Beta * float3(c.xyz);
     }else{
-        payload.HitColor *= float4(0.0f ,0.0f, 0.0f, 1.0f);
+        payload.L += payload.Beta * float3(0.0f ,0.0f, 0.0f);
     }
 
     payload.T = -1.0f;

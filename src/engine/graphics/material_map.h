@@ -13,10 +13,12 @@ struct MaterialDesc {
 public:
     std::string BaseColorTexturePath;
     ShaderType::MaterialType MaterialType;
-    float Fuzz;
     float RefractIndex;
-    float3 EmittedColor;
-    float3 Albedo;
+    float SpecularPower;
+    float Roughness;
+    float Metallic;
+    float3 EmissiveColor;
+    float3 BaseColor;
     bool UseBaseColorTexture;
 };
 

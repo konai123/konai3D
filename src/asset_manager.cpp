@@ -40,9 +40,11 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
             auto matType = matDesc->MaterialType;
             auto diffuseTexturePath = matDesc->BaseColorTexturePath;
             auto refractIndex = matDesc->RefractIndex;
-            auto fuzz = matDesc->Fuzz;
-            auto emitted = matDesc->EmittedColor;
-            auto albedo = matDesc->Albedo;
+            auto specularPower = matDesc->SpecularPower;
+            auto emittedColor = matDesc->EmissiveColor;
+            auto baseColor = matDesc->BaseColor;
+            auto roughness = matDesc->Roughness;
+            auto metallic = matDesc->Metallic;
             auto useTexture = matDesc->UseBaseColorTexture;
 
             json["Materials"].push_back({
@@ -50,9 +52,11 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
                                                     {"MaterialType",       matType},
                                                     {"DiffuseTexturePath", diffuseTexturePath},
                                                     {"RefractIndex",       refractIndex},
-                                                    {"FuzzValue",          fuzz},
-                                                    {"EmittedColor", {emitted.x, emitted.y, emitted.z}},
-                                                    {"Albedo",       {albedo.x, albedo.y, albedo.z}},
+                                                    {"Metallic",          metallic},
+                                                    {"Roughness", roughness},
+                                                    {"SpecularPower", specularPower},
+                                                    {"EmissiveColor", {emittedColor.x, emittedColor.y, emittedColor.z}},
+                                                    {"BaseColor",       {baseColor.x, baseColor.y, baseColor.z}},
                                                     {"UseTexture",         useTexture}
                                             });
         }
@@ -97,11 +101,13 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
             for (int i = 0; i < 4 * 4; i++) {
                 worldMatrixElem.push_back(reinterpret_cast<float *>(&worldMatrix)[i]);
             }
+            float intensity = light->I;
 
             json["Lights"].push_back({
                                              {"Name",        s},
                                              {"WorldMatrix", nlohmann::json(worldMatrixElem)},
-                                             {"LightType", light_type}
+                                             {"LightType", light_type},
+                                             {"Intensity", intensity}
                                      });
         }
     }
@@ -241,21 +247,25 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
     for (UINT i = 0; i < json["Materials"].size(); i++) {
         auto& material = json["Materials"][i];
         auto diffuse_texture_path = material["DiffuseTexturePath"].get<std::string>();
-        auto fuzz = material["FuzzValue"].get<float>();
         auto material_type = material["MaterialType"].get<int>();
         auto refract_idx = material["RefractIndex"].get<int>();
+        auto metallic = material["Metallic"].get<float>();
+        auto roughness = material["Roughness"].get<float>();
+        auto specular_power = material["SpecularPower"].get<float>();
         auto mat_name = material["MaterialName"].get<std::string>();
-        auto emitted = material["EmittedColor"].get<std::vector<float>>();
-        auto albedo = material["Albedo"].get<std::vector<float>>();
+        auto emissive_color = material["EmissiveColor"].get<std::vector<float>>();
+        auto base_color = material["BaseColor"].get<std::vector<float>>();
         auto use_texture = material["UseTexture"].get<bool>();
 
         _ENGINE::MaterialDesc mat_desc;
-        mat_desc.Fuzz = fuzz;
+        mat_desc.SpecularPower = specular_power;
         mat_desc.RefractIndex = refract_idx;
+        mat_desc.Metallic = metallic;
+        mat_desc.Roughness = roughness;
         mat_desc.BaseColorTexturePath = diffuse_texture_path;
         mat_desc.MaterialType = static_cast<_ENGINE::ShaderType::MaterialType>(material_type);
-        mat_desc.EmittedColor = DirectX::XMFLOAT3(emitted.data());
-        mat_desc.Albedo = DirectX::XMFLOAT3(albedo.data());
+        mat_desc.EmissiveColor = DirectX::XMFLOAT3(emissive_color.data());
+        mat_desc.BaseColor = DirectX::XMFLOAT3(base_color.data());
         mat_desc.UseBaseColorTexture = use_texture;
 
         if (!matMap->Contains(mat_name))
@@ -290,12 +300,14 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
         auto name = light_json["Name"].get<std::string>();
         auto type = light_json["LightType"].get<int>();
         auto world_mat = light_json["WorldMatrix"].get<std::vector<float>>();
+        auto intensity = light_json["Intensity"].get<float>();
 
         DirectX::XMFLOAT4X4 fmat(world_mat.data());
         screen_ptr->AddLight(name, static_cast<_ENGINE::ShaderType::LightType>(type));
         auto light = screen_ptr->GetLight(name);
         if (light != nullptr) {
             light->SetTransform(DirectX::XMLoadFloat4x4(&fmat));
+            light->I = intensity;
         }
     }
 
@@ -305,9 +317,14 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
         {
             _ENGINE::MaterialDesc mat_desc {
                     .BaseColorTexturePath = system_texture_path.string(),
-                    .MaterialType = _ENGINE::ShaderType::Lambertian,
-                    .Fuzz = 0.f,
-                    .RefractIndex = 1.5f
+                    .MaterialType = _ENGINE::ShaderType::CookTorrance,
+                    .RefractIndex = 1.5f,
+                    .SpecularPower = 0.0f,
+                    .Roughness = 0.0f,
+                    .Metallic = 0.0f,
+                    .EmissiveColor = float3(0.0f, 0.0f, 0.0f),
+                    .BaseColor = float3(1.0f, 1.0f, 1.0f),
+                    .UseBaseColorTexture = true,
             };
             matMap->AddMaterial(K3DApp::DefaultMaterialName, mat_desc);
         }

@@ -2,8 +2,10 @@
 #define MATH_HLSLI
 
 static const float gPI = 3.141592653;
+static const float g2PI = 6.28318530718;
 static const float gEps = 1e-8;
 static const float gM1PI = 0.318309886183790671538;
+
 uint wang_hash(inout uint seed)
 {
     seed = (seed ^ 61) ^ (seed >> 16);
@@ -115,5 +117,12 @@ bool HitSphere(float3 center, float radius, float3 origin, float3 direction) {
     float c = dot(oc, oc) - radius*radius;
     float discriminant = b*b - 4*a*c;
     return discriminant > 0;
+}
+
+float PowerHeuristic(uint numf, float fPdf, uint numg, float gPdf) {
+    float f = numf * fPdf;
+    float g = numg * gPdf;
+
+    return (f * f) / (f * f + g * g);
 }
 #endif

@@ -1,34 +1,31 @@
 #ifndef SHADER_TYPE_HLSLI
 #define SHADER_TYPE_HLSLI
 
-#define MaterialType_Lambertian 0
-#define MaterialType_Metal      1
-#define MaterialType_Dielectric 2
-#define MaterialType_Emitter    3
+#define MaterialType_CookTorrance   0
+#define MaterialType_Glass          1
 
 #include <math.hlsli>
 
 struct Material {
     int BaseColorTextureIndex;
     int MaterialType;
-    float Fuzz;
-    float RefractIndex;
-    float3 EmittedColor;
-    float Pad;
-    float3 Albedo;
-    float Pad1;
     int UseBaseColorTexture;
+    float RefractIndex;
+    float SpecularPower;
+    float Roughness;
+    float Metallic;
+    float3 EmissiveColor;
+    float3 BaseColor;
 };
 
 struct RayPayload
 {
-    float4 HitColor;
+    float3 L;
+    float3 Beta;
     float3 Direction;
-    float Pad0;
     float Seed;
     float3 Origin;
     float T;
-    float Pdf;
     uint CurrDepth;
 
     float3 At() {
@@ -38,7 +35,7 @@ struct RayPayload
     RayDesc Ray(float tMin, float tMax) {
         const float OriginEpsilon = 0.0001f;
         RayDesc ray;
-        ray.Origin = Origin + Direction * OriginEpsilon;
+        ray.Origin = Origin;
         ray.Direction = Direction;
         ray.TMin = tMin;
         ray.TMax = tMax;
@@ -55,8 +52,8 @@ struct ShadowRayPayload
         float3 direction = target - origin;
 
         RayDesc ray;
-        ray.Origin = origin;
         ray.Direction = normalize(direction);
+        ray.Origin = origin;
         ray.TMin = 0.001f;
         ray.TMax = length(direction) - Epsilon;
         return ray;
@@ -91,46 +88,20 @@ struct Camera
         raypay.Origin = Position;
         raypay.T = 0.f;
         raypay.Seed = seed;
-        raypay.Pdf = 1.0f;
-        raypay.HitColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
+        raypay.L = float3(0.0f, 0.0f, 0.0f);
+        raypay.Beta = float3(1.0f, 1.0f, 1.0f);
         raypay.CurrDepth = 0;
         return raypay;
     }
 };
 
 
-#define LightType_Shpere 0
+#define LightType_Point 0
 struct Light
 {
     int LightType;
     float3 Position;
-    float Radius;
-
-    float PDF(float3 origin, float3 direction) {
-        if (LightType == LightType_Shpere) {
-            if (!HitSphere(Position, Radius, origin, direction)) {
-                return 0.0f;
-            }
-
-            float3 ls = (Position-origin);
-
-            float cos_theta_max = sqrt(1 - Radius*Radius/(dot(ls, ls)));
-            float solid_angle = 2*gPI*(1-cos_theta_max);
-            return  1.0f / solid_angle;
-        }
-        return 0.0f;
-    }
-
-    float3 ToLight(float3 origin, inout uint seed) {
-        if (LightType == LightType_Shpere) {
-            float3 direction = Position - origin;
-            float distance_squared = dot(direction, direction);
-            float3x3 uvw = GetONB(direction);
-
-            return mul(RandomToSphere(Radius, distance_squared, seed), uvw);
-        }
-        return float3(0.0f, 0.0f, 0.0f);
-    }
+    float I;
 };
 
 #endif

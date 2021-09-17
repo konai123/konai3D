@@ -69,9 +69,14 @@ bool K3DApp::Prepare(HWND hwnd, int width, int height, float dpiFactor) {
 
         _ENGINE::MaterialDesc mat_desc {
             .BaseColorTexturePath = system_texture_path.string(),
-            .MaterialType = _ENGINE::ShaderType::Lambertian,
-            .Fuzz = 0.f,
-            .RefractIndex = 1.5f
+            .MaterialType = _ENGINE::ShaderType::CookTorrance,
+            .RefractIndex = 1.5f,
+            .SpecularPower = 0.0f,
+            .Roughness = 0.0f,
+            .Metallic = 0.0f,
+            .EmissiveColor = float3(0.0f, 0.0f, 0.0f),
+            .BaseColor = float3(1.0f, 1.0f, 1.0f),
+            .UseBaseColorTexture = true,
         };
         _renderer->RenderResourceMap->MaterialMap->AddMaterial(DefaultMaterialName, mat_desc);
     }

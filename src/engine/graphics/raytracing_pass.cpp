@@ -121,7 +121,7 @@ void Raytracer::Render(
             ShaderType::Light l = {
                     .LightType = light_ptr->LightType,
                     .Position = light_ptr->Position,
-                    .Radius = light_ptr->Radius
+                    .I = light_ptr->I / 4.0f*DirectX::XM_PI
             };
             _rw_buffer_light->UpdateData(&l, i, currentFrameIndex);
         }
@@ -184,13 +184,13 @@ void Raytracer::Render(
                 ShaderType::Material material{
                         .BaseColorTextureIndex = textureIdx,
                         .MaterialType = material_desc->MaterialType,
-                        .Fuzz = material_desc->Fuzz,
+                        .UseBaseColorTexture = material_desc->UseBaseColorTexture ? 1 : 0,
                         .RefractIndex = material_desc->RefractIndex,
-                        .EmittedColor = material_desc->EmittedColor,
-                        .Pad0 = 0.0f,
-                        .Albedo = material_desc->Albedo,
-                        .Pad1 = 0.0f,
-                        .UseBaseColorTexture = material_desc->UseBaseColorTexture ? 1 : 0
+                        .SpecularPower = material_desc->SpecularPower,
+                        .Roughness = material_desc->Roughness,
+                        .Metallic = material_desc->Metallic,
+                        .EmissiveColor = material_desc->EmissiveColor,
+                        .BaseColor = material_desc->BaseColor,
                 };
                 _rw_buffer_material->UpdateData(&material, material_id, currentFrameIndex);
             }

@@ -8,34 +8,30 @@ _START_ENGINE
 namespace ShaderType {
 
 enum MaterialType {
-    Lambertian = 0,
-    Metal,
-    Dielectric,
-    Emitter
+    CookTorrance = 0,
+    Glass
 };
 
 struct Material {
-public:
-    int BaseColorTextureIndex = 0;
-    MaterialType MaterialType;
-    float Fuzz;
-    float RefractIndex;
-    float3 EmittedColor;
-    float Pad0;
-    float3 Albedo;
-    float Pad1;
+    int BaseColorTextureIndex;
+    ShaderType::MaterialType MaterialType;
     int UseBaseColorTexture;
+    float RefractIndex;
+    float SpecularPower;
+    float Roughness;
+    float Metallic;
+    float3 EmissiveColor;
+    float3 BaseColor;
 };
 
 struct RayPayload
 {
-    float4 HitColor;
+    float3 L;
+    float3 Beta;
     float3 Direction;
-    float Pad0;
     float Seed;
     float3 Origin;
     float T;
-    float Pdf;
     UINT CurrDepth;
 };
 
@@ -60,14 +56,14 @@ struct Camera
 };
 
 enum LightType {
-    LightType_Sphere = 0
+    LightType_Point = 0
 };
 
 struct Light
 {
     LightType LightType;
     float3 Position;
-    float Radius;
+    float I;
 };
 
 }

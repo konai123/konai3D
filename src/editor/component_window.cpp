@@ -48,7 +48,7 @@ bool ComponentWindow::DeleteComponent(std::string name) {
 bool ComponentWindow::AddLight(std::string name) {
     _ENGINE::Light light;
 
-    if (!_viewport_window->GetRenderScreen()->AddLight(name, engine::ShaderType::LightType_Sphere)) {
+    if (!_viewport_window->GetRenderScreen()->AddLight(name, engine::ShaderType::LightType_Point)) {
         return false;
     }
     return true;
@@ -237,7 +237,7 @@ void ComponentWindow::OnUpdate(float delta) {
         );
 
         light->SetTransform(DirectX::XMLoadFloat4x4(&world));
-        if (ImGui::InputFloat("Radius", &light->Radius)) _viewport_window->Update();
+        if (ImGui::InputFloat("L", &light->I)) _viewport_window->Update();
 
         if (ImGui::Button("Delete")) {
             DeleteLight(name);
