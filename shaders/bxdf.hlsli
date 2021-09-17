@@ -19,19 +19,19 @@ struct Dielectric
 
     BXDFSample Sample(float3 wo, float3 wg, inout uint seed) {
         float ete = 1.0f/ir;
-        if (InsideRay(wo, wg)) {
+        if (InsideRay(-wo, wg)) {
             ete = ir;
             wg = -wg;
         }
 
-        float cos_theta = min(dot(-wo, wg), 1.0f);
+        float cos_theta = min(dot(wo, wg), 1.0f);
         float sin_theta = sqrt(1.0f - cos_theta * cos_theta);
 
         BXDFSample outSample;
         if ((ete * sin_theta > 1.0f) || FSchlick(cos_theta, ete) > RandomFloat01(seed)) {
-            outSample.Wi = reflect(wo, wg);
+            outSample.Wi = reflect(-wo, wg);
         }else{
-            outSample.Wi = Refract(wo, wg, ete);
+            outSample.Wi = Refract(-wo, wg, ete);
         }
         outSample.Pdf = 1.0f;
         return outSample;
@@ -55,8 +55,6 @@ struct CookTorrance
 {
     float3 Fr(float3 wi, float3 wg, float3 wo) {
         float3 SpecularColor = lerp(0.08f*SpecularPower, BaseColor, Metallic);
-        float3 DiffuseColor = BaseColor - BaseColor * Metallic;
-        SpecularColor = SpecularColor * (Metallic);
 
         float3 wm = normalize(wi+wo);
         float dotIM = dot(wi, wm);
@@ -70,7 +68,7 @@ struct CookTorrance
         float3 specularTerm = GGX(wm, wg) * fresnel * GGXPartialGeometryTerm(wi, wg, wm, a2) * GGXPartialGeometryTerm(wo, wg, wm, a2) / (4.0f*dotIG*dotOG);
         float3 diffuseTerm = dotIG / gPI;
 
-        return (specularTerm + (DiffuseColor * diffuseTerm)) * dotIG;
+        return (specularTerm + (BaseColor * diffuseTerm * (1-Metallic))) * dotIG;
     }
 
     BXDFSample Sample(float3 wo, float3 wg, inout uint seed) {

@@ -99,8 +99,8 @@ float3 EstimateDirection(Light light, float3 origin, float3 wg, float3 wo, BSDF 
         LightSample sample = SampleLi(light, origin);
         if (sample.Pdf > 0.0f && any(sample.Li)) {
             bool vis = ShootShadowRay(origin + wg * 0.0001f, sample.Position);
-            float weight = PowerHeuristic(1, sample.Pdf, 1, bsdf.PDF(sample.Wi, wg, wo));
-            Lo += bsdf.F(sample.Wi, wg, wo) * sample.Li * float(vis) * weight / sample.Pdf;
+//            float weight = PowerHeuristic(1, sample.Pdf, 1, bsdf.PDF(sample.Wi, wg, wo));
+            Lo += bsdf.F(sample.Wi, wg, wo) * sample.Li * float(vis) / sample.Pdf;
         }
     }
 
