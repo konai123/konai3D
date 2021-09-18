@@ -121,7 +121,8 @@ void Raytracer::Render(
             ShaderType::Light l = {
                     .LightType = light_ptr->LightType,
                     .Position = light_ptr->Position,
-                    .I = light_ptr->I / 4.0f*DirectX::XM_PI
+                    .Points = light_ptr->Points,
+                    .I = light_ptr->I
             };
             _rw_buffer_light->UpdateData(&l, i, currentFrameIndex);
         }

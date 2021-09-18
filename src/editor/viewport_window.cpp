@@ -319,6 +319,11 @@ void ViewportWindow::EditTransform(_ENGINE::Positionable* targetObject) {
     DirectX::XMStoreFloat4x4(&view_mat, _camera->GetViewMatrix());
     DirectX::XMStoreFloat4x4(&project_mat, _camera->GetProjectionMatrix());
     auto mat = targetObject->GetWorldMatrix();
+    if (targetObject->IsLight()) {
+        ImGuizmo::DrawCubes(reinterpret_cast<float *>(&view_mat),
+                            reinterpret_cast<float *>(&project_mat), reinterpret_cast<float *>(&mat), 1);
+    }
+
     if (ImGuizmo::Manipulate(
             reinterpret_cast<float*>(&view_mat),
             reinterpret_cast<float*>(&project_mat),

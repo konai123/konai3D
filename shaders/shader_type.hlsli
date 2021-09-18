@@ -95,12 +95,13 @@ struct Camera
     }
 };
 
-
 #define LightType_Point 0
+#define LightType_Quad  1
 struct Light
 {
     int LightType;
     float3 Position;
+    float4x4 Points;
     float I;
 };
 

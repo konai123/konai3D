@@ -78,6 +78,8 @@ bool RenderScreen::AddLight(std::string name, ShaderType::LightType lightType) {
     Light light;
     light.LightType = lightType;
     light.Position = {0.0f, 0.0f, 0.0f};
+    light.Scale = {1.0f, 1.0f, 0.01f};
+    DirectX::XMStoreFloat4(&light.Rotation, DirectX::XMQuaternionIdentity());
     light.I = 1.0f;
     _lights[name] = light;
     Updated = true;

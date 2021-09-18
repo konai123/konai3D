@@ -12,7 +12,7 @@ struct LightSample
     float3 Li;
 };
 
-LightSample SampleLi(Light light, float3 origin) {
+LightSample SampleLi(Light light, float3 origin, inout uint seed) {
     LightSample sample;
     if (light.LightType == LightType_Point) {
         float l = length(light.Position - origin);
@@ -25,8 +25,36 @@ LightSample SampleLi(Light light, float3 origin) {
         sample.Pdf = 1.0f;
         sample.Li = light.I / l2;
         return sample;
+    }else if (light.LightType == LightType_Quad){
+        float4x4 points = transpose(light.Points);
+        float3 e0 = (points[3] - points[2]).xyz;
+        float3 e1 = (points[0] - points[2]).xyz;
+
+        float A = length(cross(e0, e1));
+
+        float X0 = RandomFloat01(seed) - 0.5f;
+        float X1 = RandomFloat01(seed) - 0.5f;
+
+        float3 po = light.Position + e0 * X0 + e1 * X1;
+        float3 di = origin - po;
+        float distance = length(di);
+
+        di = normalize(di);
+        float3 N = normalize(cross(e0, e1));
+
+        if (dot(di, N) < 0) {
+            N = -N;
+        }
+
+        float cosine = dot(N, di);
+        float pdf = (distance * distance) / (cosine * A);
+
+        sample.Position = po;
+        sample.Pdf = pdf;
+        sample.Li = light.I;
+        sample.Wi = -di;
+        return sample;
     }else{
-        //Todo
         return sample;
     }
 }

@@ -25,6 +25,10 @@ void RenderObject::DiscardRenderObject(RenderObject& obj) {
     _pool.free(obj.ObjectID);
 }
 
+bool RenderObject::IsLight() {
+    return false;
+}
+
 void RenderObject::SetTransform(DirectX::FXMMATRIX worldMat) {
     WorldMatrix = worldMat;
 }

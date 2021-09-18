@@ -48,7 +48,7 @@ bool ComponentWindow::DeleteComponent(std::string name) {
 bool ComponentWindow::AddLight(std::string name) {
     _ENGINE::Light light;
 
-    if (!_viewport_window->GetRenderScreen()->AddLight(name, engine::ShaderType::LightType_Point)) {
+    if (!_viewport_window->GetRenderScreen()->AddLight(name, engine::ShaderType::LightType_Quad)) {
         return false;
     }
     return true;
@@ -219,6 +219,10 @@ void ComponentWindow::OnUpdate(float delta) {
 
         _viewport_window->SelectedObject = light;
 
+        if (ImGui::Combo("Light Type", reinterpret_cast<int *>(&light->LightType), "Point\0Quad\0\0")) {
+            _viewport_window->Update();
+        }
+
         float4x4 world;
         DirectX::XMStoreFloat4x4(&world, light->GetWorldMatrix());
         float matrixTranslation[3], matrixRotation[3], matrixScale[3];
@@ -229,6 +233,10 @@ void ComponentWindow::OnUpdate(float delta) {
                 matrixScale
         );
         if (ImGui::InputFloat3("Tr", matrixTranslation)) _viewport_window->Update();
+        if (light->LightType == _ENGINE::ShaderType::LightType_Quad) {
+            if (ImGui::InputFloat3("Rt", matrixRotation)) _viewport_window->Update();
+            if (ImGui::InputFloat3("Sc", matrixScale)) _viewport_window->Update();
+        }
         ImGuizmo::RecomposeMatrixFromComponents(
                 matrixTranslation,
                 matrixRotation,
@@ -237,7 +245,7 @@ void ComponentWindow::OnUpdate(float delta) {
         );
 
         light->SetTransform(DirectX::XMLoadFloat4x4(&world));
-        if (ImGui::InputFloat("L", &light->I)) _viewport_window->Update();
+        if (ImGui::InputFloat("I", &light->I)) _viewport_window->Update();
 
         if (ImGui::Button("Delete")) {
             DeleteLight(name);

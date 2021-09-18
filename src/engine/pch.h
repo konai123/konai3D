@@ -94,6 +94,7 @@ typedef std::wstring tString;
 
 #define float4x4 DirectX::XMFLOAT4X4
 #define float3x4 DirectX::XMFLOAT3X4
+#define float4x3 DirectX::XMFLOAT4X3
 
 #define float2 DirectX::XMFLOAT2
 #define float3 DirectX::XMFLOAT3

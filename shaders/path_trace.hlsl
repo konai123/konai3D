@@ -43,7 +43,7 @@ void RayGen()
     uint2 LaunchDimensions = DispatchRaysDimensions().xy;
     uint seed = uint(LaunchIndex.x * (5555) + LaunchIndex.y * uint(20328) + uint(gTotalFrameCount) * uint(24023));
 
-    const uint sampleCount = 4;
+    const uint sampleCount = 8;
 
     //Camera Position
     float3 outColor = float3(0.f, 0.f, 0.f);
@@ -96,10 +96,10 @@ float3 EstimateDirection(Light light, float3 origin, float3 wg, float3 wo, BSDF 
 {
     float3 Lo = float3(0.0f, 0.0f, 0.0f);
     if (!bsdf.IsGlass) {
-        LightSample sample = SampleLi(light, origin);
+        LightSample sample = SampleLi(light, origin, seed);
         if (sample.Pdf > 0.0f && any(sample.Li)) {
             bool vis = ShootShadowRay(origin + wg * 0.0001f, sample.Position);
-//            float weight = PowerHeuristic(1, sample.Pdf, 1, bsdf.PDF(sample.Wi, wg, wo));
+//            float mixPDF = (sample.Pdf * 0.5 + bsdf.PDF(sample.Wi, wg, wo) * 0.5);
             Lo += bsdf.F(sample.Wi, wg, wo) * sample.Li * float(vis) / sample.Pdf;
         }
     }
@@ -115,8 +115,8 @@ float3 SampleOneLight(float3 origin, float3 wg, float3 wo, BSDF bsdf, inout uint
     float lightPdf = 1.0f / gNumberOfLight;
     int lightIndex = RandomFloat01(seed) * gNumberOfLight;
     Light light = gLights[lightIndex];
-
-    return EstimateDirection(light, origin, wg, wo, bsdf, seed) / lightPdf;
+    float3 o = EstimateDirection(light, origin, wg, wo, bsdf, seed);
+    return o;
 }
 
 [shader("closesthit")]
@@ -167,6 +167,7 @@ void ClosestHit(inout RayPayload payload, Attributes attrib)
 
     //Indirect light
     payload.Beta *= bsdf.F(sample.Wi, wg, wo) / bsdf.PDF(sample.Wi, wg, wo);
+
     payload.L += bsdf.EmissiveColor;
     payload.Direction = sample.Wi;
     payload.Origin = origin;

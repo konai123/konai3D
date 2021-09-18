@@ -56,13 +56,15 @@ struct Camera
 };
 
 enum LightType {
-    LightType_Point = 0
+    LightType_Point = 0,
+    LightType_Quad  = 1
 };
 
 struct Light
 {
     LightType LightType;
     float3 Position;
+    float4x4 Points;
     float I;
 };
 

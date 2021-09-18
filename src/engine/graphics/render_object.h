@@ -16,6 +16,7 @@ DECLARE_CLASS_AS_INTERFACE(Positionable)
 public:
     virtual DirectX::XMMATRIX GetWorldMatrix() = 0;
     virtual void SetTransform (DirectX::FXMMATRIX worldMat) = 0;
+    virtual bool IsLight() = 0;
 };
 
 class RenderObject : public Positionable {
@@ -30,6 +31,7 @@ public:
 public:
     virtual DirectX::XMMATRIX GetWorldMatrix() override;
     virtual void SetTransform (DirectX::FXMMATRIX worldMat) override;
+    virtual bool IsLight() override;
 
 public:
     std::string MaterialName;
@@ -51,18 +53,39 @@ struct Light : public Positionable
 {
     ShaderType::LightType LightType;
     float3 Position;
+    float3 Scale;
+    float4 Rotation;
+    float4x4 Points;
     float I;
 
 public:
-    virtual DirectX::XMMATRIX GetWorldMatrix() {
+    virtual DirectX::XMMATRIX GetWorldMatrix() override {
         auto t = DirectX::XMMatrixTranslation(Position.x, Position.y, Position.z);
-        return t;
+        auto s = DirectX::XMMatrixScaling(Scale.x, Scale.y, Scale.z);
+        auto r = DirectX::XMMatrixRotationQuaternion(DirectX::XMVectorSet(Rotation.x, Rotation.y, Rotation.z, Rotation.w));
+        return s * r * t;
     }
 
-    virtual void SetTransform (DirectX::FXMMATRIX worldMat) {
+    virtual bool IsLight() override {
+        return true;
+    }
+
+    virtual void SetTransform (DirectX::FXMMATRIX worldMat) override {
+        float4x4 points = {
+                -0.5f, 0.5f, 0.0f, 0.0f,
+                0.5f, 0.5f, 0.0f, 0.0f,
+                -0.5f, -0.5f, 0.0f, 0.0f,
+                0.5f, -0.5f, 0.0f, 0.0f,
+        };
+        auto mat = DirectX::XMLoadFloat4x4(&points);
+        auto p = DirectX::XMMatrixMultiply(mat, worldMat);
+        DirectX::XMStoreFloat4x4(&Points, p);
+
         DirectX::XMVECTOR position, scale, rotation;
         DirectX::XMMatrixDecompose(&scale, &rotation, &position, worldMat);
         DirectX::XMStoreFloat3(&Position, position);
+        DirectX::XMStoreFloat3(&Scale, scale);
+        DirectX::XMStoreFloat4(&Rotation, rotation);
     }
 };
 _END_ENGINE
