@@ -102,7 +102,6 @@ def convertToKonai3DScreen(doc):
         "Target": [0.0, 0.0, 0.0],
         "Up": [0.0, 1.0, 0.0]
     }
-
     Meshes = []
     Textures = []
     Materials = []
@@ -111,6 +110,7 @@ def convertToKonai3DScreen(doc):
         "Height": 1080,
         "VSync": True,
         "Width": 1920,
+        "Depth": 13,
     }
 
     objs = []
@@ -126,13 +126,16 @@ def convertToKonai3DScreen(doc):
 
         Materials.append({
                         "DiffuseTexturePath": tex,
-                        "EmittedColor": [0.0, 0.0, 0.0],
+                        "EmissiveColor": [0.0, 0.0, 0.0],
                         "FuzzValue": 0.0,
                         "MaterialName": k,
                         "MaterialType": 0,
                         "RefractIndex": 1.5,
                         "UseTexture": mat["useTexture"],
-                        "Albedo": mat["rgb"]
+                        "BaseColor": mat["rgb"],
+                        "Roughness": 0.3,
+                        "SpecularPower": 0.0,
+                        "Metallic": 1.0,
         })
 
     for v in doc["objects"]:
@@ -160,7 +163,7 @@ def convertToKonai3DScreen(doc):
         "Options": Options,
         "RenderObjects": objs,
         "Textures": Textures,
-        "Materials": Materials
+        "Materials": Materials,
     }
     return j
 
