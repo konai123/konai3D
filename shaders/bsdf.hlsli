@@ -76,7 +76,7 @@ struct BSDF
             CTorrance.SpecularPower = specular;
         }
 
-        if (MaterialType == MaterialType_Mirror || MaterialType_Glass) {
+        if (MaterialType == MaterialType_Mirror || MaterialType == MaterialType_Glass) {
             IsGlass = true;
         }
     }

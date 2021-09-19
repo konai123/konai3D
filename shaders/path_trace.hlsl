@@ -98,7 +98,7 @@ float3 EstimateDirection(Light light, float3 origin, float3 wg, float3 wo, BSDF 
     if (sample.Pdf > 0.0f && any(sample.Li)) {
         float vis = ShootShadowRay(origin + wg * 0.0001f, sample.Position);
         float mixPDF = (sample.Pdf * 0.5 + bsdf.PDF(sample.Wi, wg, wo) * 0.5);
-        Lo += bsdf.F(sample.Wi, wg, wo) * sample.Li * vis / sample.Pdf;
+        Lo += bsdf.F(sample.Wi, wg, wo) * sample.Li * vis / mixPDF;
     }
 
     return Lo;
