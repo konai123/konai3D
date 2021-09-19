@@ -52,6 +52,7 @@ void RayGen()
         float2 ndc = uv * float2(2,-2) + float2(-1, +1);
         RayPayload raypay = gCamera.GetRayPayload(ndc, seed);
         outColor += RayColor(raypay).xyz;
+        seed = raypay.Seed;
     }
 
     outColor.r = isnan(outColor.r) ? 0.0f : outColor.r;
