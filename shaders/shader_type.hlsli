@@ -102,7 +102,7 @@ struct Light
     int LightType;
     float3 Position;
     float4x4 Points;
-    float I;
+    float3 I;
 };
 
 #endif

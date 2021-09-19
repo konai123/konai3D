@@ -98,7 +98,7 @@ float3 EstimateDirection(Light light, float3 origin, float3 wg, float3 wo, BSDF 
     if (sample.Pdf > 0.0f && any(sample.Li)) {
         float vis = ShootShadowRay(origin + wg * 0.0001f, sample.Position);
         float mixPDF = (sample.Pdf * 0.5 + bsdf.PDF(sample.Wi, wg, wo) * 0.5);
-        Lo += bsdf.F(sample.Wi, wg, wo) * sample.Li * vis / mixPDF;
+        Lo += bsdf.F(sample.Wi, wg, wo) * sample.Li * vis / sample.Pdf;
     }
 
     return Lo;
@@ -157,13 +157,13 @@ void ClosestHit(inout RayPayload payload : SV_RayPayload, in Attributes attrib)
     BXDFSample sample = bsdf.Sample(wo, wg, payload.Seed);
     float3 wi = sample.Wi;
 
-    if (sample.Pdf <= gEps) {
+    payload.L += bsdf.EmissiveColor;
+    if (sample.Pdf < gEps) {
         TerminateRay(payload);
-        return;
+    }else{
+        payload.Beta *= bsdf.F(wi, wg, wo) / sample.Pdf;
     }
 
-    payload.Beta *= bsdf.F(sample.Wi, wg, wo) / bsdf.PDF(sample.Wi, wg, wo);
-    payload.L += bsdf.EmissiveColor;
     payload.Direction = wi;
     payload.Origin = origin;
 
@@ -177,7 +177,6 @@ void ClosestHit(inout RayPayload payload : SV_RayPayload, in Attributes attrib)
         }
         payload.Beta /= 1.0f - q;
     }
-
     return;
 }
 
@@ -190,8 +189,6 @@ void Miss(inout RayPayload payload : SV_RayPayload)
         float2 uv = VectorToLatLong(payload.Direction);
         float4 c = env.SampleLevel(gSamLinearClamp, uv, 0.0f);
         payload.L += payload.Beta * float3(c.xyz);
-    }else{
-        payload.L += payload.Beta * float3(0.0f ,0.0f, 0.0f);
     }
 
     TerminateRay(payload);

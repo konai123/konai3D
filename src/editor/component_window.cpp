@@ -245,7 +245,11 @@ void ComponentWindow::OnUpdate(float delta) {
         );
 
         light->SetTransform(DirectX::XMLoadFloat4x4(&world));
-        if (ImGui::InputFloat("I", &light->I)) _viewport_window->Update();
+        ImVec4 color = ImVec4(light->I.x, light->I.y, light->I.z, 1.0f);
+        if (ImGui::ColorPicker4("Intensity", (float *) &color,ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoAlpha, NULL)) {
+            light->I = {color.x, color.y, color.z};
+            _viewport_window->Update();
+        }
 
         if (ImGui::Button("Delete")) {
             DeleteLight(name);

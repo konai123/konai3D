@@ -56,7 +56,7 @@ struct Light : public Positionable
     float3 Scale;
     float4 Rotation;
     float4x4 Points;
-    float I;
+    float3 I;
 
 public:
     virtual DirectX::XMMATRIX GetWorldMatrix() override {
