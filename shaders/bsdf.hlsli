@@ -68,13 +68,16 @@ struct BSDF
         IsGlass = false;
 
         if (MaterialType == MaterialType_Glass) {
-            IsGlass = true;
             Glass.ir = ir;
-        }else{
+        }else if (MaterialType == MaterialType_CookTorrance){
             CTorrance.Roughness = roughness;
             CTorrance.BaseColor = baseColor;
             CTorrance.Metallic = metallic;
             CTorrance.SpecularPower = specular;
+        }
+
+        if (MaterialType == MaterialType_Mirror || MaterialType_Glass) {
+            IsGlass = true;
         }
     }
 
@@ -82,8 +85,10 @@ struct BSDF
         BXDFSample sample;
         if (MaterialType == MaterialType_Glass) {
             return Glass.Sample(wo, wg, seed);
-        }else{
+        }else if (MaterialType == MaterialType_CookTorrance) {
             return CTorrance.Sample(wo, wg, seed);
+        }else {
+            return Mirror.Sample(wo, wg, seed);
         }
     }
 
@@ -91,21 +96,26 @@ struct BSDF
     {
         if (MaterialType == MaterialType_Glass) {
             return Glass.Ft(wi, wg, wo);
-        }else{
+        }else if (MaterialType == MaterialType_CookTorrance) {
             return CTorrance.Fr(wi, wg, wo);
+        }else {
+            return Mirror.Fr(wi, wg, wo);
         }
     }
 
     float PDF(float3 wi, float3 wg, float3 wo) {
         if (MaterialType == MaterialType_Glass) {
             return Glass.PDF(wi, wg, wo);
-        }else{
+        }else if (MaterialType == MaterialType_CookTorrance) {
             return CTorrance.PDF(wi, wg, wo);
+        }else{
+            return Mirror.PDF(wi, wg, wo);
         }
     }
 
     CookTorrance CTorrance;
     Dielectric Glass;
+    Mirror Mirror;
 
     float3 EmissiveColor;
     int MaterialType;

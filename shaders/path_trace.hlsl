@@ -137,7 +137,7 @@ void ClosestHit(inout RayPayload payload : SV_RayPayload, in Attributes attrib)
     if (mat.UseBaseColorTexture != 0) {
         int baseColorTextureIndex = mat.BaseColorTextureIndex;
         Texture2D tex = gTexture2DTable[baseColorTextureIndex];
-        color = tex.SampleLevel(gSamPointClamp, vertex.TexCoord, 0.0f).rgb;
+        color = tex.SampleLevel(gSamLinearWrap, vertex.TexCoord, 0.0f).rgb;
     }else {
         color = mat.BaseColor;
     }
@@ -149,6 +149,10 @@ void ClosestHit(inout RayPayload payload : SV_RayPayload, in Attributes attrib)
     float3 origin = payload.At();
     float3 wg = worldNormal;
     float3 wo = -payload.Direction;
+
+    if (!InsideRay(wg, wo)) {
+        wg = -wg;
+    }
 
     if (!bsdf.IsGlass) {
         payload.L += payload.Beta * SampleOneLight(origin, wg, wo, bsdf, payload.Seed);

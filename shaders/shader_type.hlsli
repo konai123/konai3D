@@ -3,6 +3,7 @@
 
 #define MaterialType_CookTorrance   0
 #define MaterialType_Glass          1
+#define MaterialType_Mirror         2
 
 #include <math.hlsli>
 

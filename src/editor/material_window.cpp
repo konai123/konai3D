@@ -96,7 +96,7 @@ void MaterialWindow::OnUpdate(float delta) {
             }
 
             if (ImGui::Combo("Material Type", reinterpret_cast<int *>(&material_desc.MaterialType),
-                             "CookTorrance\0Glass\0\0")) {
+                             "CookTorrance\0Glass\0Mirror\0\0")) {
                 _render_resource_map->MaterialMap->UpdateMaterial(mat_name, material_desc);
                 _viewport_window->Update();
             }

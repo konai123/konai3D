@@ -9,7 +9,8 @@ namespace ShaderType {
 
 enum MaterialType {
     CookTorrance = 0,
-    Glass
+    Glass,
+    Mirror,
 };
 
 struct Material {

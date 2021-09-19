@@ -163,4 +163,26 @@ struct CookTorrance
     float3 BaseColor;
 };
 
+struct Mirror
+{
+    float3 Fr(float3 wi, float3 wg, float3 wo) {
+        return float3(1.0f, 1.0f, 1.0f);
+    }
+
+    BXDFSample Sample(float3 wo, float3 wg, inout uint seed) {
+        BXDFSample outSample;
+        outSample.Wi = reflect(-wo, wg);
+        outSample.Pdf = 1.0f;
+        return outSample;
+    }
+
+    float PDF(float3 wi, float3 wg, float3 wo) {
+        float dotIO = dot(wi, wo);
+        float pdf = 0.0f;
+        if (dotIO > 0 && dotIO <= gEps) {
+            pdf = 1.0f;
+        }
+        return pdf;
+    }
+};
 #endif
