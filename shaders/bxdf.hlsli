@@ -114,14 +114,17 @@ struct CookTorrance
         float specularPdf = 0.0f;
         if (dotGI > 0.0f && dot(wi, wm) > 0.0f) {
             float d = 4 * abs(dot(wo, wm));
-
             specularPdf = GGX(wm, wg)*dot(wm, wg)/d;
+        }else {
+            specularPdf = 0.0f;
         }
 
         //Get Diffuse PDF
         float diffusePdf = 0.0f;
         if (dotGI > 0.0f) {
             diffusePdf = dotGI / gPI;
+        }else{
+            diffusePdf = 0.0f;
         }
         return specularRatio * specularPdf + diffuseRatio * diffusePdf;
     }

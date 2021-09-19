@@ -28,6 +28,10 @@ public:
     virtual void ResetCameraAngle();
     virtual void Update();
 
+public:
+    UINT GetTraceDepth() const;
+    void SetTraceDepth(UINT depth);
+
 private:
     void EditTransform(_ENGINE::Positionable* targetObject);
     void UpdateScreen();

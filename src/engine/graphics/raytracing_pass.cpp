@@ -156,7 +156,8 @@ void Raytracer::Render(
                 .TotalFrameCount = _total_frame_cnt,
                 .IntegrationCount = _integration_cnt,
                 .NumberOfLight = static_cast<UINT>(lights.size()),
-                .EnvTextureIdx = env_tex_idx
+                .EnvTextureIdx = env_tex_idx,
+                .MaxDepth = render_screen->MaxTraceDepth
             };
             _cb_buffer_per_frames->UpdateData(&per_frame, currentFrameIndex);
         }

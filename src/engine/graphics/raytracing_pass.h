@@ -25,7 +25,7 @@ public:
         UINT IntegrationCount;
         UINT NumberOfLight;
         int EnvTextureIdx;
-        float3 Pad;
+        UINT MaxDepth;
     };
 
     explicit Raytracer(std::shared_ptr<DeviceCom> deviceCom);

@@ -45,7 +45,7 @@ struct RayPayload
 
 struct ShadowRayPayload
 {
-    bool Visibility;
+    float Visibility;
 
     RayDesc Ray(float3 origin, float3 target) {
         const float Epsilon = 0.0001f;

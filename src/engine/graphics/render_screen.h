@@ -66,6 +66,7 @@ public:
 
     UINT Width;
     UINT Height;
+    UINT MaxTraceDepth;
     std::optional<std::string> EnvTextureKey;
 
 public:

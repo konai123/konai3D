@@ -37,7 +37,7 @@ struct RayPayload
 
 struct ShadowRayPayload
 {
-    bool Visibility;
+    float Visibility;
 };
 
 struct Camera

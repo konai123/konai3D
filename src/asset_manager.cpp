@@ -127,6 +127,7 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
 
     auto height = viewportWindow->GetHeight();
     auto width = viewportWindow->GetWidth();
+    auto depth = viewportWindow->GetTraceDepth();
     auto env_map_path_opt = viewportWindow->GetRenderScreen()->EnvTextureKey;
     std::string env_map;
     if (env_map_path_opt.has_value()) {
@@ -140,7 +141,8 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
                 {"Height", height},
                 {"Width",  width},
                 {"EnvMap", env_map},
-                {"VSync", viewportWindow->VsyncEnabled()}
+                {"VSync", viewportWindow->VsyncEnabled()},
+                {"Depth", depth}
         };
     }
 
@@ -200,6 +202,7 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
     auto option_width= json["Options"]["Width"].get<UINT>();
     auto env_map = json["Options"]["EnvMap"].get<std::string>();
     auto vsync = json["Options"]["VSync"].get<bool>();
+    auto depth = json["Options"]["Depth"].get<UINT>();
 
     if (env_map.empty()) {
         viewportWindow->GetRenderScreen()->EnvTextureKey = std::nullopt;
@@ -209,6 +212,7 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
     viewportWindow->SetVSync(vsync);
     viewportWindow->ResetCameraAngle();
     viewportWindow->SetResolution(option_width, option_height);
+    viewportWindow->SetTraceDepth(depth);
 
     auto camera = viewportWindow->GetCamera();
     camera->Far = camera_far;

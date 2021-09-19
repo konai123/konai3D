@@ -125,6 +125,12 @@ void ViewportWindow::OnUpdate(float delta) {
                 SetVSync(_vsync);
             }
 
+            if (ImGui::SliderInt("Max Trace Depth", reinterpret_cast<int*>(&_screen->MaxTraceDepth), 2, 30)) {
+                Update();
+            }
+
+            ImGui::Separator();
+
             if (ImGui::BeginMenu("Environment Map")) {
                 auto texture_names = _renderer->RenderResourceMap->TextureMap->GetTextureList();
                 auto texture_size = ImVec2(400.0f, 200.0f);
@@ -145,6 +151,7 @@ void ViewportWindow::OnUpdate(float delta) {
                 }
                 ImGui::EndMenu();
             }
+
             ImGui::EndMenu();
         }
 
@@ -161,14 +168,8 @@ void ViewportWindow::OnUpdate(float delta) {
                 _guizmo_oper = ImGuizmo::OPERATION::SCALE;
             }
 
-            ImGui::Separator();
-            if (ImGui::MenuItem("World", NULL, _guizmo_mode == ImGuizmo::MODE::WORLD, true)) {
-                _guizmo_mode = ImGuizmo::MODE::WORLD;
-            }
+            _guizmo_mode = ImGuizmo::MODE::LOCAL;
 
-            if (ImGui::MenuItem("Local", NULL, _guizmo_mode == ImGuizmo::MODE::LOCAL, true)) {
-                _guizmo_mode = ImGuizmo::MODE::LOCAL;
-            }
             ImGui::Text("Fov");
             ImGui::SameLine();
             float angle = AI_RAD_TO_DEG(_camera->Fov);
@@ -357,4 +358,12 @@ void ViewportWindow::SetVSync(bool set) {
     _renderer->SetRenderingOptions(curr);
 }
 
+UINT ViewportWindow::GetTraceDepth() const {
+    return _screen->MaxTraceDepth;
+}
+
+void ViewportWindow::SetTraceDepth(UINT depth) {
+    _screen->MaxTraceDepth = depth;
+    Update();
+}
 _END_KONAI3D

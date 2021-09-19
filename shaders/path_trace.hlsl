@@ -9,12 +9,15 @@
 #include <math.hlsli>
 #include <bsdf.hlsli>
 
-float4 RayColor(RayPayload raypay, uint maxDepth) {
-    for (uint i = 0; i < maxDepth; i++) {
+void TerminateRay(inout RayPayload payload) {
+    payload.CurrDepth = gMaxDepth;
+}
+
+float4 RayColor(RayPayload raypay) {
+    while (raypay.CurrDepth < gMaxDepth) {
         RayDesc r;
         r =  raypay.Ray(0.001f, 100000.0f);
 
-        raypay.CurrDepth = i;
         TraceRay(
                 gRaytracingAccelerationStructure,
                 RAY_FLAG_NONE,
@@ -25,15 +28,10 @@ float4 RayColor(RayPayload raypay, uint maxDepth) {
                 r,
                 raypay);
 
-        if (raypay.T < 0.0f) {
-            if (i >= maxDepth - 1) {
-                return float4(0.0f, 0.0f, 0.0f, 1.0f);
-            }
-            break;
-        }
+        raypay.CurrDepth++;
     }
 
-    return float4(raypay.L.xyz, 1.0f);
+    return float4(raypay.L.xyz, 1);
 }
 
 [shader("raygeneration")]
@@ -43,7 +41,7 @@ void RayGen()
     uint2 LaunchDimensions = DispatchRaysDimensions().xy;
     uint seed = uint(LaunchIndex.x * (5555) + LaunchIndex.y * uint(20328) + uint(gTotalFrameCount) * uint(24023));
 
-    const uint sampleCount = 8;
+    const uint sampleCount = 4;
 
     //Camera Position
     float3 outColor = float3(0.f, 0.f, 0.f);
@@ -53,7 +51,7 @@ void RayGen()
         float2 uv = (float2(LaunchIndex) + (r - 0.5)) / float2(LaunchDimensions);
         float2 ndc = uv * float2(2,-2) + float2(-1, +1);
         RayPayload raypay = gCamera.GetRayPayload(ndc, seed);
-        outColor += RayColor(raypay, 15).xyz;
+        outColor += RayColor(raypay).xyz;
     }
 
     outColor.r = isnan(outColor.r) ? 0.0f : outColor.r;
@@ -71,13 +69,13 @@ void RayGen()
     output[LaunchIndex.xy] = float4(outColor.xyz, 1.0f);
 }
 
-bool ShootShadowRay(float3 origin, float3 target)
+float ShootShadowRay(float3 origin, float3 target)
 {
     ShadowRayPayload raypay;
     RayDesc r;
     r =  raypay.Ray(origin, target);
 
-    raypay.Visibility = false;
+    raypay.Visibility = 0;
     const uint flag = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
     TraceRay(
             gRaytracingAccelerationStructure,
@@ -95,13 +93,11 @@ bool ShootShadowRay(float3 origin, float3 target)
 float3 EstimateDirection(Light light, float3 origin, float3 wg, float3 wo, BSDF bsdf, inout uint seed)
 {
     float3 Lo = float3(0.0f, 0.0f, 0.0f);
-    if (!bsdf.IsGlass) {
-        LightSample sample = SampleLi(light, origin, seed);
-        if (sample.Pdf > 0.0f && any(sample.Li)) {
-            bool vis = ShootShadowRay(origin + wg * 0.0001f, sample.Position);
-//            float mixPDF = (sample.Pdf * 0.5 + bsdf.PDF(sample.Wi, wg, wo) * 0.5);
-            Lo += bsdf.F(sample.Wi, wg, wo) * sample.Li * float(vis) / sample.Pdf;
-        }
+    LightSample sample = SampleLi(light, origin, seed);
+    if (sample.Pdf > 0.0f && any(sample.Li)) {
+        float vis = ShootShadowRay(origin + wg * 0.0001f, sample.Position);
+        float mixPDF = (sample.Pdf * 0.5 + bsdf.PDF(sample.Wi, wg, wo) * 0.5);
+        Lo += bsdf.F(sample.Wi, wg, wo) * sample.Li * vis / mixPDF;
     }
 
     return Lo;
@@ -112,15 +108,14 @@ float3 SampleOneLight(float3 origin, float3 wg, float3 wo, BSDF bsdf, inout uint
     if (gNumberOfLight == 0) {
         return float3(0.0f, 0.0f, 0.0f);
     }
-    float lightPdf = 1.0f / gNumberOfLight;
+    float lightPdf = 1.0f / float(gNumberOfLight);
     int lightIndex = RandomFloat01(seed) * gNumberOfLight;
     Light light = gLights[lightIndex];
-    float3 o = EstimateDirection(light, origin, wg, wo, bsdf, seed);
-    return o;
+    return EstimateDirection(light, origin, wg, wo, bsdf, seed) / lightPdf;
 }
 
 [shader("closesthit")]
-void ClosestHit(inout RayPayload payload, Attributes attrib)
+void ClosestHit(inout RayPayload payload : SV_RayPayload, in Attributes attrib)
 {
     payload.T = RayTCurrent();
 
@@ -158,18 +153,17 @@ void ClosestHit(inout RayPayload payload, Attributes attrib)
         payload.L += payload.Beta * SampleOneLight(origin, wg, wo, bsdf, payload.Seed);
     }
 
-    BXDFSample sample;
-    sample = bsdf.Sample(wo, wg, payload.Seed);
-    if (sample.Pdf <= 0.0f) {
-        payload.T = -1.0f;
+    BXDFSample sample = bsdf.Sample(wo, wg, payload.Seed);
+    float3 wi = sample.Wi;
+
+    if (sample.Pdf <= gEps) {
+        TerminateRay(payload);
         return;
     }
 
-    //Indirect light
     payload.Beta *= bsdf.F(sample.Wi, wg, wo) / bsdf.PDF(sample.Wi, wg, wo);
-
     payload.L += bsdf.EmissiveColor;
-    payload.Direction = sample.Wi;
+    payload.Direction = wi;
     payload.Origin = origin;
 
     //Russian roulette
@@ -178,7 +172,7 @@ void ClosestHit(inout RayPayload payload, Attributes attrib)
     if (maxCmp < 1.0f && payload.CurrDepth > 1) {
         float q = max(0.0f, 1.0f - maxCmp);
         if (RandomFloat01(payload.Seed) < q) {
-            payload.T = -1.0f;
+            TerminateRay(payload);
         }
         payload.Beta /= 1.0f - q;
     }
@@ -187,7 +181,7 @@ void ClosestHit(inout RayPayload payload, Attributes attrib)
 }
 
 [shader("miss")]
-void Miss(inout RayPayload payload)
+void Miss(inout RayPayload payload : SV_RayPayload)
 {
     if (gEnvTextureIdx != -1) {
         Texture2D env = gTexture2DTable[gEnvTextureIdx];
@@ -199,12 +193,12 @@ void Miss(inout RayPayload payload)
         payload.L += payload.Beta * float3(0.0f ,0.0f, 0.0f);
     }
 
-    payload.T = -1.0f;
+    TerminateRay(payload);
 }
 
 [shader("miss")]
-void ShadowMiss(inout ShadowRayPayload payload)
+void ShadowMiss(inout ShadowRayPayload payload : SV_RayPayload)
 {
-    payload.Visibility = true;
+    payload.Visibility = 1.0f;
 }
 #endif

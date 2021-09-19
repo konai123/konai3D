@@ -21,6 +21,7 @@ EnvTextureKey(std::nullopt),
 Updated(true)
 {
     CreateRenderTargets(false, width, height);
+    MaxTraceDepth = 13;
 };
 
 RenderScreen::~RenderScreen() {
@@ -79,6 +80,12 @@ bool RenderScreen::AddLight(std::string name, ShaderType::LightType lightType) {
     light.LightType = lightType;
     light.Position = {0.0f, 0.0f, 0.0f};
     light.Scale = {1.0f, 1.0f, 0.01f};
+    light.Points = {
+            -0.5f, 0.5f, 0.0f, 1.0f,
+            0.5f, 0.5f, 0.0f, 1.0f,
+            -0.5f, -0.5f, 0.0f, 1.0f,
+            0.5f, -0.5f, 0.0f, 1.0f,
+    };
     DirectX::XMStoreFloat4(&light.Rotation, DirectX::XMQuaternionIdentity());
     light.I = 1.0f;
     _lights[name] = light;

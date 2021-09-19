@@ -72,10 +72,10 @@ public:
 
     virtual void SetTransform (DirectX::FXMMATRIX worldMat) override {
         float4x4 points = {
-                -0.5f, 0.5f, 0.0f, 0.0f,
-                0.5f, 0.5f, 0.0f, 0.0f,
-                -0.5f, -0.5f, 0.0f, 0.0f,
-                0.5f, -0.5f, 0.0f, 0.0f,
+                -0.5f, 0.5f, 0.0f, 1.0f,
+                0.5f, 0.5f, 0.0f, 1.0f,
+                -0.5f, -0.5f, 0.0f, 1.0f,
+                0.5f, -0.5f, 0.0f, 1.0f,
         };
         auto mat = DirectX::XMLoadFloat4x4(&points);
         auto p = DirectX::XMMatrixMultiply(mat, worldMat);
