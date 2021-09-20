@@ -10,7 +10,7 @@
 #include <bsdf.hlsli>
 
 void TerminateRay(inout RayPayload payload) {
-    payload.CurrDepth = gMaxDepth;
+    payload.CurrDepth = gMaxDepth+1;
 }
 
 float4 RayColor(RayPayload raypay) {
@@ -31,7 +31,11 @@ float4 RayColor(RayPayload raypay) {
         raypay.CurrDepth++;
     }
 
-    return float4(raypay.L.xyz, 1);
+    float4 l = float4(1.0f, 0.0f, 0.0f, 1.0f);
+    if (raypay.CurrDepth != gMaxDepth) {
+        l = float4(raypay.L.xyz, 1);
+    }
+    return l;
 }
 
 [shader("raygeneration")]
@@ -52,15 +56,13 @@ void RayGen()
         float2 ndc = uv * float2(2,-2) + float2(-1, +1);
         RayPayload raypay = gCamera.GetRayPayload(ndc, seed);
         outColor += RayColor(raypay).xyz;
-        seed = raypay.Seed;
     }
+    RWTexture2D<float4> output = gRTOutputs[gRenderTargetIdx];
+    outColor /= float(sampleCount);
 
     outColor.r = isnan(outColor.r) ? 0.0f : outColor.r;
     outColor.g = isnan(outColor.g) ? 0.0f : outColor.g;
     outColor.b = isnan(outColor.b) ? 0.0f : outColor.b;
-
-    RWTexture2D<float4> output = gRTOutputs[gRenderTargetIdx];
-    outColor /= float(sampleCount);
 
     if (gIntegrationCount > 1) {
         outColor = (gIntegrationCount * float3(output[LaunchIndex.xy].xyz) + outColor.xyz) / float(gIntegrationCount+1);
@@ -161,7 +163,7 @@ void ClosestHit(inout RayPayload payload : SV_RayPayload, in Attributes attrib)
     float3 wi = sample.Wi;
 
     payload.L += bsdf.EmissiveColor;
-    if (sample.Pdf < gEps) {
+    if (sample.Pdf <= 0.0f) {
         TerminateRay(payload);
     }else{
         payload.Beta *= bsdf.F(wi, wg, wo) / sample.Pdf;

@@ -120,8 +120,6 @@ void Raytracer::Render(
 ) {
     {
         RenderScreen *render_screen = screen;
-        auto render_target = render_screen->GetRenderTargetResource();
-
         //Update Lights
         auto lights = render_screen->GetLightList();
         for (int i = 0; i < lights.size(); i++) {
@@ -684,7 +682,7 @@ bool Raytracer::BuildRenderTarget() {
         _render_target_handle = _resource_heap->AllocShaderResourceHeapDescriptor();
     }
 
-    auto desc = CD3DX12_RESOURCE_DESC::Tex2D(Renderer::BackbufferFormat, _width, _height);
+    auto desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32G32B32A32_FLOAT, _width, _height);
     desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     auto properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     _render_target = _device->CreateResource(&properties, &desc, nullptr, D3D12_HEAP_FLAG_NONE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);

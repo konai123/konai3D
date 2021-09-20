@@ -55,6 +55,7 @@ struct CookTorrance
 {
     float3 Fr(float3 wi, float3 wg, float3 wo) {
         float3 SpecularColor = lerp(0.08f*SpecularPower, BaseColor, Metallic);
+        float3 DiffuseColor = BaseColor - BaseColor * Metallic;
 
         float3 wm = normalize(wi+wo);
         float dotIM = dot(wi, wm);
@@ -64,11 +65,11 @@ struct CookTorrance
         float a = max(0.001f, Roughness);
         float a2 = a * a;
 
-        float3 fresnel = FSchlick(SpecularColor, saturate(dotIM));
+        float3 fresnel = FSchlick(SpecularColor, dotIM);
         float3 specularTerm = GGX(wm, wg) * fresnel * GGXPartialGeometryTerm(wi, wg, wm, a2) * GGXPartialGeometryTerm(wo, wg, wm, a2) / (4.0f*dotIG*dotOG);
         float3 diffuseTerm = dotIG / gPI;
 
-        return (specularTerm + (BaseColor * diffuseTerm * (1-Metallic))) * dotIG;
+        return (Metallic*specularTerm + (DiffuseColor * diffuseTerm)) * dotIG;
     }
 
     BXDFSample Sample(float3 wo, float3 wg, inout uint seed) {

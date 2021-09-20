@@ -11,16 +11,17 @@ struct VertexOut {
 
 VertexOut VS(uint vid : SV_VertexID) {
     VertexOut vout;
-    //(0, 0), (1, 0), (1, 1)
     vout.Coord = float2((vid << 1) & 2, vid & 2);
-    //NDC
     vout.Position = float4(vout.Coord.x * 2.0f - 1.0f, -vout.Coord.y * 2.0f + 1.0f, 0.0f, 1.0f);
     return vout;
 }
 
 float4 PS(VertexOut vIn) : SV_Target {
-    float4 c = gShaderInput.SampleLevel(gSamPointClamp, vIn.Coord, 0.0f);
-    return float4(c.xyz, 1.0f);
+    float3 c = gShaderInput.SampleLevel(gSamPointClamp, vIn.Coord, 0.0f).xyz;
+    float3 x = max(0.0f, c - 0.004);
+    c = (x * (6.2f * x + 0.5f)) / (x*(6.2f * x + 1.7f) + 0.06f);
+
+    return float4(c, 1.0f);
 }
 
 #endif
