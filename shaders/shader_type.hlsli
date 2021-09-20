@@ -73,6 +73,9 @@ struct Camera
     float Fov;
     float Near;
     float Far;
+    float DistToFocus;
+    float Aperture;
+    float2 Pad3;
 
     RayPayload GetRayPayload(float2 ndc, float seed) {
         //Camera Position
@@ -84,9 +87,19 @@ struct Camera
 
         float3 direction = mul(float3(ndc.xy, FocalLength), float3x3(r, u, f));
 
+        float aperture = Aperture;
+        float lensRadius = aperture / 2.0f;
+        float3 rd = lensRadius * RandomToDisk(seed);
+        float3 offset = r * rd.x + u * rd.y;
+        float3 origin = Position + offset;
+
+        float distToFocus = DistToFocus;
+        float3 rdir = (distToFocus - FocalLength)*offset / distToFocus;
+        direction = normalize(direction + rdir - offset);
+
         RayPayload raypay;
-        raypay.Direction = normalize(direction);
-        raypay.Origin = Position;
+        raypay.Direction = direction;
+        raypay.Origin = origin;
         raypay.T = 0.f;
         raypay.Seed = seed;
         raypay.L = float3(0.0f, 0.0f, 0.0f);

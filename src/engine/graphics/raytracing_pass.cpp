@@ -145,7 +145,10 @@ void Raytracer::Render(
                     .AspectRatio = camera_info.AspectRatio,
                     .Fov = camera_info.Fov,
                     .Near = camera_info.Near,
-                    .Far = camera_info.Far
+                    .Far = camera_info.Far,
+                    .DistToFocus = camera_info.DistToFocus,
+                    .Aperture = camera_info.Aperture,
+                    .Pad3 = float2(0.0f, 0.0f)
             };
 
             int env_tex_idx = -1;

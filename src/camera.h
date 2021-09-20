@@ -11,7 +11,9 @@ public:
             float fov,
             float ratio,
             float near = 1.0f,
-            float far = 1000.0f
+            float far = 1000.0f,
+            float distToFocus = 10.0f,
+            float aperture = 0.01f
     );
 
     virtual ~Camera() = default;
@@ -41,5 +43,7 @@ public :
     float Ratio;
     float Near;
     float Far;
+    float DistToFocus;
+    float Aperture;
 };
 _END_KONAI3D

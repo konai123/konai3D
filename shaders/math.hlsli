@@ -65,6 +65,11 @@ float3 RandomCosineDirection(inout uint seed)
     return float3(x, y, z);
 }
 
+float3 RandomToDisk(inout uint seed) {
+    float Theta = RandomFloat01(seed);
+    return float3(cos(g2PI * Theta), sin(g2PI * Theta), 0.0f);
+}
+
 float3 RandomToSphere(float radius, float distanceSquared, inout uint seed) {
     float r1 = RandomFloat01(seed);
     float r2 = RandomFloat01(seed);

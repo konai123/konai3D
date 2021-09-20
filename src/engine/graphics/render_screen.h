@@ -26,6 +26,8 @@ public:
         float Far;
         float Fov;
         float AspectRatio;
+        float DistToFocus;
+        float Aperture;
     };
 
 public:

@@ -121,7 +121,9 @@ AssetManager::Save(std::filesystem::path savePath, ViewportWindow *viewportWindo
                 {"Far",      camera->Far},
                 {"Position", {camera->Position.x, camera->Position.y, camera->Position.z}},
                 {"Target",   {camera->Target.x,   camera->Target.y,   camera->Target.z}},
-                {"Up", {camera->CameraUp.x, camera->CameraUp.y, camera->CameraUp.z}}
+                {"Up", {camera->CameraUp.x, camera->CameraUp.y, camera->CameraUp.z}},
+                {"Aperture", camera->Aperture},
+                {"DistToFocus", camera->DistToFocus}
         };
     }
 
@@ -197,6 +199,9 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
     auto camera_target = json["Camera"]["Target"].get<std::vector<float>>();
     auto camera_position = json["Camera"]["Position"].get<std::vector<float>>();
     auto camera_up = json["Camera"]["Up"].get<std::vector<float>>();
+    auto camera_aperture = json["Camera"]["Aperture"].get<float>();
+    auto camera_df = json["Camera"]["DistToFocus"].get<float>();
+
 
     auto option_height = json["Options"]["Height"].get<UINT>();
     auto option_width= json["Options"]["Width"].get<UINT>();
@@ -219,6 +224,8 @@ AssetManager::Load(std::filesystem::path loadFile, ViewportWindow *viewportWindo
     camera->Fov = camera_fov;
     camera->Near = camera_near;
     camera->Ratio = camera_ratio;
+    camera->DistToFocus = camera_df;
+    camera->Aperture = camera_aperture;
 
     DirectX::XMFLOAT3 target(camera_target.data());
     DirectX::XMFLOAT3 position(camera_position.data());

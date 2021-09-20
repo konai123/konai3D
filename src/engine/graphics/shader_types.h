@@ -53,7 +53,9 @@ struct Camera
     float Fov;
     float Near;
     float Far;
-
+    float DistToFocus;
+    float Aperture;
+    float2 Pad3;
 };
 
 enum LightType {

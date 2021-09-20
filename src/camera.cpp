@@ -6,7 +6,7 @@
 #include "src/math.h"
 
 _START_KONAI3D
-Camera::Camera(float fov, float ratio, float pnear, float pfar)
+Camera::Camera(float fov, float ratio, float pnear, float pfar, float distToFocus, float aperture)
 :
         Position(0.0f, 0.0f, 0.0f),
         Direction(0.0f, 0.0f, 1.0f),
@@ -15,6 +15,8 @@ Camera::Camera(float fov, float ratio, float pnear, float pfar)
         Ratio(ratio),
         Near(pnear),
         Far(pfar),
+        DistToFocus(distToFocus),
+        Aperture(aperture),
         CameraUp(0.0f, 1.0f, 0.0f) {}
 
 void Camera::SetPosition(DirectX::XMVECTOR point) {

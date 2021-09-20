@@ -52,6 +52,8 @@ _renderer(renderer)
     camera_info.CameraDirection = _camera->Direction;
     camera_info.CameraUp = _camera->CameraUp;
     camera_info.AspectRatio = _width / static_cast<float>(_height);
+    camera_info.Aperture = _camera->Aperture;
+    camera_info.DistToFocus = _camera->DistToFocus;
     _screen->SetCameraInfo(camera_info);
 
     auto options = _renderer->GetRenderingOptions();
@@ -175,6 +177,8 @@ void ViewportWindow::OnUpdate(float delta) {
             float angle = AI_RAD_TO_DEG(_camera->Fov);
             ImGui::SliderFloat("Angle", &angle, 5.0f, 90.0f);
             _camera->Fov = AI_DEG_TO_RAD(angle);
+            ImGui::SliderFloat("Aperture", &_camera->Aperture, 0.01f, 5.0f);
+            ImGui::SliderFloat("Dist To Focus", &_camera->DistToFocus, 1.0f, 10.0f);
             ImGui::EndMenu();
         }
 
@@ -308,6 +312,8 @@ void ViewportWindow::UpdateScreen() {
     camera_info.CameraDirection = _camera->Direction;
     camera_info.CameraUp = _camera->CameraUp;
     camera_info.AspectRatio = _width / static_cast<float>(_height);
+    camera_info.Aperture = _camera->Aperture;
+    camera_info.DistToFocus = _camera->DistToFocus;
     _screen->SetCameraInfo(camera_info);
 }
 
