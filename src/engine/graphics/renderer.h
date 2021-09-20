@@ -19,6 +19,7 @@
 #include "src/engine/graphics/material_map.h"
 #include "src/engine/graphics/resource_garbage_queue.h"
 #include "src/engine/graphics/raytracing_pass.h"
+#include "src/engine/graphics/tonemap_pass.h"
 
 _START_ENGINE
 struct RenderingOptions {
@@ -106,6 +107,7 @@ private:
 private:
     /*Render Passes*/
     std::unique_ptr<Raytracer> _render_pass;
+    std::unique_ptr<ToneMapper> _tonemap_pass;
 };
 
 _END_ENGINE

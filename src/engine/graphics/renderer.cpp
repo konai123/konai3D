@@ -39,7 +39,12 @@ Renderer::Initiate(HWND hWnd, UINT width, UINT height, std::filesystem::path sha
 
     {
         if (!Shader::RaytracePass.Build(shaderDirectoryPath)) {
-            GRAPHICS_LOG_ERROR("Filed to build shaders");
+            GRAPHICS_LOG_ERROR("filed to build shaders");
+            return false;
+        }
+
+        if (!Shader::ToneMapPass.Build(shaderDirectoryPath)) {
+            GRAPHICS_LOG_ERROR("filed to build shaders");
             return false;
         }
     }
@@ -96,9 +101,15 @@ Renderer::Initiate(HWND hWnd, UINT width, UINT height, std::filesystem::path sha
 
     {
         /*Initiate Render Pass*/
-        _render_pass = std::make_unique<Raytracer>(_device);
+        _render_pass = std::make_unique<Raytracer>(_device, _resource_heap);
         if (!_render_pass->Initiate()) {
-            GRAPHICS_LOG_ERROR("Failed to initialize render pass");
+            GRAPHICS_LOG_ERROR("Failed to initialize RT render pass");
+            return false;
+        }
+
+        _tonemap_pass = std::make_unique<ToneMapper> (_device);
+        if (!_tonemap_pass->Initiate()) {
+            GRAPHICS_LOG_ERROR("Failed to initialize ToneMap render pass");
             return false;
         }
     }
@@ -146,9 +157,40 @@ void Renderer::OnRender(
     _command_list->SetDescriptorHeaps(_countof(heaps), heaps);
 
     {
-        //RenderPass.Render();
+        _render_pass->SetResolution(screen->Width, screen->Height);
         _render_pass->Render(delta, screen, _command_list.Get(), _current_frame, RenderResourceMap->MeshMap.get(),
                              RenderResourceMap->TextureMap.get(), RenderResourceMap->MaterialMap.get(), _resource_heap.get());
+    }
+
+    {
+        auto svr_barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+                _render_pass->GetRenderTarget(),
+                D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+        );
+
+        auto rtv_barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+                screen->GetRenderTargetResource(),
+                D3D12_RESOURCE_STATE_COMMON,
+                D3D12_RESOURCE_STATE_RENDER_TARGET
+        );
+        auto barriers = {svr_barrier, rtv_barrier};
+        _command_list->ResourceBarrier(2, data(barriers));
+        //Tonemapping
+        _tonemap_pass->Render(delta, _command_list.Get(), screen, _render_pass->GetRenderTargetHandle());
+
+        svr_barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+                _render_pass->GetRenderTarget(),
+                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+        );
+        rtv_barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+                screen->GetRenderTargetResource(),
+                D3D12_RESOURCE_STATE_RENDER_TARGET,
+                D3D12_RESOURCE_STATE_COMMON
+        );
+        barriers = {svr_barrier, rtv_barrier};
+        _command_list->ResourceBarrier(2, data(barriers));
     }
 
     _command_list->RSSetViewports(1, &_gui_viewport);

@@ -61,7 +61,6 @@ void RayGen()
 
     RWTexture2D<float4> output = gRTOutputs[gRenderTargetIdx];
     outColor /= float(sampleCount);
-    outColor = sqrt(outColor);
 
     if (gIntegrationCount > 1) {
         outColor = (gIntegrationCount * float3(output[LaunchIndex.xy].xyz) + outColor.xyz) / float(gIntegrationCount+1);

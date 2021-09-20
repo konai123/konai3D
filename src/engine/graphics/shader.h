@@ -62,36 +62,36 @@ public:
 struct Shader
 {
 public:
-//    struct Rasterize {
-//    public:
-//        Microsoft::WRL::ComPtr<IDxcBlob> VS;
-//        Microsoft::WRL::ComPtr<IDxcBlob> PS;
-//
-//        bool Build(std::filesystem::path path) {
-//            if (!Shader::Build(
-//                    {
-//                            path / "rasterize_pass.hlsl",
-//                            path,
-//                            L"VS",
-//                            ShaderVersionedType::VS_SHADER_PROFILE_6_3
-//                    },
-//                    VS.GetAddressOf())) {
-//                return false;
-//            }
-//
-//            if (!Shader::Build(
-//                    {
-//                            path / "rasterize_pass.hlsl",
-//                            path,
-//                            L"PS",
-//                            ShaderVersionedType::PS_SHADER_PROFILE_6_3
-//                    },
-//                    PS.GetAddressOf())) {
-//                return false;
-//            }
-//            return true;
-//        }
-//    };
+    struct ToneMap {
+    public:
+        Microsoft::WRL::ComPtr<IDxcBlob> VS;
+        Microsoft::WRL::ComPtr<IDxcBlob> PS;
+
+        bool Build(std::filesystem::path path) {
+            if (!Shader::Build(
+                    {
+                            path / "hdr" / "tonemap.hlsl",
+                            path,
+                            L"VS",
+                            ShaderVersionedType::VS_SHADER_PROFILE_6_3
+                    },
+                    VS.GetAddressOf())) {
+                return false;
+            }
+
+            if (!Shader::Build(
+                    {
+                            path / "hdr" / "tonemap.hlsl",
+                            path,
+                            L"PS",
+                            ShaderVersionedType::PS_SHADER_PROFILE_6_3
+                    },
+                    PS.GetAddressOf())) {
+                return false;
+            }
+            return true;
+        }
+    };
 
     struct Raytrace {
     public:
@@ -137,6 +137,7 @@ public:
 
 public:
     inline static Raytrace RaytracePass;
+    inline static ToneMap ToneMapPass;
 
 public:
     static bool Build(ShaderInfo info, IDxcBlob** outBlob) {

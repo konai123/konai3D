@@ -54,6 +54,7 @@ public:
     ID3D12Resource *GetRenderTargetResource();
 
     HeapDescriptorHandle *GetShaderResourceHeapDesc();
+    HeapDescriptorHandle *GetRenderTargetHeapDesc();
 
     void SetCameraInfo(const CameraInfo& info);
     CameraInfo GetCameraInfo();
@@ -89,6 +90,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource> _render_target;
 
     HeapDescriptorHandle _shader_view;
+    HeapDescriptorHandle _render_target_view;
     DirectX::XMVECTORF32 _clear_color;
 
     D3D12_VIEWPORT _viewport;

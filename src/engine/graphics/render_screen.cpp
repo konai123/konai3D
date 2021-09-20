@@ -25,6 +25,7 @@ Updated(true)
 };
 
 RenderScreen::~RenderScreen() {
+    _resource_heap->DiscardRenderTargetHeapDescriptor(_render_target_view._heap_index);
     _resource_heap->DiscardRenderTargetHeapDescriptor(_shader_view._heap_index);
 }
 
@@ -139,6 +140,10 @@ HeapDescriptorHandle *RenderScreen::GetShaderResourceHeapDesc() {
     return &_shader_view;
 };
 
+HeapDescriptorHandle *RenderScreen::GetRenderTargetHeapDesc() {
+    return &_render_target_view;
+}
+
 bool RenderScreen::Resize(UINT width, UINT height) {
     Updated = true;
     return CreateRenderTargets(true, width, height);
@@ -172,28 +177,46 @@ bool RenderScreen::CreateRenderTargetResourceAndView(bool isRecreation, UINT wid
     render_target_desc.SampleDesc.Count = 1;
     render_target_desc.SampleDesc.Quality = 0;
     render_target_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-    render_target_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+    render_target_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+    CD3DX12_CLEAR_VALUE clear_value;
+    clear_value.Format = Renderer::BackbufferFormat;
+    clear_value.Color[0] = _clear_color.f[0];
+    clear_value.Color[1] = _clear_color.f[1];
+    clear_value.Color[2] = _clear_color.f[2];
+    clear_value.Color[3] = _clear_color.f[3];
 
     auto properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     if (_render_target != nullptr) {
         ResourceGarbageQueue::Instance().SubmitResource(_render_target);
     }
+
     _render_target = _device->CreateResource(
             &properties,
             &render_target_desc,
-            NULL,
+            &clear_value,
             D3D12_HEAP_FLAG_NONE,
             D3D12_RESOURCE_STATE_COMMON
     );
 
     if (!isRecreation) {
         _shader_view = _resource_heap->AllocShaderResourceHeapDescriptor();
+        _render_target_view = _resource_heap->AllocRenderTargetHeapDescriptor();
+    }
+
+    if (!_render_target_view.IsVaild()) {
+        GRAPHICS_LOG_ERROR("Failed to create render target view.");
+        return false;
     }
 
     if (!_shader_view.IsVaild()) {
         GRAPHICS_LOG_ERROR("Failed to create shader resource view.");
         return false;
     }
+
+    _device->CreatDescriptorHeapView<D3D12_RENDER_TARGET_VIEW_DESC>(
+            _render_target.Get(), nullptr, _render_target_view.CpuHandle, nullptr
+    );
 
     _device->CreatDescriptorHeapView<D3D12_SHADER_RESOURCE_VIEW_DESC>(
             _render_target.Get(), nullptr, _shader_view.CpuHandle, nullptr

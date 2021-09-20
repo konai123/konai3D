@@ -64,6 +64,7 @@ add_executable(
         src/engine/graphics/raytracing_pass.cpp
         src/engine/graphics/resource_garbage_queue.cpp
         src/engine/graphics/frame_resource_buffer.cpp
+        src/engine/graphics/tonemap_pass.cpp
 )
 
 #set_target_properties(${PROJECT_NAME} PROPERTIES

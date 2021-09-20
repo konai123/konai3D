@@ -28,11 +28,13 @@ public:
         UINT MaxDepth;
     };
 
-    explicit Raytracer(std::shared_ptr<DeviceCom> deviceCom);
+    explicit Raytracer(std::shared_ptr<DeviceCom> deviceCom, std::shared_ptr<ResourceDescriptorHeap> resourceHeap);
     virtual ~Raytracer() = default;
 
 public:
     bool Initiate();
+    HeapDescriptorHandle* GetRenderTargetHandle();
+    ID3D12Resource* GetRenderTarget();
 
     void Render(float delta,
                 RenderScreen * screen,
@@ -44,6 +46,7 @@ public:
                 ResourceDescriptorHeap *heaps
     );
 
+    void SetResolution(UINT width, UINT height);
     void Reset();
 
 private:
@@ -52,6 +55,7 @@ private:
     bool BuildRSShaderTable(ID3D12GraphicsCommandList* cmdList);
     bool BuildRSPipelineState();
     bool BuildResourceBuffer();
+    bool BuildRenderTarget();
 
     bool UpdateHitgroupTable(MeshMap* meshMap, MaterialMap* matMap, std::vector<RenderObject*> objs, UINT currentFrame, ID3D12GraphicsCommandList* cmdList);
 
@@ -69,8 +73,11 @@ private:
 
     Microsoft::WRL::ComPtr<ID3D12RootSignature> _global_root_signature;
     Microsoft::WRL::ComPtr<ID3D12RootSignature> _hit_group_root_signature;
+    Microsoft::WRL::ComPtr<ID3D12Resource> _render_target;
+    HeapDescriptorHandle _render_target_handle;
 
     std::shared_ptr<DeviceCom> _device;
+    std::shared_ptr<ResourceDescriptorHeap> _resource_heap;
 
     std::unique_ptr<ConstantBuffer> _cb_buffer_per_frames;
     std::unique_ptr<RWResourceBuffer> _rw_buffer_material;
@@ -78,5 +85,7 @@ private:
     std::vector<TLAS> _tlas;
     UINT _total_frame_cnt;
     UINT _integration_cnt;
+    UINT _width;
+    UINT _height;
 };
 _END_ENGINE

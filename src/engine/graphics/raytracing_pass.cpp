@@ -65,11 +65,15 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> StaticSamplers() {
 }
 }
 
-Raytracer::Raytracer(std::shared_ptr<DeviceCom> deviceCom):
+Raytracer::Raytracer(std::shared_ptr<DeviceCom> deviceCom, std::shared_ptr<ResourceDescriptorHeap> resourceHeap):
 _rtpso(nullptr),
 _device(deviceCom),
+_resource_heap(resourceHeap),
 _total_frame_cnt(0),
-_integration_cnt(0)
+_integration_cnt(0),
+_render_target(nullptr),
+_width(10),
+_height(10)
 {
 }
 
@@ -96,6 +100,10 @@ bool Raytracer::Initiate() {
         return false;
     }
 
+    if (!BuildRenderTarget()) {
+        GRAPHICS_LOG_ERROR("Failed To Create RT RenderTarget");
+        return false;
+    }
 
     return true;
 }
@@ -152,7 +160,7 @@ void Raytracer::Render(
 
             CBPerFrame per_frame{
                 .Camera = camera,
-                .RenderTargetIdx = static_cast<UINT>(render_screen->GetShaderResourceHeapDesc()->_heap_index),
+                .RenderTargetIdx = static_cast<UINT>(_render_target_handle._heap_index),
                 .TotalFrameCount = _total_frame_cnt,
                 .IntegrationCount = _integration_cnt,
                 .NumberOfLight = static_cast<UINT>(lights.size()),
@@ -285,8 +293,8 @@ void Raytracer::Render(
             desc.HitGroupTable.StrideInBytes = _hitgroup_table.MaxRecordSize;
         }
 
-        desc.Width = render_screen->Width;
-        desc.Height = render_screen->Height;
+        desc.Width = _width;
+        desc.Height = _height;
         desc.Depth = 1;
 
         command_list->DispatchRays(&desc);
@@ -669,8 +677,44 @@ bool Raytracer::BuildResourceBuffer() {
     return true;
 }
 
+bool Raytracer::BuildRenderTarget() {
+    if (_render_target != nullptr) {
+        ResourceGarbageQueue::Instance().SubmitResource(_render_target);
+    }else {
+        _render_target_handle = _resource_heap->AllocShaderResourceHeapDescriptor();
+    }
+
+    auto desc = CD3DX12_RESOURCE_DESC::Tex2D(Renderer::BackbufferFormat, _width, _height);
+    desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+    auto properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    _render_target = _device->CreateResource(&properties, &desc, nullptr, D3D12_HEAP_FLAG_NONE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    if (_render_target == nullptr) {
+        return false;
+    }
+
+    _device->CreatDescriptorHeapView<D3D12_SHADER_RESOURCE_VIEW_DESC> (_render_target.Get(), nullptr, _render_target_handle.CpuHandle, nullptr);
+
+    return true;
+}
+
 void Raytracer::Reset() {
     _integration_cnt = 0;
+}
+
+void Raytracer::SetResolution(UINT width, UINT height) {
+    if (width == _width && height == _height) return;
+
+    _width = width;
+    _height = height;
+    BuildRenderTarget();
+}
+
+HeapDescriptorHandle *Raytracer::GetRenderTargetHandle() {
+    return &_render_target_handle;
+}
+
+ID3D12Resource *Raytracer::GetRenderTarget() {
+    return _render_target.Get();
 }
 
 _END_ENGINE
